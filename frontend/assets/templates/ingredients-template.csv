@@ -1,0 +1,47 @@
+name,kcalPer100g,category
+Chicken Breast,165,protein
+Ground Beef (lean),250,protein
+Salmon,208,protein
+Turkey Breast,135,protein
+Tuna (canned),116,protein
+Eggs (whole),155,protein
+Tofu,76,protein
+Shrimp,99,protein
+Pork Loin,143,protein
+Greek Yogurt (plain),97,protein
+Cottage Cheese,98,protein
+White Rice (cooked),130,carbs
+Brown Rice (cooked),111,carbs
+Quinoa (cooked),120,carbs
+Oats,389,carbs
+Pasta (cooked),131,carbs
+Sweet Potato,86,carbs
+Potato,77,carbs
+Bread (whole wheat),247,carbs
+Banana,89,carbs
+Avocado,160,fats
+Olive Oil,884,fats
+Almonds,579,fats
+Peanut Butter,588,fats
+Cheddar Cheese,403,fats
+Butter,717,fats
+Walnuts,654,fats
+Coconut Oil,862,fats
+Dark Chocolate,598,fats
+Broccoli,34,vegetables
+Spinach,23,vegetables
+Tomato,18,vegetables
+Cucumber,16,vegetables
+Bell Pepper,31,vegetables
+Carrot,41,vegetables
+Zucchini,17,vegetables
+Cauliflower,25,vegetables
+Lettuce (romaine),17,vegetables
+Mushrooms,22,vegetables
+Onion,40,vegetables
+Garlic,149,vegetables
+Green Beans,31,vegetables
+Asparagus,20,vegetables
+Mixed Salad,20,mixed
+Stir Fry Vegetables,45,mixed
+Vegetable Soup,35,mixed

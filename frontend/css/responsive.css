@@ -1,0 +1,520 @@
+/* ===========================================
+   RESPONSIVE.CSS - Responsive Styles
+   =========================================== */
+
+/* ===========================================
+   TABLET (768px - 1024px)
+   =========================================== */
+
+@media (max-width: 1024px) {
+    /* Week Grid - 2 columns on tablet */
+    .week-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Show only 2 days visible, horizontal scroll for rest */
+    .day-card {
+        break-inside: avoid;
+    }
+    
+    /* Header adjustments */
+    .header__title {
+        font-size: var(--font-size-lg);
+    }
+    
+    /* Planner header */
+    .planner__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .diet-selector {
+        justify-content: flex-start;
+    }
+    
+    .calorie-summary {
+        justify-content: space-between;
+    }
+    
+    /* Recipes grid */
+    .recipes__grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+/* ===========================================
+   MOBILE (< 768px)
+   =========================================== */
+
+@media (max-width: 767px) {
+    /* Base adjustments */
+    :root {
+        --space-md: 12px;
+        --space-lg: 16px;
+    }
+    
+    body {
+        font-size: var(--font-size-sm);
+    }
+    
+    h1 { font-size: var(--font-size-xl); }
+    h2 { font-size: var(--font-size-lg); }
+    
+    /* Header */
+    .header {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .header__container {
+        flex-wrap: wrap;
+    }
+    
+    .header__title {
+        font-size: var(--font-size-md);
+        flex: 1;
+    }
+    
+    .header__actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: var(--space-sm);
+    }
+    
+    .header__actions .btn__text {
+        display: none;
+    }
+    
+    .header__actions .btn {
+        padding: var(--space-sm);
+    }
+    
+    /* Tabs */
+    .tabs {
+        top: 85px;
+    }
+    
+    .tabs__container {
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .tabs__tab {
+        flex: 1;
+        padding: var(--space-sm);
+        min-width: 60px;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+    
+    .tabs__icon {
+        width: 24px;
+        height: 24px;
+        font-size: 18px;
+    }
+    
+    .tabs__label {
+        font-size: 10px;
+        text-align: center;
+    }
+    
+    /* Main content */
+    .main {
+        padding: var(--space-md);
+        min-height: calc(100vh - 150px);
+    }
+    
+    /* Week Grid - 1 column on mobile */
+    .week-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+    
+    /* Day card adjustments */
+    .day-card__content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+    
+    .day-card__calories {
+        width: 100%;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .meal-slot {
+        flex: 1;
+        min-width: calc(50% - var(--space-xs));
+    }
+    
+    /* Planner header */
+    .planner__header {
+        gap: var(--space-sm);
+    }
+    
+    .diet-selector {
+        width: 100%;
+    }
+    
+    .diet-selector__select {
+        flex: 1;
+    }
+    
+    .calorie-summary {
+        width: 100%;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+    
+    .calorie-summary__item {
+        justify-content: space-between;
+    }
+    
+    .calorie-summary__input {
+        width: 100px;
+    }
+    
+    .planner__header > .btn {
+        width: 100%;
+    }
+    
+    /* Ingredients */
+    .ingredients__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .ingredients__actions {
+        width: 100%;
+    }
+    
+    .ingredients__actions .btn {
+        flex: 1;
+    }
+    
+    .ingredient-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+    
+    .ingredient-item__info {
+        flex-wrap: wrap;
+    }
+    
+    .ingredient-item__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    /* Recipes */
+    .recipes__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .recipes__header > .btn {
+        width: 100%;
+    }
+    
+    .recipes__grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Category filter */
+    .category-filter {
+        justify-content: center;
+    }
+    
+    .category-filter__btn {
+        flex: 1;
+        text-align: center;
+        padding: var(--space-sm);
+    }
+    
+    /* Shopping */
+    .shopping__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .shopping__actions {
+        width: 100%;
+    }
+    
+    .shopping__actions .btn {
+        flex: 1;
+    }
+    
+    .shopping-item {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+    
+    .shopping-item__quantity {
+        width: 100%;
+        text-align: right;
+        margin-top: var(--space-xs);
+    }
+    
+    /* Modal */
+    .modal {
+        max-width: 95vw;
+        max-height: 85vh;
+    }
+    
+    .modal__body {
+        padding: var(--space-md);
+    }
+    
+    /* Toast */
+    .toast-container {
+        left: var(--space-md);
+        right: var(--space-md);
+        bottom: var(--space-md);
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: none;
+    }
+}
+
+/* ===========================================
+   LARGE DESKTOP (> 1400px)
+   =========================================== */
+
+@media (min-width: 1401px) {
+    /* Slightly larger spacing on big screens */
+    :root {
+        --space-lg: 28px;
+        --space-xl: 36px;
+    }
+    
+    /* Week grid could show more info */
+    .meal-slot {
+        min-height: 70px;
+    }
+    
+    .meal-slot__content {
+        font-size: var(--font-size-md);
+    }
+}
+
+/* ===========================================
+   PRINT STYLES
+   =========================================== */
+
+@media print {
+    /* Hide non-essential elements */
+    .header,
+    .tabs,
+    .btn,
+    .modal-overlay,
+    .toast-container,
+    .category-filter,
+    .ingredients__actions,
+    .recipes__header > .btn,
+    .shopping__actions {
+        display: none !important;
+    }
+    
+    /* Reset body */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+    }
+    
+    .main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Show all tab content */
+    .tab-content {
+        display: block !important;
+        page-break-after: always;
+        margin-bottom: 20mm;
+    }
+    
+    .tab-content:last-child {
+        page-break-after: avoid;
+    }
+    
+    /* Week grid - fit all days */
+    .week-grid {
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+        gap: 5mm;
+    }
+    
+    .day-card {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+    }
+    
+    .day-card__header {
+        background: #333 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .meal-slot {
+        border: 1px solid #ddd !important;
+        min-height: 40pt;
+        background: white !important;
+    }
+    
+    .meal-slot__remove {
+        display: none !important;
+    }
+    
+    /* Ingredients list */
+    .ingredient-item {
+        box-shadow: none !important;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    /* Shopping list - clean print */
+    .shopping__list {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+    }
+    
+    .shopping-item__checkbox {
+        width: auto;
+        height: auto;
+    }
+    
+    .shopping-item__quantity {
+        font-weight: bold;
+    }
+    
+    /* Title page info */
+    .planner__header {
+        display: block !important;
+        border: none !important;
+        margin-bottom: 10mm;
+    }
+    
+    .planner__header .btn,
+    .diet-selector {
+        display: none !important;
+    }
+    
+    .calorie-summary {
+        display: flex !important;
+        justify-content: space-between;
+    }
+    
+    .section-title {
+        font-size: 18pt;
+        margin-bottom: 5mm;
+    }
+    
+    /* Links */
+    a {
+        color: black !important;
+        text-decoration: none !important;
+    }
+}
+
+/* ===========================================
+   ACCESSIBILITY - Reduced Motion
+   =========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ===========================================
+   HIGH CONTRAST MODE
+   =========================================== */
+
+@media (prefers-contrast) {
+    :root {
+        --color-border: #666;
+        --color-text-light: #555;
+    }
+    
+    .btn {
+        border: 2px solid currentColor;
+    }
+    
+    .card,
+    .day-card,
+    .meal-slot,
+    .ingredient-item {
+        border: 2px solid var(--color-text);
+    }
+}
+
+/* ===========================================
+   LANDSCAPE MOBILE
+   =========================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        position: relative;
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .header__title {
+        font-size: var(--font-size-md);
+    }
+    
+    .tabs {
+        position: relative;
+        top: 0;
+    }
+    
+    .tabs__container {
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .tabs__tab {
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .tabs__icon {
+        display: inline;
+        margin-bottom: 0;
+        margin-right: var(--space-xs);
+    }
+    
+    .main {
+        min-height: auto;
+        padding: var(--space-sm);
+    }
+    
+    .week-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ===========================================
+   DARK MODE (Optional - for future)
+   =========================================== */
+
+/* 
+   To enable dark mode, uncomment and adjust:
+   
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-bg: #121212;
+        --color-bg-alt: #1E1E1E;
+        --color-bg-dark: #FAFAFA;
+        --color-text: #E0E0E0;
+        --color-text-light: #9E9E9E;
+        --color-border: #333;
+        --color-border-dark: #555;
+    }
+}
+*/
