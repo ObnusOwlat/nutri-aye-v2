@@ -620,7 +620,7 @@ app.post('/api/ingredients/bulk', (req, res) => {
                 insertStmt.run(
                     item.id || uuidv4(),
                     item.name,
-                    item.category || 'protein',
+                    item.category || 'lunch',
                     item.unit || 'gram',
                     item.kcalPer100g || 0,
                     item.proteinPer100g || 0,
@@ -772,10 +772,40 @@ app.post('/api/recipes', (req, res) => {
         const id = req.body.id || uuidv4();
         const now = new Date().toISOString();
 
+        // Validation: Recipe must have a name
+        if (!name || !name.trim()) {
+            return res.status(400).json({ success: false, error: 'Recipe name is required' });
+        }
+
+        // Validation: Recipe must have at least one ingredient
+        if (!ingredients || ingredients.length === 0) {
+            return res.status(400).json({ success: false, error: 'Recipe must have at least one ingredient' });
+        }
+
+        // Validation: All ingredient IDs must exist in database
+        const validCategories = ['protein', 'carbs', 'fats', 'vegetables', 'mixed', 'breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
+        if (category && !validCategories.includes(category)) {
+            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` });
+        }
+
+        // Validate each ingredient exists
+        for (const ing of ingredients) {
+            if (!ing.ingredientId) {
+                return res.status(400).json({ success: false, error: 'ingredientId is required for each ingredient' });
+            }
+            const exists = db.prepare('SELECT id FROM ingredients WHERE id = ?').get(ing.ingredientId);
+            if (!exists) {
+                return res.status(400).json({ success: false, error: `Ingredient not found: ${ing.ingredientId}` });
+            }
+            if (!ing.grams || ing.grams <= 0) {
+                return res.status(400).json({ success: false, error: 'grams must be greater than 0' });
+            }
+        }
+
         db.prepare(`
             INSERT INTO recipes (id, name, category_id, instructions, notes, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(id, name, category || 'protein', instructions || '', notes || '', now, now);
+        `).run(id, name, category || 'lunch', instructions || '', notes || '', now, now);
 
         // Insert recipe ingredients
         const insertIng = db.prepare(`
@@ -806,6 +836,38 @@ app.put('/api/recipes/:id', (req, res) => {
         const { name, category, instructions, notes, ingredients } = req.body;
         const now = new Date().toISOString();
 
+        // Check recipe exists
+        const existing = db.prepare('SELECT id FROM recipes WHERE id = ?').get(req.params.id);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: 'Recipe not found' });
+        }
+
+        // Validation: Recipe must have a name
+        if (name && !name.trim()) {
+            return res.status(400).json({ success: false, error: 'Recipe name cannot be empty' });
+        }
+
+        // Validation: If ingredients provided, must have at least one
+        if (ingredients && ingredients.length === 0) {
+            return res.status(400).json({ success: false, error: 'Recipe must have at least one ingredient' });
+        }
+
+        // Validate each ingredient exists
+        if (ingredients && ingredients.length > 0) {
+            for (const ing of ingredients) {
+                if (!ing.ingredientId) {
+                    return res.status(400).json({ success: false, error: 'ingredientId is required for each ingredient' });
+                }
+                const exists = db.prepare('SELECT id FROM ingredients WHERE id = ?').get(ing.ingredientId);
+                if (!exists) {
+                    return res.status(400).json({ success: false, error: `Ingredient not found: ${ing.ingredientId}` });
+                }
+                if (!ing.grams || ing.grams <= 0) {
+                    return res.status(400).json({ success: false, error: 'grams must be greater than 0' });
+                }
+            }
+        }
+
         db.prepare(`
             UPDATE recipes SET
                 name = ?,
@@ -814,7 +876,7 @@ app.put('/api/recipes/:id', (req, res) => {
                 notes = ?,
                 updated_at = ?
             WHERE id = ?
-        `).run(name, category || 'protein', instructions || '', notes || '', now, req.params.id);
+        `).run(name, category || 'lunch', instructions || '', notes || '', now, req.params.id);
 
         // Update ingredients if provided
         if (ingredients) {
@@ -1310,7 +1372,7 @@ app.post('/api/backup/import', (req, res) => {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `);
                 for (const ing of ingredients) {
-                    insertIng.run(ing.id, ing.name, ing.category || 'protein', 'gram', now, now, ing.kcalPer100g || 0, ing.proteinPer100g || 0, ing.carbsPer100g || 0, ing.fatPer100g || 0);
+                    insertIng.run(ing.id, ing.name, ing.category || 'lunch', 'gram', now, now, ing.kcalPer100g || 0, ing.proteinPer100g || 0, ing.carbsPer100g || 0, ing.fatPer100g || 0);
                 }
             }
 
@@ -1321,7 +1383,7 @@ app.post('/api/backup/import', (req, res) => {
                 const insertRecIng = db.prepare(`INSERT INTO recipe_ingredients (id, recipe_id, ingredient_id, grams) VALUES (?, ?, ?, ?)`);
                 
                 for (const rec of recipes) {
-                    insertRec.run(rec.id, rec.name, rec.category || 'protein', rec.instructions || '', rec.notes || '', now, now);
+                    insertRec.run(rec.id, rec.name, rec.category || 'lunch', rec.instructions || '', rec.notes || '', now, now);
                     for (const ing of (rec.ingredients || [])) {
                         insertRecIng.run(uuidv4(), rec.id, ing.ingredientId, ing.grams || 100);
                     }
@@ -1355,6 +1417,159 @@ app.post('/api/backup/import', (req, res) => {
 });
 
 // ==========================================
+// ==========================================
+// WEEK PLANNER API
+// ==========================================
+
+// GET /api/planner - Get all planners OR by patient
+app.get('/api/planner', (req, res) => {
+    try {
+        const { patientId } = req.query;
+        
+        let planners;
+        if (patientId) {
+            planners = db.prepare(`
+                SELECT wp.*, p.first_name || ' ' || p.last_name as patient_name
+                FROM week_planner wp
+                LEFT JOIN patients p ON wp.patient_id = p.id
+                WHERE wp.patient_id = ?
+                ORDER BY wp.updated_at DESC
+            `).all(patientId);
+        } else {
+            planners = db.prepare(`
+                SELECT wp.*, p.first_name || ' ' || p.last_name as patient_name
+                FROM week_planner wp
+                LEFT JOIN patients p ON wp.patient_id = p.id
+                ORDER BY wp.updated_at DESC
+            `).all();
+        }
+        
+        // Get meals for each planner
+        const getMeals = db.prepare(`
+            SELECT wpm.*, r.name as recipe_name
+            FROM week_planner_meals wpm
+            LEFT JOIN recipes r ON wpm.recipe_id = r.id
+            WHERE wpm.planner_id = ?
+        `);
+        
+        const result = planners.map(planner => ({
+            ...planner,
+            meals: getMeals.all(planner.id)
+        }));
+        
+        res.json({ success: true, data: result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/planner - Create planner
+app.post('/api/planner', (req, res) => {
+    try {
+        const { patientId, templateId } = req.body;
+        
+        // Validation: patientId required
+        if (!patientId) {
+            return res.status(400).json({ success: false, error: 'patientId is required' });
+        }
+        
+        // Validate patient exists
+        const patient = db.prepare('SELECT id FROM patients WHERE id = ?').get(patientId);
+        if (!patient) {
+            return res.status(400).json({ success: false, error: 'Patient not found' });
+        }
+        
+        const id = req.body.id || require('uuid').v4();
+        const now = new Date().toISOString();
+        
+        db.prepare(`
+            INSERT INTO week_planner (id, patient_id, template_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+        `).run(id, patientId, templateId || null, now, now);
+        
+        const planner = db.prepare('SELECT * FROM week_planner WHERE id = ?').get(id);
+        res.json({ success: true, data: planner });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// PUT /api/planner/:id - Update planner
+app.put('/api/planner/:id', (req, res) => {
+    try {
+        const { patientId, templateId, meals } = req.body;
+        
+        // Check planner exists
+        const existing = db.prepare('SELECT id FROM week_planner WHERE id = ?').get(req.params.id);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: 'Planner not found' });
+        }
+        
+        // Validate patient if provided
+        if (patientId) {
+            const patient = db.prepare('SELECT id FROM patients WHERE id = ?').get(patientId);
+            if (!patient) {
+                return res.status(400).json({ success: false, error: 'Patient not found' });
+            }
+        }
+        
+        const now = new Date().toISOString();
+        
+        db.prepare(`
+            UPDATE week_planner SET
+                patient_id = COALESCE(?, patient_id),
+                template_id = COALESCE(?, template_id),
+                updated_at = ?
+            WHERE id = ?
+        `).run(patientId, templateId, now, req.params.id);
+        
+        // Update meals if provided
+        if (meals && Array.isArray(meals)) {
+            db.prepare('DELETE FROM week_planner_meals WHERE planner_id = ?').run(req.params.id);
+            
+            const validMealTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
+            const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            
+            const insertMeal = db.prepare(`
+                INSERT INTO week_planner_meals (id, planner_id, day, meal_type, recipe_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `);
+            
+            for (const meal of meals) {
+                if (!validDays.includes(meal.day)) continue;
+                if (!validMealTypes.includes(meal.mealType)) continue;
+                if (meal.recipeId) {
+                    const recipe = db.prepare('SELECT id FROM recipes WHERE id = ?').get(meal.recipeId);
+                    if (!recipe) continue;
+                }
+                insertMeal.run(require('uuid').v4(), req.params.id, meal.day, meal.mealType, meal.recipeId || null, now);
+            }
+        }
+        
+        const planner = db.prepare('SELECT * FROM week_planner WHERE id = ?').get(req.params.id);
+        res.json({ success: true, data: planner });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// DELETE /api/planner/:id - Delete planner
+app.delete('/api/planner/:id', (req, res) => {
+    try {
+        const existing = db.prepare('SELECT id FROM week_planner WHERE id = ?').get(req.params.id);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: 'Planner not found' });
+        }
+        
+        db.prepare('DELETE FROM week_planner_meals WHERE planner_id = ?').run(req.params.id);
+        db.prepare('DELETE FROM week_planner WHERE id = ?').run(req.params.id);
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // STATS
 // ==========================================
 
