@@ -13,6 +13,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/billing-api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
     },
   },
   build: {
@@ -21,6 +25,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        billing: resolve(__dirname, 'billing.html'),
       },
     },
   },
