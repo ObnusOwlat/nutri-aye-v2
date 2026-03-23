@@ -214,6 +214,28 @@ const EventHandlers = (function() {
                 const id = btn?.dataset.patientId;
                 if (id) Patients?.deletePatient?.(id);
             }
+
+            // Sync patient to billing
+            if (target.matches('[data-action="sync-billing"]') || 
+                target.closest('[data-action="sync-billing"]')) {
+                const btn = target.closest('[data-action="sync-billing"]');
+                const id = btn?.dataset.patientId;
+                if (id) Patients?.syncPatientToBilling?.(id);
+            }
+
+            // Create invoice from patient
+            if (target.matches('[data-action="create-invoice"]') || 
+                target.closest('[data-action="create-invoice"]')) {
+                const btn = target.closest('[data-action="create-invoice"]');
+                const id = btn?.dataset.patientId;
+                if (id) Patients?.createInvoiceFromPatient?.(id);
+            }
+
+            // Open billing system
+            if (target.matches('[data-action="open-billing"]') || 
+                target.closest('[data-action="open-billing"]')) {
+                window.open('/billing', '_blank');
+            }
         });
 
         // Add patient button
