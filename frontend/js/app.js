@@ -22,11 +22,26 @@ const App = (function() {
         tabs = document.querySelectorAll('.tabs__tab');
         tabContents = document.querySelectorAll('.tab-content');
 
+        // Check URL for ?tab= parameter (for /billing redirects)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam && ['patients', 'planner', 'ingredients', 'recipes', 'billing', 'reports'].includes(tabParam)) {
+            currentTab = tabParam;
+        }
+
         // Bind events
         bindEvents();
 
+        // Switch to initial tab (from URL or default)
+        switchTab(currentTab);
+
         // Mark current day in planner
         updateTodayMarker();
+
+        // Clear URL params after reading
+        if (tabParam) {
+            window.history.replaceState({}, '', window.location.pathname);
+        }
 
         // Log initialization complete
         console.log('[App] Initialization complete');
@@ -53,6 +68,13 @@ const App = (function() {
 
         // Handle visibility change (pause/resume)
         document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Subscribe to tab changes
+        UI.on('app:tabChanged', (data) => {
+            if (data.tab === 'reports') {
+                Reports.render();
+            }
+        });
     }
 
     /**
@@ -93,9 +115,9 @@ const App = (function() {
      */
     function handleKeyboard(e) {
         // Alt + number for quick tab switch
-        if (e.altKey && e.key >= '1' && e.key <= '4') {
+        if (e.altKey && e.key >= '1' && e.key <= '6') {
             e.preventDefault();
-            const tabMap = { '1': 'patients', '2': 'planner', '3': 'ingredients', '4': 'recipes' };
+            const tabMap = { '1': 'patients', '2': 'planner', '3': 'ingredients', '4': 'recipes', '5': 'billing', '6': 'reports' };
             switchTab(tabMap[e.key]);
         }
 
@@ -193,10 +215,5 @@ const App = (function() {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
-});
-
-// Also run module initializers
-document.addEventListener('DOMContentLoaded', () => {
-    // Modules are initialized via their own DOMContentLoaded listeners
-    // This ensures proper order of initialization
+    // Note: event-handlers.js is disabled - events are bound in individual modules
 });

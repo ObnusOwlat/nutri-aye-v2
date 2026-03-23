@@ -25,9 +25,9 @@ const State = (function() {
         PATIENT_PROGRESS: 'mp_patient_progress_v1'
     };
 
-    // Enums
-    const VALID_CATEGORIES = ['protein', 'carbs', 'fats', 'vegetables', 'mixed'];
-    const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'snack', 'dinner'];
+    // Enums - Sincronizado con backend (server.js)
+    const VALID_CATEGORIES = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
+    const VALID_MEAL_TYPES = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'snack', 'dinner'];
     const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const GENDERS = ['male', 'female', 'other'];
     const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
@@ -35,6 +35,53 @@ const State = (function() {
     const CONDITION_SEVERITIES = ['mild', 'moderate', 'severe'];
     const PLAN_STATUSES = ['active', 'completed', 'cancelled'];
     const DIET_GOALS = ['maintenance', 'deficit', 'bulking', 'performance'];
+
+    // Currencies
+    const CURRENCIES = {
+        PYG: { symbol: '₲', name: 'Guaraní Paraguayo', code: 'PYG' },
+        USD: { symbol: '$', name: 'Dólar Estadounidense', code: 'USD' },
+        BRL: { symbol: 'R$', name: 'Real Brasileño', code: 'BRL' }
+    };
+
+    // Meal Labels (for UI display) - Sincronizado con VALID_MEAL_TYPES
+    const MEAL_LABELS = {
+        breakfast: 'Breakfast',
+        morning_snack: 'Morning Snack',
+        lunch: 'Lunch',
+        afternoon_snack: 'Afternoon Snack',
+        snack: 'Snack',
+        dinner: 'Dinner'
+    };
+
+    // Day Labels (English - consistent language)
+    const DAY_LABELS = {
+        monday: 'Monday',
+        tuesday: 'Tuesday',
+        wednesday: 'Wednesday',
+        thursday: 'Thursday',
+        friday: 'Friday',
+        saturday: 'Saturday',
+        sunday: 'Sunday'
+    };
+
+    // Suggested Activities (Physical Exercises)
+    const DEFAULT_SUGGESTED_ACTIVITIES = [
+        { id: 'act_1', name: 'Caminar', category: 'cardio', intensity: 'baja', caloriesPerHour: 200, description: 'Actividad de bajo impacto, ideal para principiantes' },
+        { id: 'act_2', name: 'Correr', category: 'cardio', intensity: 'alta', caloriesPerHour: 400, description: 'Ejercicio aeróbico intenso' },
+        { id: 'act_3', name: 'Natación', category: 'cardio', intensity: 'media', caloriesPerHour: 300, description: 'Ejercicio completo de bajo impacto' },
+        { id: 'act_4', name: 'Yoga', category: 'flexibilidad', intensity: 'baja', caloriesPerHour: 150, description: 'Mejora flexibilidad y reduce estrés' },
+        { id: 'act_5', name: 'Pesas', category: 'fuerza', intensity: 'media', caloriesPerHour: 250, description: 'Entrenamiento de fuerza' },
+        { id: 'act_6', name: 'Spinning', category: 'cardio', intensity: 'alta', caloriesPerHour: 450, description: 'Ejercicio cardiovascular intenso en bicicleta' },
+        { id: 'act_7', name: 'Crossfit', category: 'fuerza', intensity: 'muy alta', caloriesPerHour: 500, description: 'Entrenamiento funcional de alta intensidad' },
+        { id: 'act_8', name: 'HIIT', category: 'cardio', intensity: 'muy alta', caloriesPerHour: 400, description: 'Entrenamiento intervalado de alta intensidad' },
+        { id: 'act_9', name: 'Bicicleta', category: 'cardio', intensity: 'media', caloriesPerHour: 350, description: 'Ejercicio cardiovascular' },
+        { id: 'act_10', name: 'Baile', category: 'cardio', intensity: 'media', caloriesPerHour: 300, description: 'Ejercicio divertido y efectivo' },
+        { id: 'act_11', name: 'Pilates', category: 'fuerza', intensity: 'media', caloriesPerHour: 200, description: 'Fortalece core y mejora postura' },
+        { id: 'act_12', name: 'Tai Chi', category: 'flexibilidad', intensity: 'baja', caloriesPerHour: 120, description: 'Arte marcial suave' },
+        { id: 'act_13', name: 'Boxeo', category: 'cardio', intensity: 'muy alta', caloriesPerHour: 500, description: 'Entrenamiento completo de combate' },
+        { id: 'act_14', name: 'Saltar cuerda', category: 'cardio', intensity: 'alta', caloriesPerHour: 450, description: 'Ejercicio cardiovascular intenso' },
+        { id: 'act_15', name: 'Stretching', category: 'flexibilidad', intensity: 'baja', caloriesPerHour: 80, description: 'Estiramientos para mejorar movilidad' }
+    ];
 
     // State
     let state = {
@@ -170,6 +217,9 @@ const State = (function() {
             }
 
             rebuildMaps();
+
+            // Migrate week plans to 6-meal format if needed
+            migrateWeekPlansToSixMeals();
         } catch (error) {
             console.error('[State] Load error:', error);
             state = getDefaultState();
@@ -491,10 +541,22 @@ const State = (function() {
     const getRecipe = (id) => recipeMap.get(id) || null;
     const getRecipesByCategory = (cat) => cat === 'all' ? getRecipes() : state.recipes.filter(r => r.category === cat);
 
+    // Empty nutrition object template
+    const getEmptyNutritionObject = () => ({
+        calories: 0, protein: 0, carbs: 0, fat: 0,
+        saturatedFat: 0, polyunsaturatedFat: 0, monounsaturatedFat: 0,
+        fiber: 0, sugar: 0, cholesterol: 0, sodium: 0,
+        vitaminA: 0, vitaminB1: 0, vitaminB2: 0, vitaminB3: 0,
+        vitaminB5: 0, vitaminB6: 0, vitaminB9: 0, vitaminB12: 0,
+        vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+        calcium: 0, iron: 0, magnesium: 0, phosphorus: 0,
+        potassium: 0, zinc: 0, selenium: 0, manganese: 0, copper: 0, choline: 0
+    });
+
     // Calculate full nutrition for a recipe
     const calculateRecipeNutrition = (recipe) => {
         if (!recipe?.ingredients?.length) {
-            return { calories: 0, protein: 0, carbs: 0, fat: 0, saturatedFat: 0, sugar: 0, fiber: 0 };
+            return getEmptyNutritionObject();
         }
         return recipe.ingredients.reduce((totals, ri) => {
             const ing = ingredientMap.get(ri.ingredientId);
@@ -502,14 +564,80 @@ const State = (function() {
             const factor = ri.grams / 100;
             return {
                 calories: totals.calories + (ing.kcalPer100g * factor),
-                protein: totals.protein + (ing.proteinPer100g * factor),
-                carbs: totals.carbs + (ing.carbsPer100g * factor),
-                fat: totals.fat + (ing.fatPer100g * factor),
-                saturatedFat: totals.saturatedFat + (ing.saturatedFatPer100g * factor),
-                sugar: totals.sugar + (ing.sugarPer100g * factor),
-                fiber: totals.fiber + (ing.fiberPer100g * factor)
+                protein: totals.protein + ((ing.proteinPer100g || 0) * factor),
+                carbs: totals.carbs + ((ing.carbsPer100g || 0) * factor),
+                fat: totals.fat + ((ing.fatPer100g || 0) * factor),
+                saturatedFat: totals.saturatedFat + ((ing.saturatedFatPer100g || 0) * factor),
+                polyunsaturatedFat: totals.polyunsaturatedFat + ((ing.polyunsaturatedFatPer100g || 0) * factor),
+                monounsaturatedFat: totals.monounsaturatedFat + ((ing.monounsaturatedFatPer100g || 0) * factor),
+                fiber: totals.fiber + ((ing.fiberPer100g || 0) * factor),
+                sugar: totals.sugar + ((ing.sugarPer100g || 0) * factor),
+                cholesterol: totals.cholesterol + ((ing.cholesterolPer100g || 0) * factor),
+                sodium: totals.sodium + ((ing.sodiumPer100g || 0) * factor),
+                vitaminA: totals.vitaminA + ((ing.vitaminAPer100g || 0) * factor),
+                vitaminB1: totals.vitaminB1 + ((ing.vitaminB1Per100g || 0) * factor),
+                vitaminB2: totals.vitaminB2 + ((ing.vitaminB2Per100g || 0) * factor),
+                vitaminB3: totals.vitaminB3 + ((ing.vitaminB3Per100g || 0) * factor),
+                vitaminB5: totals.vitaminB5 + ((ing.vitaminB5Per100g || 0) * factor),
+                vitaminB6: totals.vitaminB6 + ((ing.vitaminB6Per100g || 0) * factor),
+                vitaminB9: totals.vitaminB9 + ((ing.vitaminB9Per100g || 0) * factor),
+                vitaminB12: totals.vitaminB12 + ((ing.vitaminB12Per100g || 0) * factor),
+                vitaminC: totals.vitaminC + ((ing.vitaminCPer100g || 0) * factor),
+                vitaminD: totals.vitaminD + ((ing.vitaminDPer100g || 0) * factor),
+                vitaminE: totals.vitaminE + ((ing.vitaminEPer100g || 0) * factor),
+                vitaminK: totals.vitaminK + ((ing.vitaminKPer100g || 0) * factor),
+                calcium: totals.calcium + ((ing.calciumPer100g || 0) * factor),
+                iron: totals.iron + ((ing.ironPer100g || 0) * factor),
+                magnesium: totals.magnesium + ((ing.magnesiumPer100g || 0) * factor),
+                phosphorus: totals.phosphorus + ((ing.phosphorusPer100g || 0) * factor),
+                potassium: totals.potassium + ((ing.potassiumPer100g || 0) * factor),
+                zinc: totals.zinc + ((ing.zincPer100g || 0) * factor),
+                selenium: totals.selenium + ((ing.seleniumPer100g || 0) * factor),
+                manganese: totals.manganese + ((ing.manganesePer100g || 0) * factor),
+                copper: totals.copper + ((ing.copperPer100g || 0) * factor),
+                choline: totals.choline + ((ing.cholinePer100g || 0) * factor)
             };
-        }, { calories: 0, protein: 0, carbs: 0, fat: 0, saturatedFat: 0, sugar: 0, fiber: 0 });
+        }, getEmptyNutritionObject());
+    };
+
+    // Calculate nutrition for a single meal (recipe ID)
+    const calculateMealNutrition = (recipeId) => {
+        if (!recipeId) return getEmptyNutritionObject();
+        const recipe = recipeMap.get(recipeId);
+        return recipe ? calculateRecipeNutrition(recipe) : getEmptyNutritionObject();
+    };
+
+    // Calculate daily nutrition from a day object { breakfast, lunch, snack, dinner }
+    const calculateDayNutrition = (dayMeals) => {
+        const totals = getEmptyNutritionObject();
+        if (!dayMeals) return totals;
+        
+        for (const mealType of VALID_MEAL_TYPES) {
+            const recipeId = dayMeals[mealType];
+            if (recipeId) {
+                const mealNutrition = calculateMealNutrition(recipeId);
+                for (const key of Object.keys(totals)) {
+                    totals[key] += mealNutrition[key];
+                }
+            }
+        }
+        return totals;
+    };
+
+    // Calculate weekly nutrition from a weekPlan object
+    const calculateWeekNutrition = (weekPlan) => {
+        const totals = getEmptyNutritionObject();
+        if (!weekPlan) return totals;
+        
+        for (const day of DAYS) {
+            if (weekPlan[day]) {
+                const dayNutrition = calculateDayNutrition(weekPlan[day]);
+                for (const key of Object.keys(totals)) {
+                    totals[key] += dayNutrition[key];
+                }
+            }
+        }
+        return totals;
     };
 
     const addRecipe = (data) => {
@@ -595,10 +723,13 @@ const State = (function() {
     const initializeEmptyWeekPlan = () => {
         const plan = {};
         for (const day of DAYS) {
-            plan[day] = { breakfast: null, lunch: null, snack: null, dinner: null };
+            plan[day] = { desayuno: null, media_manana: null, almuerzo: null, media_tarde: null, merienda: null, cena: null };
         }
         return plan;
     };
+
+    // Get empty day meals template
+    const getEmptyDayMeals = () => ({ desayuno: null, media_manana: null, almuerzo: null, media_tarde: null, merienda: null, cena: null });
 
     // Get week plan for current or specific template
     const getWeekPlan = (templateId = null) => {
@@ -610,8 +741,8 @@ const State = (function() {
     // Get day meals for current or specific template
     const getDayMeals = (day, templateId = null) => {
         const id = templateId || state.currentTemplateId;
-        if (!id) return { breakfast: null, lunch: null, snack: null, dinner: null };
-        return { ...(state.weekPlans[id]?.[day] || { breakfast: null, lunch: null, snack: null, dinner: null }) };
+        if (!id) return getEmptyDayMeals();
+        return { ...(state.weekPlans[id]?.[day] || getEmptyDayMeals()) };
     };
 
     // Assign meal to current template's week plan
@@ -623,7 +754,7 @@ const State = (function() {
             state.weekPlans[id] = initializeEmptyWeekPlan();
         }
         if (!state.weekPlans[id][day]) {
-            state.weekPlans[id][day] = { breakfast: null, lunch: null, snack: null, dinner: null };
+            state.weekPlans[id][day] = getEmptyDayMeals();
         }
         
         state.weekPlans[id][day][mealType] = recipeId;
@@ -649,7 +780,7 @@ const State = (function() {
         if (!meals) return 0;
         let total = 0;
         for (const recipeId of Object.values(meals)) {
-            if (recipeId) { const r = recipeMap.get(recipeId); if (r) total += r.totalKcal; }
+            if (recipeId) { const r = recipeMap.get(recipeId); if (r) total += (r.nutrition?.calories || 0); }
         }
         return Math.round(total);
     };
@@ -664,6 +795,35 @@ const State = (function() {
     };
 
     const getWeeklyTotal = () => DAYS.reduce((sum, d) => sum + getDailyCalories(d), 0);
+
+    // Migrate week plans from old format (4 meals) to new format (6 meals)
+    const migrateWeekPlansToSixMeals = () => {
+        let migrated = 0;
+        for (const [templateId, weekPlan] of Object.entries(state.weekPlans)) {
+            for (const day of DAYS) {
+                if (weekPlan[day]) {
+                    // Check if plan has old format (breakfast/lunch/snack/dinner)
+                    if ('breakfast' in weekPlan[day]) {
+                        const oldDay = weekPlan[day];
+                        weekPlan[day] = {
+                            desayuno: oldDay.breakfast || null,
+                            media_manana: null,
+                            almuerzo: oldDay.lunch || null,
+                            media_tarde: null,
+                            merienda: oldDay.snack || null,
+                            cena: oldDay.dinner || null
+                        };
+                        migrated++;
+                    }
+                }
+            }
+        }
+        if (migrated > 0) {
+            saveToStorage();
+            emit('weekPlans:migrated', { count: migrated });
+            console.log(`[State] Migrated ${migrated} day plans to 6-meal format`);
+        }
+    };
 
     // Set current active template
     const setCurrentTemplate = (templateId) => {
@@ -795,9 +955,13 @@ const State = (function() {
         return true;
     };
 
-    const generateShoppingList = () => {
+    const generateShoppingList = (templateId = null) => {
+        const id = templateId || state.currentTemplateId;
+        const weekPlan = state.weekPlans[id];
+        if (!weekPlan) return [];
+        
         const map = new Map();
-        for (const dayMeals of Object.values(state.weekPlan)) {
+        for (const dayMeals of Object.values(weekPlan)) {
             for (const id of Object.values(dayMeals)) {
                 if (!id) continue;
                 const recipe = recipeMap.get(id);
@@ -850,15 +1014,28 @@ const State = (function() {
         }
 
         const patient = {
-            id: generateId(),
+            id: data.id || generateId(),  // Use existing ID if provided (from API)
             firstName: data.firstName.trim(), lastName: data.lastName.trim(),
             email: data.email?.trim() || null, phone: data.phone?.trim() || null,
             dateOfBirth: data.dateOfBirth || null,
             gender: GENDERS.includes(data.gender) ? data.gender : null,
             address: { street: '', city: '', zipCode: '', ...pick(data.address || {}, ['street', 'city', 'zipCode']) },
             emergencyContact: { name: '', phone: '', relation: '', ...pick(data.emergencyContact || {}, ['name', 'phone', 'relation']) },
-            notes: data.notes?.trim() || '', photo: null,
-            status: 'active', createdAt: getTimestamp(), updatedAt: getTimestamp()
+            physicalActivity: {
+                active: false,
+                level: null,
+                frequency: null,
+                duration: null,
+                caloriesBurned: null,
+                types: null,
+                goals: null,
+                ...pick(data.physicalActivity || {}, ['active', 'level', 'frequency', 'duration', 'caloriesBurned', 'types', 'goals'])
+            },
+            notes: data.notes?.trim() || '', photo: data.photo || null,
+            status: data.status || 'active',
+            billingClientId: data.billingClientId || null,
+            createdAt: data.createdAt || getTimestamp(), 
+            updatedAt: data.updatedAt || getTimestamp()
         };
 
         state.patients.push(patient);
@@ -889,6 +1066,16 @@ const State = (function() {
             gender: GENDERS.includes(data.gender) ? data.gender : orig.gender,
             address: { ...orig.address, ...pick(data.address || {}, ['street', 'city', 'zipCode']) },
             emergencyContact: { ...orig.emergencyContact, ...pick(data.emergencyContact || {}, ['name', 'phone', 'relation']) },
+            physicalActivity: { 
+                ...(orig.physicalActivity || {}),
+                active: data.physicalActivity?.active !== undefined ? data.physicalActivity.active : (orig.physicalActivity?.active || false),
+                level: data.physicalActivity?.level !== undefined ? data.physicalActivity.level : orig.physicalActivity?.level,
+                frequency: data.physicalActivity?.frequency !== undefined ? data.physicalActivity.frequency : orig.physicalActivity?.frequency,
+                duration: data.physicalActivity?.duration !== undefined ? data.physicalActivity.duration : orig.physicalActivity?.duration,
+                caloriesBurned: data.physicalActivity?.caloriesBurned !== undefined ? data.physicalActivity.caloriesBurned : orig.physicalActivity?.caloriesBurned,
+                types: data.physicalActivity?.types !== undefined ? data.physicalActivity.types : orig.physicalActivity?.types,
+                goals: data.physicalActivity?.goals !== undefined ? data.physicalActivity.goals : orig.physicalActivity?.goals
+            },
             notes: data.notes !== undefined ? data.notes?.trim() || '' : orig.notes,
             status: data.status || orig.status,
             updatedAt: getTimestamp()
@@ -947,6 +1134,11 @@ const State = (function() {
             waist: data.waist !== undefined ? parseFloat(data.waist) : null,
             chest: data.chest !== undefined ? parseFloat(data.chest) : null,
             hips: data.hips !== undefined ? parseFloat(data.hips) : null,
+            // CIA Measurements
+            ciaAbdominal: data.ciaAbdominal !== undefined ? parseFloat(data.ciaAbdominal) : null,
+            ciaBrazo: data.ciaBrazo !== undefined ? parseFloat(data.ciaBrazo) : null,
+            ciaPierna: data.ciaPierna !== undefined ? parseFloat(data.ciaPierna) : null,
+            cadera: data.cadera !== undefined ? parseFloat(data.cadera) : null,
             activityLevel: ACTIVITY_LEVELS.includes(data.activityLevel) ? data.activityLevel : 'moderate',
             notes: data.notes?.trim() || '', createdAt: getTimestamp()
         };
@@ -1042,6 +1234,22 @@ const State = (function() {
     };
 
     const getAllergies = (patientId) => getPatientConditions(patientId).filter(c => c.type === 'allergy' || c.type === 'intolerance');
+
+    // ==========================================
+    // SUGGESTED ACTIVITIES
+    // ==========================================
+
+    const getSuggestedActivities = () => [...DEFAULT_SUGGESTED_ACTIVITIES];
+
+    const getSuggestedActivitiesByCategory = (category) => {
+        if (!category || category === 'all') return DEFAULT_SUGGESTED_ACTIVITIES;
+        return DEFAULT_SUGGESTED_ACTIVITIES.filter(a => a.category === category);
+    };
+
+    const getSuggestedActivitiesByIntensity = (intensity) => {
+        if (!intensity || intensity === 'all') return DEFAULT_SUGGESTED_ACTIVITIES;
+        return DEFAULT_SUGGESTED_ACTIVITIES.filter(a => a.intensity === intensity);
+    };
 
     // ==========================================
     // PATIENT MEAL PLANS
@@ -1372,16 +1580,17 @@ const State = (function() {
         VALID_CATEGORIES, VALID_MEAL_TYPES, DAYS, GENDERS,
         ACTIVITY_LEVELS, CONDITION_TYPES, CONDITION_SEVERITIES, PLAN_STATUSES, DIET_GOALS,
         // Utilities
-        calculateAge, calculateBMI, getBMICategory,
+        calculateAge, calculateBMI, getBMICategory, generateId,
         // Ingredients
         getIngredients, getIngredient, addIngredient, updateIngredient, deleteIngredient, deleteAllIngredients,
         importIngredients, importIngredientsFull,
         // Recipes
-        getRecipes, getRecipe, getRecipesByCategory, calculateRecipeNutrition,
+        getRecipes, getRecipe, getRecipesByCategory, calculateRecipeNutrition, calculateMealNutrition,
         addRecipe, updateRecipe, deleteRecipe,
         // Week Plan
         getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan,
         getDailyCalories, getWeeklyAverage, getWeeklyTotal,
+        calculateDayNutrition, calculateWeekNutrition, getEmptyNutritionObject,
         // Diet
         getDietProfile, updateDietProfile, generateShoppingList,
         // Diet Templates
@@ -1395,6 +1604,8 @@ const State = (function() {
         // Conditions
         getPatientConditions, addPatientCondition, updatePatientCondition,
         deletePatientCondition, getAllergies,
+        getSuggestedActivities, getSuggestedActivitiesByCategory, getSuggestedActivitiesByIntensity,
+        CURRENCIES, MEAL_LABELS, DAY_LABELS,
         // Plans
         getPatientPlans, getActivePlan, addPatientPlan, updatePatientPlan,
         deletePatientPlan, getPatientDailyCalories,
