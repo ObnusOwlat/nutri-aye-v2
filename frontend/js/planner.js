@@ -17,9 +17,9 @@ const Planner = (function() {
 
     // Constants
     const DAYS = State.DAYS;
-    const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const DAY_LABELS = State.DAY_LABELS;
     const MEAL_TYPES = State.VALID_MEAL_TYPES;
-    const MEAL_LABELS = { breakfast: 'Breakfast', lunch: 'Lunch', snack: 'Snack', dinner: 'Dinner' };
+    const MEAL_LABELS = State.MEAL_LABELS;
 
     /**
      * Initialize planner module
@@ -123,7 +123,7 @@ const Planner = (function() {
                     `).join('')}
                 </div>
                 <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn btn--primary" onclick="Planner.showAddTemplateModal()">+ Add Template</button>
+                    <button class="btn btn--primary" data-action="add-template">+ Add Template</button>
                 </div>
             </div>
         `;
@@ -523,7 +523,7 @@ const Planner = (function() {
             return `
                 <div class="day-card" data-day="${day}">
                     <div class="day-card__header ${isToday ? 'day-card__header--today' : ''}">
-                        ${DAY_LABELS[index]}${isToday ? ' (Today)' : ''}
+                        ${DAY_LABELS[day]}${isToday ? ' (Hoy)' : ''}
                     </div>
                     <div class="day-card__content">
                         <div class="day-card__calories ${isOver ? 'day-card__calories-over' : ''}">
@@ -555,7 +555,7 @@ const Planner = (function() {
                 }
             }
 
-            const nutrition = recipe.nutrition || { calories: recipe.totalKcal || 0, protein: 0, carbs: 0, fat: 0 };
+            const nutrition = recipe.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
             return `
                 <div class="meal-slot meal-slot--filled" data-day="${day}" data-meal="${mealType}">
@@ -648,7 +648,7 @@ const Planner = (function() {
                 }
             }
 
-            const nutrition = recipe.nutrition || { calories: recipe.totalKcal || 0, protein: 0, carbs: 0, fat: 0 };
+            const nutrition = recipe.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
             return `
                 <div class="ingredient-select__item ${hasAllergens ? 'has-allergen' : ''}" data-id="${recipe.id}">

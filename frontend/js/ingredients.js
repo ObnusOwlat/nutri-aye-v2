@@ -80,7 +80,7 @@ const Ingredients = (function() {
     }
 
     /**
-     * Get filtered ingredients
+     * Get filtered and sorted ingredients
      */
     function getFilteredIngredients() {
         let ingredients = State.getIngredients();
@@ -94,7 +94,78 @@ const Ingredients = (function() {
             ingredients = ingredients.filter(i => i.name.toLowerCase().includes(query));
         }
         
+        // Sort alphabetically
+        ingredients.sort((a, b) => a.name.localeCompare(b.name));
+        
         return ingredients;
+    }
+
+    /**
+     * Get summary stats for ingredients
+     */
+    function getSummaryStats() {
+        const all = State.getIngredients();
+        const filtered = getFilteredIngredients();
+        
+        const calc = (arr, field) => {
+            if (!arr.length) return 0;
+            const sum = arr.reduce((a, b) => a + (b[field] || 0), 0);
+            const max = Math.max(...arr.map(b => b[field] || 0));
+            const min = Math.min(...arr.filter(b => b[field]).map(b => b[field]));
+            return { avg: sum / arr.length, max, min };
+        };
+
+        return {
+            total: filtered.length,
+            totalAll: all.length,
+            kcal: calc(filtered, 'kcalPer100g'),
+            protein: calc(filtered, 'proteinPer100g'),
+            carbs: calc(filtered, 'carbsPer100g'),
+            fat: calc(filtered, 'fatPer100g'),
+            byCategory: filtered.reduce((acc, i) => {
+                acc[i.category] = (acc[i.category] || 0) + 1;
+                return acc;
+            }, {})
+        };
+    }
+
+    /**
+     * Render summary stats bar
+     */
+    function renderSummaryBar() {
+        const stats = getSummaryStats();
+        
+        return `
+            <div class="ingredients-summary">
+                <div class="ingredients-summary__stat">
+                    <span class="ingredients-summary__value">${stats.total}</span>
+                    <span class="ingredients-summary__label">${currentFilter !== 'all' ? currentFilter : 'Total'}</span>
+                </div>
+                <div class="ingredients-summary__divider"></div>
+                <div class="ingredients-summary__stat">
+                    <span class="ingredients-summary__value">${Math.round(stats.kcal.avg || 0)}</span>
+                    <span class="ingredients-summary__label">Avg kcal</span>
+                </div>
+                <div class="ingredients-summary__stat">
+                    <span class="ingredients-summary__value">${Math.round(stats.protein.avg || 0)}g</span>
+                    <span class="ingredients-summary__label">Avg Protein</span>
+                </div>
+                <div class="ingredients-summary__stat">
+                    <span class="ingredients-summary__value">${Math.round(stats.carbs.avg || 0)}g</span>
+                    <span class="ingredients-summary__label">Avg Carbs</span>
+                </div>
+                <div class="ingredients-summary__stat">
+                    <span class="ingredients-summary__value">${Math.round(stats.fat.avg || 0)}g</span>
+                    <span class="ingredients-summary__label">Avg Fat</span>
+                </div>
+                <div class="ingredients-summary__divider"></div>
+                <div class="ingredients-summary__categories">
+                    ${Object.entries(stats.byCategory).slice(0, 4).map(([cat, count]) => `
+                        <span class="category-badge category-badge--${cat}">${UI.capitalize(cat)}: ${count}</span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
     }
 
     /**
@@ -114,20 +185,27 @@ const Ingredients = (function() {
             return;
         }
 
-        ingredientsList.innerHTML = ingredients.map(ingredient => `
+        const summaryHtml = renderSummaryBar();
+
+        ingredientsList.innerHTML = summaryHtml + ingredients.map(ingredient => `
             <div class="ingredient-item" data-id="${ingredient.id}">
-                <div class="ingredient-item__header">
+                <div class="ingredient-item__compact" data-action="toggle-ingredient">
                     <div class="ingredient-item__title">
                         <span class="category-badge category-badge--${ingredient.category}">${UI.capitalize(ingredient.category)}</span>
                         <span class="ingredient-item__name">${UI.escapeHtml(ingredient.name)}</span>
                     </div>
-                    <div class="ingredient-item__actions">
-                        <button class="btn btn--secondary btn--sm btn-edit" data-id="${ingredient.id}">Edit</button>
-                        <button class="btn btn--danger btn--sm btn-delete" data-id="${ingredient.id}">Delete</button>
+                    <div class="ingredient-item__macros">
+                        <span class="macro-kcal">${Math.round(ingredient.kcalPer100g)} kcal</span>
+                        <span class="macro-divider">|</span>
+                        <span class="macro-p">P: ${round(ingredient.proteinPer100g)}g</span>
+                        <span class="macro-c">C: ${round(ingredient.carbsPer100g)}g</span>
+                        <span class="macro-f">F: ${round(ingredient.fatPer100g)}g</span>
                     </div>
+                    <button class="btn btn--secondary btn--sm btn-edit" data-action="edit-ingredient" data-id="${ingredient.id}">Edit</button>
+                    <button class="btn btn--danger btn--sm btn-delete" data-action="delete-ingredient" data-id="${ingredient.id}">Delete</button>
                 </div>
-                <div class="ingredient-item__nutrition">
-                    <div class="ingredient-nutrition-panel">
+                <div class="ingredient-item__nutrition" id="nutrition-${ingredient.id}" style="display: none;">
+                    <div class="ingredient-nutrition-panel ingredient-nutrition-panel--expanded">
                         <div class="ingredient-nutrition-panel__header">
                             <strong>Nutrition Facts</strong>
                             <span>per 100g</span>
@@ -178,15 +256,101 @@ const Ingredients = (function() {
                                 <span>${round(ingredient.proteinPer100g)}g</span>
                             </div>
                         </div>
-                        ${hasVitamins(ingredient) || hasMinerals(ingredient) ? `
-                        <div class="ingredient-nutrition-panel__section ingredient-nutrition-panel__section--minerals">
-                            <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--sub">
-                                <span>Vitamins</span>
-                                <span>A:${round(ingredient.vitaminAPer100g)} B12:${round(ingredient.vitaminB12Per100g)} D:${round(ingredient.vitaminDPer100g)}</span>
+                        ${hasVitamins(ingredient) ? `
+                        <div class="ingredient-nutrition-panel__section ingredient-nutrition-panel__section--full">
+                            <div class="nutrition-grid-header">Vitamins</div>
+                            <div class="nutrition-grid">
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin A</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminAPer100g)} mcg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B1</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB1Per100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B2</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB2Per100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B3</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB3Per100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B5</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB5Per100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B6</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB6Per100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B9</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB9Per100g)} mcg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin B12</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminB12Per100g)} mcg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin C</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminCPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin D</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminDPer100g)} mcg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin E</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminEPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Vitamin K</span>
+                                    <span class="nutrition-value">${round(ingredient.vitaminKPer100g)} mcg</span>
+                                </div>
                             </div>
-                            <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--sub">
-                                <span>Minerals</span>
-                                <span>Ca:${round(ingredient.calciumPer100g)} Fe:${round(ingredient.ironPer100g)} K:${round(ingredient.potassiumPer100g)}</span>
+                        </div>
+                        ` : ''}
+                        ${hasMinerals(ingredient) ? `
+                        <div class="ingredient-nutrition-panel__section ingredient-nutrition-panel__section--full">
+                            <div class="nutrition-grid-header">Minerals</div>
+                            <div class="nutrition-grid">
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Calcium</span>
+                                    <span class="nutrition-value">${round(ingredient.calciumPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Iron</span>
+                                    <span class="nutrition-value">${round(ingredient.ironPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Magnesium</span>
+                                    <span class="nutrition-value">${round(ingredient.magnesiumPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Phosphorus</span>
+                                    <span class="nutrition-value">${round(ingredient.phosphorusPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Potassium</span>
+                                    <span class="nutrition-value">${round(ingredient.potassiumPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Selenium</span>
+                                    <span class="nutrition-value">${round(ingredient.seleniumPer100g)} mcg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Zinc</span>
+                                    <span class="nutrition-value">${round(ingredient.zincPer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Manganese</span>
+                                    <span class="nutrition-value">${round(ingredient.manganesePer100g)} mg</span>
+                                </div>
+                                <div class="nutrition-grid-item">
+                                    <span class="nutrition-label">Copper</span>
+                                    <span class="nutrition-value">${round(ingredient.copperPer100g)} mg</span>
+                                </div>
                             </div>
                         </div>
                         ` : ''}
@@ -196,7 +360,7 @@ const Ingredients = (function() {
         `).join('');
 
         // Bind item events
-        ingredientsList.onclick = (e) => {
+        ingredientsList.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-edit');
             if (btn) {
                 e.stopPropagation();
@@ -209,19 +373,25 @@ const Ingredients = (function() {
                 e.stopPropagation();
                 showDeleteConfirmation(delBtn.dataset.id);
             }
-        };
+        });
     }
-    
+     
     function round(val) {
         return Math.round((val || 0) * 10) / 10;
     }
-    
+     
     function hasVitamins(ing) {
-        return ing.vitaminAPer100g || ing.vitaminB12Per100g || ing.vitaminDPer100g;
+        return ing.vitaminAPer100g || ing.vitaminB1Per100g || ing.vitaminB2Per100g || 
+               ing.vitaminB3Per100g || ing.vitaminB5Per100g || ing.vitaminB6Per100g ||
+               ing.vitaminB9Per100g || ing.vitaminB12Per100g || ing.vitaminCPer100g ||
+               ing.vitaminDPer100g || ing.vitaminEPer100g || ing.vitaminKPer100g;
     }
     
     function hasMinerals(ing) {
-        return ing.calciumPer100g || ing.ironPer100g || ing.potassiumPer100g;
+        return ing.calciumPer100g || ing.ironPer100g || ing.potassiumPer100g ||
+               ing.magnesiumPer100g || ing.phosphorusPer100g || ing.sodiumPer100g ||
+               ing.zincPer100g || ing.selenuimPer100g || ing.copperPer100g ||
+               ing.manganesePer100g;
     }
 
     /**

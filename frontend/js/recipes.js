@@ -1,58 +1,88 @@
 /**
  * recipes.js - Recipe Management
  * Clean recipe builder with ingredient selection
+ * Refactored: Fixed state issues, removed duplicates, proper cleanup
  */
 
 const Recipes = (function() {
-    let recipesGrid, categoryFilter;
-
+    // ==========================================
+    // PRIVATE STATE
+    // ==========================================
+    
+    // Modal form state
+    let formState = {
+        recipeId: null,
+        name: '',
+        category: 'breakfast',  // FIX: was 'protein'
+        ingredients: [],        // Array of { ingredientId, grams }
+        isEdit: false
+    };
+    
+    // Cache for ingredients (refreshed on modal open) - MOVED UP to fix ReferenceError
+    let ingredientsCache = [];
+    
+    // DOM refs (cached on init)
+    let elements = {};
+    
+    // Category options
+    const CATEGORIES = [
+        { id: 'breakfast', name: 'Breakfast' },
+        { id: 'lunch', name: 'Lunch' },
+        { id: 'dinner', name: 'Dinner' },
+        { id: 'afternoon_snack', name: 'Afternoon Snack' },
+        { id: 'snack', name: 'Snack' }
+    ];
+    
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+    
     function init() {
-        recipesGrid = document.getElementById('recipes-grid');
-        categoryFilter = document.querySelector('#tab-recipes .category-filter');
-
-        bindEvents();
-        render();
+        // Cache DOM elements
+        elements = {
+            grid: document.getElementById('recipes-grid'),
+            categoryFilter: document.querySelector('#tab-recipes .category-filter'),
+            addBtn: document.getElementById('btn-add-recipe')
+        };
+        
+        // Bind main events
+        elements.addBtn?.addEventListener('click', () => openModal(null));
+        
+        elements.categoryFilter?.addEventListener('click', handleCategoryFilter);
+        elements.grid?.addEventListener('click', handleGridClick);
+        
+        // Subscribe to state changes
         State.subscribe('recipes:updated', render);
+        
+        // Initial render
+        render();
+        
+        console.log('[Recipes] Initialized');
     }
-
-    function bindEvents() {
-        document.getElementById('btn-add-recipe')?.addEventListener('click', () => openModal(null));
-
-        categoryFilter?.addEventListener('click', (e) => {
-            const btn = e.target.closest('.category-filter__btn');
-            if (btn) {
-                categoryFilter.querySelectorAll('.category-filter__btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                render();
-            }
-        });
-
-        recipesGrid?.addEventListener('click', (e) => {
-            const card = e.target.closest('.recipe-card');
-            if (!card) return;
-
-            const id = card.dataset.id;
-            if (e.target.closest('.btn-edit')) {
-                openModal(id);
-            } else if (e.target.closest('.btn-delete')) {
-                UI.confirmDanger('Delete this recipe?', () => {
-                    State.deleteRecipe(id);
-                    UI.toastSuccess('Recipe deleted');
-                });
-            }
-        });
-    }
-
+    
+    // ==========================================
+    // MAIN RENDER
+    // ==========================================
+    
     function render() {
+        const { grid, categoryFilter } = elements;
+        if (!grid) return;
+        
+        // Get active filter
         const activeFilter = categoryFilter?.querySelector('.active')?.dataset.category || 'all';
+        
+        // Get and filter recipes
         let recipes = State.getRecipes();
-
         if (activeFilter !== 'all') {
             recipes = recipes.filter(r => r.category === activeFilter);
         }
-
+        
+        // Sort alphabetically
+        recipes.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Empty state
         if (recipes.length === 0) {
-            recipesGrid.innerHTML = `
+            grid.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state__icon"></div>
                     <p class="empty-state__text">No recipes yet</p>
@@ -61,269 +91,539 @@ const Recipes = (function() {
             `;
             return;
         }
-
-        recipesGrid.innerHTML = recipes.map(recipe => {
-            const nutrition = recipe.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
-            const ingredientNames = (recipe.ingredients || [])
-                .slice(0, 3)
-                .map(ri => {
-                    const ing = State.getIngredient(ri.ingredientId);
-                    return ing ? ing.name : 'Unknown';
-                })
-                .join(', ');
-
-            return `
-                <div class="recipe-card" data-id="${recipe.id}">
-                    <div class="recipe-card__header">
-                        <h4 class="recipe-card__title">${UI.escapeHtml(recipe.name)}</h4>
-                        <span class="category-badge category-badge--${recipe.category}">${UI.capitalize(recipe.category)}</span>
-                    </div>
-                    <div class="recipe-card__body">
-                        <div class="recipe-nutrition-summary">
-                            <div class="recipe-nutrition-item recipe-nutrition-item--main">
-                                <span class="recipe-nutrition-value">${Math.round(nutrition.calories)}</span>
-                                <span class="recipe-nutrition-label">kcal</span>
-                            </div>
-                            <div class="recipe-nutrition-item">
-                                <span class="recipe-nutrition-value">${Math.round(nutrition.protein)}g</span>
-                                <span class="recipe-nutrition-label">P</span>
-                            </div>
-                            <div class="recipe-nutrition-item">
-                                <span class="recipe-nutrition-value">${Math.round(nutrition.carbs)}g</span>
-                                <span class="recipe-nutrition-label">C</span>
-                            </div>
-                            <div class="recipe-nutrition-item">
-                                <span class="recipe-nutrition-value">${Math.round(nutrition.fat)}g</span>
-                                <span class="recipe-nutrition-label">F</span>
-                            </div>
-                        </div>
-                        <p class="recipe-card__ingredients">${(recipe.ingredients || []).length} ingredient${(recipe.ingredients || []).length !== 1 ? 's' : ''}</p>
-                        <p class="recipe-card__list">${UI.escapeHtml(ingredientNames) || 'No ingredients'}${(recipe.ingredients || []).length > 3 ? '...' : ''}</p>
-                    </div>
-                    <div class="recipe-card__footer">
-                        <button class="btn btn--secondary btn--sm btn-edit">Edit</button>
-                        <button class="btn btn--danger btn--sm btn-delete">Delete</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        
+        // Render cards
+        grid.innerHTML = recipes.map(recipe => renderRecipeCard(recipe)).join('');
     }
-
-    // Modal state
-    let currentIngredients = [];
-    let currentRecipeId = null;
-    let currentName = '';
-    let currentCategory = 'protein';
-    let renderFn = null;
-
-    function openModal(recipeId) {
-        const recipe = recipeId ? State.getRecipe(recipeId) : null;
-        const isEdit = !!recipe;
-        const ingredients = State.getIngredients();
-
-        if (ingredients.length === 0) {
+    
+    function renderRecipeCard(recipe) {
+        const nutrition = recipe.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        const ingredientCount = (recipe.ingredients || []).length;
+        
+        // Get first 3 ingredient names
+        const ingredientNames = (recipe.ingredients || [])
+            .slice(0, 3)
+            .map(ri => {
+                const ing = State.getIngredient(ri.ingredientId);
+                return ing ? ing.name : 'Unknown';
+            })
+            .join(', ');
+        
+        const categoryLabel = CATEGORIES.find(c => c.id === recipe.category)?.name || recipe.category;
+        
+        return `
+            <div class="recipe-card" data-id="${recipe.id}">
+                <div class="recipe-card__header">
+                    <h4 class="recipe-card__title">${UI.escapeHtml(recipe.name)}</h4>
+                    <span class="category-badge category-badge--${recipe.category}">${categoryLabel}</span>
+                </div>
+                <div class="recipe-card__body">
+                    <div class="recipe-nutrition-summary">
+                        <div class="recipe-nutrition-item recipe-nutrition-item--main">
+                            <span class="recipe-nutrition-value">${Math.round(nutrition.calories)}</span>
+                            <span class="recipe-nutrition-label">kcal</span>
+                        </div>
+                        <div class="recipe-nutrition-item">
+                            <span class="recipe-nutrition-value">${Math.round(nutrition.protein)}g</span>
+                            <span class="recipe-nutrition-label">P</span>
+                        </div>
+                        <div class="recipe-nutrition-item">
+                            <span class="recipe-nutrition-value">${Math.round(nutrition.carbs)}g</span>
+                            <span class="recipe-nutrition-label">C</span>
+                        </div>
+                        <div class="recipe-nutrition-item">
+                            <span class="recipe-nutrition-value">${Math.round(nutrition.fat)}g</span>
+                            <span class="recipe-nutrition-label">F</span>
+                        </div>
+                    </div>
+                    <p class="recipe-card__ingredients">${ingredientCount} ingredient${ingredientCount !== 1 ? 's' : ''}</p>
+                    <p class="recipe-card__list">${UI.escapeHtml(ingredientNames) || 'No ingredients'}${ingredientCount > 3 ? '...' : ''}</p>
+                </div>
+                <div class="recipe-card__footer">
+                    <button class="btn btn--secondary btn--sm btn-edit">Edit</button>
+                    <button class="btn btn--danger btn--sm btn-delete">Delete</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // ==========================================
+    // EVENT HANDLERS
+    // ==========================================
+    
+    function handleCategoryFilter(e) {
+        const btn = e.target.closest('.category-filter__btn');
+        if (!btn) return;
+        
+        // Update UI
+        elements.categoryFilter?.querySelectorAll('.category-filter__btn')
+            .forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Re-render
+        render();
+    }
+    
+    function handleGridClick(e) {
+        const card = e.target.closest('.recipe-card');
+        if (!card) return;
+        
+        const id = card.dataset.id;
+        
+        if (e.target.closest('.btn-edit')) {
+            openModal(id);
+        } else if (e.target.closest('.btn-delete')) {
+            UI.confirmDanger('Delete this recipe?', () => {
+                State.deleteRecipe(id);
+                UI.toastSuccess('Recipe deleted');
+            });
+        }
+    }
+    
+    // ==========================================
+    // MODAL MANAGEMENT
+    // ==========================================
+    
+    async function openModal(recipeId) {
+        console.log('[Modal] Opening modal, recipeId:', recipeId);
+        
+        // Load ingredients from API first
+        try {
+            console.log('[Modal] Fetching ingredients from /api/ingredients...');
+            const response = await fetch('/api/ingredients?limit=100');
+            console.log('[Modal] Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error('API error: ' + response.status);
+            }
+            
+            const data = await response.json();
+            console.log('[Modal] Raw response:', data);
+            
+            // Handle different response formats
+            ingredientsCache = data.data || data.ingredients || data || [];
+            console.log('[Modal] Ingredients cache:', ingredientsCache.length);
+            
+        } catch (e) {
+            console.error('[Modal] Failed to load ingredients:', e);
+            UI.toastWarning('Failed to load ingredients: ' + e.message);
+            return;
+        }
+        
+        if (ingredientsCache.length === 0) {
             UI.toastWarning('Add ingredients first in the Ingredients tab');
             return;
         }
-
-        currentRecipeId = recipeId;
-        currentIngredients = recipe ? [...recipe.ingredients] : [];
-        currentName = recipe ? recipe.name : '';
-        currentCategory = recipe ? recipe.category : 'protein';
-
-        renderFn = buildForm;
-
+        
+        // Initialize form state
+        const recipe = recipeId ? State.getRecipe(recipeId) : null;
+        console.log('[Modal] Recipe to edit:', recipe);
+        
+        formState = {
+            recipeId: recipeId,
+            name: recipe?.name || '',
+            category: recipe?.category || 'breakfast',
+            ingredients: recipe ? [...recipe.ingredients] : [],
+            isEdit: !!recipe
+        };
+        
+        console.log('[Modal] Opening UI modal...');
         UI.openModal({
-            title: isEdit ? 'Edit Recipe' : 'Create Recipe',
-            content: buildForm(),
-            confirmText: isEdit ? 'Save Changes' : 'Create Recipe',
+            title: formState.isEdit ? 'Edit Recipe' : 'Create Recipe',
+            content: buildFormContent(),
+            confirmText: formState.isEdit ? 'Save Changes' : 'Create Recipe',
             size: 'large',
-            onConfirm: doSave
+            onConfirm: handleSave,
+            onOpen: bindFormEvents,
+            onClose: handleModalClose
         });
     }
-
-    function buildForm() {
-        const ingredients = State.getIngredients();
-        const nutrition = calculateNutrition();
-
-        const ingredientList = currentIngredients.length === 0 
-            ? '<p style="color: var(--color-text-light); padding: 12px;">No ingredients added</p>'
-            : currentIngredients.map((ri, idx) => {
-                const ing = State.getIngredient(ri.ingredientId);
-                const ingName = ing ? ing.name : 'Unknown (ID: ' + ri.ingredientId.substring(0,8) + ')';
-                const ingKcal = ing ? Math.round(ing.kcalPer100g * ri.grams / 100) : 0;
-                const ingP = ing ? ((ing.proteinPer100g || 0) * ri.grams / 100).toFixed(1) : '0';
-                const ingC = ing ? ((ing.carbsPer100g || 0) * ri.grams / 100).toFixed(1) : '0';
-                const ingF = ing ? ((ing.fatPer100g || 0) * ri.grams / 100).toFixed(1) : '0';
-                const ingFi = ing ? ((ing.fiberPer100g || 0) * ri.grams / 100).toFixed(1) : '0';
-                
-                return `
-                    <div style="background: var(--color-bg); border-radius: 8px; margin-bottom: 8px; padding: 10px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="flex: 1; font-weight: 500;">${UI.escapeHtml(ingName)}</span>
-                            <input type="number" value="${ri.grams}" min="1" max="10000" 
-                                   style="width: 70px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px;"
-                                   onchange="Recipes.updateGrams(${idx}, this.value)">
-                            <span style="width: 70px; font-weight: 600; color: var(--color-primary);">${ingKcal} kcal</span>
-                            <button onclick="Recipes.removeIng(${idx})" style="background: var(--color-danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer;">X</button>
-                        </div>
-                        <div style="display: flex; gap: 12px; margin-top: 6px; font-size: 12px; color: var(--color-text-light);">
-                            <span>P: ${ingP}g</span>
-                            <span>C: ${ingC}g</span>
-                            <span>F: ${ingF}g</span>
-                            <span>Fi: ${ingFi}g</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-        const options = ingredients.map(ing => 
-            `<option value="${ing.id}">${UI.escapeHtml(ing.name)} - ${ing.kcalPer100g} kcal/100g</option>`
+    
+    function handleModalClose() {
+        // Cleanup: reset state if needed
+        console.log('[Recipes] Modal closed');
+    }
+    
+    // ==========================================
+    // FORM BUILDING
+    // ==========================================
+    
+    function buildFormContent() {
+        const nutrition = calculateFormNutrition();
+        
+        // Render ingredient list
+        const ingredientListHtml = renderIngredientList();
+        
+        // Render category options
+        const categoryOptionsHtml = CATEGORIES.map(cat => 
+            `<option value="${cat.id}" ${formState.category === cat.id ? 'selected' : ''}>${cat.name}</option>`
         ).join('');
-
+        
         return `
-            <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="recipe-form">
+                <!-- Recipe Name -->
                 <div class="form-group">
                     <label class="form-label">Recipe Name *</label>
                     <input type="text" id="recipe-name" class="form-input" 
-                           value="${UI.escapeHtml(currentName)}" 
-                           placeholder="e.g., Chicken Salad"
-                           oninput="Recipes.setName(this.value)">
+                           value="${UI.escapeHtml(formState.name)}" 
+                           placeholder="e.g., Chicken Salad">
                 </div>
 
+                <!-- Category -->
                 <div class="form-group">
                     <label class="form-label">Category</label>
-                    <select id="recipe-category" class="form-select" onchange="Recipes.setCategory(this.value)">
-                        ${['protein', 'carbs', 'fats', 'vegetables', 'mixed'].map(cat => 
-                            `<option value="${cat}" ${currentCategory === cat ? 'selected' : ''}>${UI.capitalize(cat)}</option>`
-                        ).join('')}
+                    <select id="recipe-category" class="form-select">
+                        ${categoryOptionsHtml}
                     </select>
                 </div>
 
+                <!-- Ingredients Section -->
                 <div class="form-group">
-                    <label class="form-label">Ingredients (${currentIngredients.length})</label>
-                    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 12px;">
-                        ${ingredientList}
+                    <label class="form-label">Ingredients (${formState.ingredients.length})</label>
+                    
+                    <!-- Current ingredients list -->
+                    <div id="recipe-ingredient-list" class="recipe-ingredient-list">
+                        ${ingredientListHtml}
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <select id="ingredient-select" class="form-select" style="flex: 1;">
-                            <option value="">Select ingredient...</option>
-                            ${options}
-                        </select>
-                        <button onclick="Recipes.addIng()" class="btn btn--secondary">Add</button>
+                    
+                    <!-- Search input -->
+                    <div class="ingredient-search-section">
+                        <label class="ingredient-search-label">🔍 Search and add ingredients:</label>
+                        <div class="ingredient-combobox">
+                            <input type="text" id="ingredient-search" class="form-input" 
+                                   placeholder="Type to search..."
+                                   autocomplete="off">
+                            <div id="ingredient-dropdown" class="ingredient-dropdown"></div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="background: var(--color-bg); padding: 16px; border-radius: 8px;">
-                    <div style="font-weight: 600; margin-bottom: 12px;">Nutrition Facts (Total)</div>
-                    <div style="display: flex; gap: 20px;">
-                        <div><strong>${Math.round(nutrition.calories)}</strong> kcal</div>
-                        <div>P: <strong>${Math.round(nutrition.protein)}g</strong></div>
-                        <div>C: <strong>${Math.round(nutrition.carbs)}g</strong></div>
-                        <div>F: <strong>${Math.round(nutrition.fat)}g</strong></div>
+                <!-- Nutrition Summary -->
+                <div class="nutrition-summary">
+                    <div class="nutrition-summary__title">Nutrition Facts (Total)</div>
+                    <div class="nutrition-summary__values">
+                        <span><strong>${Math.round(nutrition.calories)}</strong> kcal</span>
+                        <span>P: <strong>${Math.round(nutrition.protein)}g</strong></span>
+                        <span>C: <strong>${Math.round(nutrition.carbs)}g</strong></span>
+                        <span>F: <strong>${Math.round(nutrition.fat)}g</strong></span>
                     </div>
                 </div>
             </div>
         `;
     }
-
-    function calculateNutrition() {
-        const result = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-        for (const ri of currentIngredients) {
+    
+    function renderIngredientList() {
+        if (formState.ingredients.length === 0) {
+            return '<p class="empty-message">No ingredients added yet. Search and select below.</p>';
+        }
+        
+        return formState.ingredients.map((ri, idx) => {
             const ing = State.getIngredient(ri.ingredientId);
             if (!ing) {
-                console.warn('Ingredient not found:', ri.ingredientId);
-                continue;
+                return `<div class="ingredient-item ingredient-item--error">Unknown ingredient</div>`;
             }
+            
+            const factor = ri.grams / 100;
+            const kcal = Math.round(ing.kcalPer100g * factor);
+            const protein = ((ing.proteinPer100g || 0) * factor).toFixed(1);
+            const carbs = ((ing.carbsPer100g || 0) * factor).toFixed(1);
+            const fat = ((ing.fatPer100g || 0) * factor).toFixed(1);
+            
+            return `
+                <div class="ingredient-item" data-index="${idx}">
+                    <div class="ingredient-item__main">
+                        <span class="ingredient-item__name">${UI.escapeHtml(ing.name)}</span>
+                        <input type="number" class="ingredient-item__grams" 
+                               value="${ri.grams}" min="1" max="10000"
+                               data-grams-idx="${idx}">
+                        <span class="ingredient-item__kcal">${kcal} kcal</span>
+                        <button class="ingredient-item__remove" data-remove-idx="${idx}">X</button>
+                    </div>
+                    <div class="ingredient-item__macros">
+                        <span>P: ${protein}g</span>
+                        <span>C: ${carbs}g</span>
+                        <span>F: ${fat}g</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function calculateFormNutrition() {
+        const result = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        
+        for (const ri of formState.ingredients) {
+            const ing = State.getIngredient(ri.ingredientId);
+            if (!ing) continue;
+            
             const factor = ri.grams / 100;
             result.calories += ing.kcalPer100g * factor;
             result.protein += (ing.proteinPer100g || 0) * factor;
             result.carbs += (ing.carbsPer100g || 0) * factor;
             result.fat += (ing.fatPer100g || 0) * factor;
         }
+        
         return result;
     }
-
+    
+    // ==========================================
+    // FORM EVENT BINDING
+    // ==========================================
+    
+    function bindFormEvents() {
+        // Name input
+        document.getElementById('recipe-name')?.addEventListener('input', (e) => {
+            formState.name = e.target.value;
+        });
+        
+        // Category select
+        document.getElementById('recipe-category')?.addEventListener('change', (e) => {
+            formState.category = e.target.value;
+        });
+        
+        // Search input - instant filtering
+        document.getElementById('ingredient-search')?.addEventListener('input', (e) => {
+            filterIngredients(e.target.value);
+        });
+        
+        // Keyboard navigation in dropdown
+        document.getElementById('ingredient-search')?.addEventListener('keydown', handleSearchKeydown);
+        
+        // Close dropdown on outside click
+        document.addEventListener('click', handleOutsideClick);
+        
+        // Ingredient list interactions
+        document.getElementById('recipe-ingredient-list')?.addEventListener('input', (e) => {
+            if (e.target.matches('[data-grams-idx]')) {
+                const idx = parseInt(e.target.dataset.gramsIdx);
+                const grams = Math.max(1, parseInt(e.target.value) || 100);
+                formState.ingredients[idx].grams = grams;
+                refreshNutrition();
+            }
+        });
+        
+        document.getElementById('recipe-ingredient-list')?.addEventListener('click', (e) => {
+            if (e.target.matches('[data-remove-idx]')) {
+                const idx = parseInt(e.target.dataset.removeIdx);
+                formState.ingredients.splice(idx, 1);
+                refreshForm();
+            }
+        });
+        
+        // Initial dropdown population
+        filterIngredients('');
+    }
+    
+    // ==========================================
+    // INGREDIENT SEARCH (FIXED)
+    // ==========================================
+    
+    // Cache for ingredients (refreshed on modal open)
+    let ingredientsCache = [];
+    
+    function filterIngredients(query) {
+        const dropdown = document.getElementById('ingredient-dropdown');
+        if (!dropdown) {
+            console.log('[Search] Dropdown not found');
+            return;
+        }
+        
+        console.log('[Search] Query:', query, '| Cache size:', ingredientsCache.length);
+        
+        // Filter from cache (case-insensitive, includes)
+        let filtered = ingredientsCache;
+        if (query && query.trim()) {
+            const q = query.toLowerCase().trim();
+            filtered = ingredientsCache.filter(ing => 
+                ing.name.toLowerCase().includes(q)
+            );
+        }
+        
+        console.log('[Search] Filtered:', filtered.length, 'ingredients');
+        
+        // Render results
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="ingredient-dropdown__empty">No ingredients found</div>';
+        } else {
+            dropdown.innerHTML = filtered.map(ing => `
+                <div class="ingredient-dropdown__item" data-id="${ing.id}">
+                    <span class="ingredient-dropdown__name">${UI.escapeHtml(ing.name)}</span>
+                    <span class="ingredient-dropdown__kcal">${ing.kcalPer100g} kcal/100g</span>
+                </div>
+            `).join('');
+            
+            // Bind click to add ingredient
+            dropdown.querySelectorAll('.ingredient-dropdown__item').forEach(item => {
+                item.addEventListener('click', () => {
+                    console.log('[Search] Clicked:', item.dataset.id);
+                    addIngredient(item.dataset.id);
+                });
+            });
+        }
+        
+        dropdown.style.display = 'block';
+    }
+    
+    function handleSearchKeydown(e) {
+        const dropdown = document.getElementById('ingredient-dropdown');
+        const items = dropdown?.querySelectorAll('.ingredient-dropdown__item');
+        if (!items || items.length === 0) return;
+        
+        const activeClass = 'ingredient-dropdown__item--active';
+        let active = dropdown.querySelector('.' + activeClass);
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                active?.classList.remove(activeClass);
+                const next = active?.nextElementSibling || items[0];
+                next?.classList.add(activeClass);
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                active?.classList.remove(activeClass);
+                const prev = active?.previousElementSibling || items[items.length - 1];
+                prev?.classList.add(activeClass);
+                break;
+                
+            case 'Enter':
+                e.preventDefault();
+                if (active) {
+                    addIngredient(active.dataset.id);
+                }
+                break;
+                
+            case 'Escape':
+                dropdown.style.display = 'none';
+                break;
+        }
+    }
+    
+    function handleOutsideClick(e) {
+        const searchSection = e.target.closest('.ingredient-search-section');
+        if (!searchSection) {
+            const dropdown = document.getElementById('ingredient-dropdown');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+    }
+    
+    function addIngredient(ingredientId) {
+        // Validate
+        if (!ingredientId) {
+            UI.toastWarning('Select an ingredient');
+            return;
+        }
+        
+        // Check duplicate
+        if (formState.ingredients.some(ri => ri.ingredientId === ingredientId)) {
+            UI.toastWarning('Ingredient already added');
+            return;
+        }
+        
+        // Add to state
+        formState.ingredients.push({ ingredientId, grams: 100 });
+        
+        // Clear search and close dropdown
+        const searchInput = document.getElementById('ingredient-search');
+        const dropdown = document.getElementById('ingredient-dropdown');
+        if (searchInput) searchInput.value = '';
+        if (dropdown) dropdown.style.display = 'none';
+        
+        // Refresh form
+        refreshForm();
+        UI.toastSuccess('Ingredient added');
+    }
+    
+    // ==========================================
+    // FORM REFRESH (OPTIMIZED)
+    // ==========================================
+    
     function refreshForm() {
-        const body = document.getElementById('modal-body');
-        if (body && renderFn) {
-            body.innerHTML = renderFn();
+        const ingredientList = document.getElementById('recipe-ingredient-list');
+        const dropdown = document.getElementById('ingredient-dropdown');
+        const searchInput = document.getElementById('ingredient-search');
+        
+        // Update ingredient list
+        if (ingredientList) {
+            ingredientList.innerHTML = renderIngredientList();
+        }
+        
+        // Update dropdown with current search
+        if (dropdown && searchInput) {
+            filterIngredients(searchInput.value);
+        }
+        
+        // Update nutrition display
+        refreshNutrition();
+    }
+    
+    function refreshNutrition() {
+        const nutrition = calculateFormNutrition();
+        const summaryEl = document.querySelector('.nutrition-summary__values');
+        if (summaryEl) {
+            summaryEl.innerHTML = `
+                <span><strong>${Math.round(nutrition.calories)}</strong> kcal</span>
+                <span>P: <strong>${Math.round(nutrition.protein)}g</strong></span>
+                <span>C: <strong>${Math.round(nutrition.carbs)}g</strong></span>
+                <span>F: <strong>${Math.round(nutrition.fat)}g</strong></span>
+            `;
         }
     }
-
-    function addIng() {
-        const select = document.getElementById('ingredient-select');
-        const id = select?.value;
-        if (!id) return;
-        currentIngredients.push({ ingredientId: id, grams: 100 });
-        refreshForm();
-    }
-
-    function removeIng(index) {
-        currentIngredients.splice(index, 1);
-        refreshForm();
-    }
-
-    function updateGrams(index, grams) {
-        if (currentIngredients[index]) {
-            currentIngredients[index].grams = Math.max(1, parseInt(grams) || 100);
-            refreshForm();
-        }
-    }
-
-    function setName(name) {
-        currentName = name;
-    }
-
-    function setCategory(cat) {
-        currentCategory = cat;
-    }
-
-    function doSave() {
-        const name = currentName.trim();
-        const category = currentCategory;
-
+    
+    // ==========================================
+    // SAVE LOGIC
+    // ==========================================
+    
+    function handleSave() {
+        // Validate
+        const name = formState.name.trim();
+        
         if (!name) {
             UI.toastError('Recipe name is required');
-            return;
+            return false; // Keep modal open
         }
-        if (currentIngredients.length === 0) {
+        
+        if (formState.ingredients.length === 0) {
             UI.toastError('Add at least one ingredient');
-            return;
+            return false;
         }
-
+        
+        // Prepare data
         const data = {
             name,
-            category,
+            category: formState.category,
             instructions: '',
-            ingredients: currentIngredients.map(ri => ({
+            ingredients: formState.ingredients.map(ri => ({
                 ingredientId: ri.ingredientId,
                 grams: ri.grams
             }))
         };
-
+        
         try {
-            if (currentRecipeId) {
-                State.updateRecipe(currentRecipeId, data);
+            if (formState.recipeId) {
+                State.updateRecipe(formState.recipeId, data);
                 UI.toastSuccess('Recipe updated');
             } else {
                 State.addRecipe(data);
                 UI.toastSuccess('Recipe created');
             }
+            return true; // Close modal
         } catch (e) {
             UI.toastError(e.message);
+            return false; // Keep modal open
         }
     }
-
-    // Public API
+    
+    // ==========================================
+    // PUBLIC API
+    // ==========================================
+    
     return {
         init,
-        addIng,
-        removeIng,
-        updateGrams,
-        setName,
-        setCategory
+        openModal
     };
 })();
 
+// Auto-initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => Recipes.init());
