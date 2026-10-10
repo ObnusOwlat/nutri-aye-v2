@@ -132,6 +132,9 @@ const Sync = (function() {
             version: serverData.version || localData.version,
             ingredients: mergeArrays(localData.ingredients, serverData.ingredients),
             recipes: mergeArrays(localData.recipes, serverData.recipes),
+            patients: mergeArrays(localData.patients, serverData.patients),
+            patientMetrics: mergeArrays(localData.patientMetrics, serverData.patientMetrics),
+            patientConditions: mergeArrays(localData.patientConditions, serverData.patientConditions),
             weekPlan: serverData.weekPlan || localData.weekPlan,
             dietProfile: serverData.dietProfile || localData.dietProfile
         });

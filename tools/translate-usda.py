@@ -62,14 +62,14 @@ PATTERNS = [
 
 # Words ending in -o that are nouns or adverbs, never inflected as adjectives
 NOUNS_O = {
-    "solo", "magro", "medio", "listo", "mixto", "tipo", "estilo",
+    "solo", "magro", "medio", "listo", "mixto", "tipo", "estilo", "grado",
     "pollo", "cerdo", "huevo", "pescado", "trigo", "helado", "cordero", "pavo", "pato", "queso",
     "jugo", "caldo", "aceite", "arroz", "centeno", "salvado", "tomate", "durazno", "camarón",
     "embutido", "muslo", "bife", "lomo", "hígado", "riñón", "corazón", "seso", "medallón", "grano",
     "envase", "puré", "postre", "plato", "almuerzo", "condimento", "pecho", "brazo", "garrón",
     "costilla", "chocolate", "café", "té", "vino", "agua", "producto", "corte", "centro", "extremo",
-    "promedio", "concentrado", "menudo", "pote", "mitad", "calor", "aderezo", "alimento", "relleno",
-    "pastel", "estilo", "tipo", "polvo", "trozo", "asado", "parrillero", "spiedo", "vapor", "microondas",
+    "promedio", "menudo", "pote", "mitad", "calor", "aderezo", "alimento", "relleno",
+    "pastel", "estilo", "tipo", "polvo", "trozo", "parrillero", "spiedo", "vapor", "microondas",
     "ojo", "peceto", "vacío", "cuadril", "nalga", "marucha", "palo", "kilo", "mondongo", "chorizo",
 }
 

@@ -1042,9 +1042,11 @@ app.get('/api/recipes', (req, res) => {
 app.get('/api/recipes/:id', (req, res) => {
     try {
         const recipe = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
             FROM recipes r
             JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             WHERE r.id = ?
         `).get(req.params.id);
 
@@ -1141,8 +1143,11 @@ app.post('/api/recipes', (req, res) => {
         }
 
         const recipe = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             WHERE r.id = ?
         `).get(id);
 
@@ -1216,8 +1221,11 @@ app.put('/api/recipes/:id', (req, res) => {
         }
 
         const recipe = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             WHERE r.id = ?
         `).get(req.params.id);
 
@@ -1547,8 +1555,11 @@ app.get('/api/sync/init', (req, res) => {
         const ingredients = db.prepare(LIBRARY_INGREDIENTS_SQL).all().map(transformIngredient);
         
         const recipesRaw = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
         `).all();
         
         const recipes = recipesRaw.map(r => {
@@ -1613,8 +1624,11 @@ app.get('/api/sync/pull', (req, res) => {
         const ingredients = db.prepare(LIBRARY_INGREDIENTS_SQL).all().map(transformIngredient);
         
         const recipesRaw = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
         `).all();
         
         const recipes = recipesRaw.map(r => {
@@ -1636,14 +1650,17 @@ app.get('/api/sync/pull', (req, res) => {
         });
         
         const patients = db.prepare('SELECT * FROM patients').all().map(transformPatient);
-        
+        const patientMetrics = db.prepare('SELECT * FROM patient_metrics').all().map(transformMetric);
+        const patientConditions = db.prepare('SELECT * FROM patient_conditions').all().map(transformCondition);
+
+        // Week plan and diet profile live only in the browser: not sent, so a
+        // sync does not overwrite them
         res.json({
             ingredients,
             recipes,
             patients,
-            weekPlan: {},
-            currentTemplateId: null,
-            dietProfile: { goal: 'maintenance', dailyTarget: 2000 }
+            patientMetrics,
+            patientConditions
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -1659,8 +1676,11 @@ app.get('/api/backup/export', (req, res) => {
             exportedAt: new Date().toISOString(),
             ingredients: db.prepare(LIBRARY_INGREDIENTS_SQL).all().map(transformIngredient),
             recipes: db.prepare(`
-                SELECT r.*, c.name as category, c.display_name as category_display
-                FROM recipes r JOIN categories c ON r.category_id = c.id
+                SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             `).all().map(r => {
                 const ingredients = db.prepare('SELECT * FROM recipe_ingredients WHERE recipe_id = ?').all(r.id);
                 return { ...transformRecipe(r), ingredients };

@@ -120,6 +120,15 @@ It uses `tools/glossary-usda-es.json` (~880 frequent USDA terms in Paraguayan/Ri
 | `GET /api/nutrients/:id/ingredients?category=vegetables&limit=20` | Ingredients richest in a nutrient |
 | `GET /api/recipes/:id` | Recipe with `nutrients` (full totals for the recipe) |
 
+## Demo Data
+
+```bash
+cd backend && node seed-demo.js           # 4 fictional patients (metrics, conditions) + 9 recipes from USDA foods
+node seed-demo.js --remove                # delete it (all demo rows have ids starting with "demo-")
+```
+
+Then press **Sync** in the app to bring it into the browser.
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
