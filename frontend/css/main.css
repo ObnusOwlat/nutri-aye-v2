@@ -33,6 +33,8 @@
     --color-fats: #a855f7;
     --color-vegetables: #22c55e;
     --color-mixed: #3b82f6;
+    --color-fruits: #ef4444;
+    --color-dairy: #0ea5e9;
     
     /* Spacing */
     --space-xs: 4px;
@@ -367,6 +369,16 @@ input[type="number"]::-webkit-outer-spin-button {
 .category-badge--mixed {
     background-color: rgba(33, 150, 243, 0.15);
     color: var(--color-mixed);
+}
+
+.category-badge--fruits {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--color-fruits);
+}
+
+.category-badge--dairy {
+    background-color: rgba(14, 165, 233, 0.15);
+    color: var(--color-dairy);
 }
 
 /* Recipe Badge */

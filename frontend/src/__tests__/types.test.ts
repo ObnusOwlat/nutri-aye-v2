@@ -23,8 +23,10 @@ describe('Enums', () => {
             expect(VALID_CATEGORIES).toContain('carbs');
             expect(VALID_CATEGORIES).toContain('fats');
             expect(VALID_CATEGORIES).toContain('vegetables');
+            expect(VALID_CATEGORIES).toContain('fruits');
+            expect(VALID_CATEGORIES).toContain('dairy');
             expect(VALID_CATEGORIES).toContain('mixed');
-            expect(VALID_CATEGORIES.length).toBe(5);
+            expect(VALID_CATEGORIES.length).toBe(7);
         });
     });
 

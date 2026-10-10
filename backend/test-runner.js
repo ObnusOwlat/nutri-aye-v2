@@ -111,7 +111,7 @@ async function runTests() {
 
     await test('Ingredients should have valid categories', async () => {
         const res = await request('GET', '/api/ingredients');
-        const validCategories = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
+        const validCategories = ['protein', 'carbs', 'fats', 'vegetables', 'fruits', 'dairy', 'mixed'];
         res.data.data.forEach(ing => {
             assert(validCategories.includes(ing.category), 
                 `Invalid category: ${ing.category}`);
@@ -121,7 +121,7 @@ async function runTests() {
     await test('POST /api/ingredients should create ingredient', async () => {
         const ingredient = {
             name: 'Test Ingredient',
-            category: 'snack',
+            category: 'mixed',
             kcalPer100g: 100,
             proteinPer100g: 5,
             carbsPer100g: 10,
@@ -136,7 +136,7 @@ async function runTests() {
     await test('POST /api/ingredients should reject empty name', async () => {
         const ingredient = {
             name: '',
-            category: 'snack',
+            category: 'mixed',
             kcalPer100g: 100
         };
         const res = await request('POST', '/api/ingredients', ingredient);
@@ -237,7 +237,7 @@ async function runTests() {
     await test('Should reject negative kcal', async () => {
         const ingredient = {
             name: 'Negative Energy',
-            category: 'snack',
+            category: 'mixed',
             kcalPer100g: -100
         };
         const res = await request('POST', '/api/ingredients', ingredient);
