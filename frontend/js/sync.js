@@ -26,6 +26,13 @@ const Sync = (function() {
         document.getElementById('btn-sync')?.addEventListener('click', manualSync);
         updateSyncStatus();
         console.log('[Sync] Initialized, online:', isOnline);
+
+        // First visit (nothing stored in this browser): bring the server data
+        if (isOnline && !State.getPatients().length && !State.getRecipes().length) {
+            pullFromBackend()
+                .then(() => console.log('[Sync] Initial data loaded from server'))
+                .catch(e => console.warn('[Sync] Initial load failed:', e.message));
+        }
     }
 
     /**

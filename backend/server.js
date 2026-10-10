@@ -51,7 +51,10 @@ app.get('/billing/*', (req, res) => {
 // ==========================================
 
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+// no-cache: the browser revalidates (ETag) instead of running stale JS after an update
+app.use(express.static(path.join(__dirname, '..', 'frontend'), {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+}));
 
 // Serve index.html for root
 app.get('/', (req, res) => {
