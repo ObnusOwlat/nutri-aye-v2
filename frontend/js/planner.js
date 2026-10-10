@@ -287,9 +287,68 @@ const Planner = (function() {
         
         if (selectedPatientId) {
             updatePatientInfo();
+            loadPatientWeek(selectedPatientId);
         } else {
             hidePatientInfo();
         }
+    }
+
+    // Server planner id per patient, to update it on "Save to Patient"
+    const serverPlannerIds = {};
+
+    /**
+     * Load the patient's saved week from the server into the grid
+     */
+    async function loadPatientWeek(patientId) {
+        try {
+            const res = await fetch(`/api/planner?patientId=${encodeURIComponent(patientId)}`);
+            if (!res.ok) return;
+            const planner = (await res.json()).data?.[0];
+            if (!planner || patientId !== selectedPatientId) return;
+
+            serverPlannerIds[patientId] = planner.id;
+            if (!planner.meals?.length) return;
+
+            const week = {};
+            for (const meal of planner.meals) {
+                if (!meal.recipe_id || !State.getRecipe(meal.recipe_id)) continue;
+                (week[meal.day] = week[meal.day] || {})[meal.meal_type] = meal.recipe_id;
+            }
+            State.setWeekPlan(week);
+            UI.toastInfo(`Loaded ${State.getPatient(patientId)?.firstName}'s week`);
+        } catch (e) {
+            console.warn('[Planner] Could not load patient week:', e.message);
+        }
+    }
+
+    /**
+     * Save the grid as the patient's week on the server
+     */
+    async function savePatientWeekToServer(patientId, weekPlan) {
+        const meals = [];
+        for (const [day, slots] of Object.entries(weekPlan)) {
+            for (const [mealType, recipeId] of Object.entries(slots || {})) {
+                if (recipeId) meals.push({ day, mealType, recipeId });
+            }
+        }
+
+        let plannerId = serverPlannerIds[patientId];
+        if (!plannerId) {
+            const res = await fetch('/api/planner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patientId })
+            });
+            if (!res.ok) throw new Error(`Server error: ${res.status}`);
+            plannerId = serverPlannerIds[patientId] = (await res.json()).data.id;
+        }
+
+        const res = await fetch(`/api/planner/${plannerId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ meals })
+        });
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
     }
 
     /**
@@ -370,6 +429,8 @@ const Planner = (function() {
             const plan = State.savePlannerToPatient(selectedPatientId, weekPlan, target);
             
             UI.toastSuccess(`Plan saved for ${State.getPatient(selectedPatientId)?.firstName}`);
+            savePatientWeekToServer(selectedPatientId, weekPlan)
+                .catch(e => UI.toastWarning('Saved in this browser only: ' + e.message));
             
             // Refresh patient plans if viewing a patient
             if (typeof render === 'function') {

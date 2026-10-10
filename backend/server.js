@@ -1873,7 +1873,7 @@ app.put('/api/planner/:id', (req, res) => {
         if (meals && Array.isArray(meals)) {
             db.prepare('DELETE FROM week_planner_meals WHERE planner_id = ?').run(req.params.id);
             
-            const validMealTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
+            const validMealTypes = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'snack', 'dinner'];
             const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             
             const insertMeal = db.prepare(`

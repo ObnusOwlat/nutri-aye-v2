@@ -80,7 +80,18 @@ const RECIPES = [
     ['Tostadas integrales con queso', 'snack', [['usda-172688', 60], ['usda-170845', 40]], 'Tostar el pan y gratinar el queso.']
 ];
 
+// Weekly plan per patient (recipe numbers from RECIPES, 1-based), respecting
+// conditions: Lucía is celiac (no oats/bread), Carlos lactose intolerant (no oats with milk)
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const WEEKS = {
+    'demo-p1': { breakfast: [1, 2], lunch: [3, 4, 8], afternoon_snack: [7], dinner: [6, 5] },
+    'demo-p2': { breakfast: [2], lunch: [4, 3, 8], snack: [9], dinner: [5, 6] },
+    'demo-p3': { breakfast: [2], lunch: [4, 3, 8], afternoon_snack: [7], dinner: [5, 6] },
+    'demo-p4': { breakfast: [1, 2], morning_snack: [9], lunch: [3, 8, 4], afternoon_snack: [7], dinner: [5, 6] }
+};
+
 const remove = db.transaction(() => {
+    db.prepare("DELETE FROM week_planner WHERE id LIKE 'demo-%'").run(); // meals cascade
     db.prepare("DELETE FROM recipe_ingredients WHERE recipe_id LIKE 'demo-%'").run();
     db.prepare("DELETE FROM recipes WHERE id LIKE 'demo-%'").run();
     db.prepare("DELETE FROM patients WHERE id LIKE 'demo-%'").run(); // metrics/conditions cascade
@@ -138,6 +149,18 @@ const seed = db.transaction(() => {
         insRecipe.run(id, name, category, instructions, now, now);
         items.forEach(([ingId, grams], j) => insRecipeIng.run(`${id}-i${j + 1}`, id, ingId, grams));
     });
+
+    const insPlanner = db.prepare('INSERT INTO week_planner (id, patient_id, created_at, updated_at) VALUES (?, ?, ?, ?)');
+    const insMeal = db.prepare('INSERT INTO week_planner_meals (id, planner_id, day, meal_type, recipe_id, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+    for (const [patientId, week] of Object.entries(WEEKS)) {
+        const plannerId = `demo-wp-${patientId}`;
+        insPlanner.run(plannerId, patientId, now, now);
+        DAYS.forEach((day, d) => {
+            for (const [mealType, recipes] of Object.entries(week)) {
+                insMeal.run(`${plannerId}-${day}-${mealType}`, plannerId, day, mealType, `demo-r${recipes[d % recipes.length]}`, now);
+            }
+        });
+    }
 });
 
 if (process.argv.includes('--remove')) {
@@ -149,6 +172,7 @@ if (process.argv.includes('--remove')) {
     console.log(`Demo data loaded: ${count("SELECT COUNT(*) c FROM patients WHERE id LIKE 'demo-%'")} patients, `
         + `${count("SELECT COUNT(*) c FROM patient_metrics WHERE id LIKE 'demo-%'")} metrics, `
         + `${count("SELECT COUNT(*) c FROM patient_conditions WHERE id LIKE 'demo-%'")} conditions, `
-        + `${count("SELECT COUNT(*) c FROM recipes WHERE id LIKE 'demo-%'")} recipes.`);
+        + `${count("SELECT COUNT(*) c FROM recipes WHERE id LIKE 'demo-%'")} recipes, `
+        + `${count("SELECT COUNT(*) c FROM week_planner WHERE id LIKE 'demo-%'")} weekly plans.`);
 }
 db.close();
