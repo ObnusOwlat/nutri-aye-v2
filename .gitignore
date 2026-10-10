@@ -24,3 +24,8 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+foods-data/usda/
+tools/.venv/
+tools/models/
+tools/argos-index.json
+__pycache__/

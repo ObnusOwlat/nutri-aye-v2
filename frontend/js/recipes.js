@@ -418,9 +418,7 @@ const Recipes = (function() {
     // INGREDIENT SEARCH (FIXED)
     // ==========================================
     
-    // Cache for ingredients (refreshed on modal open)
-    let ingredientsCache = [];
-    
+    // ingredientsCache (declared at the top) is refreshed on modal open
     function filterIngredients(query) {
         const dropdown = document.getElementById('ingredient-dropdown');
         if (!dropdown) {

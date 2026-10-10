@@ -747,6 +747,21 @@ const State = (function() {
     };
 
     // Assign meal to current template's week plan
+    // Replace the current template's week ({ monday: { breakfast: recipeId, ... } })
+    const setWeekPlan = (plan) => {
+        const id = state.currentTemplateId;
+        if (!id) return false;
+        const week = {};
+        for (const day of DAYS) {
+            week[day] = {};
+            for (const mealType of VALID_MEAL_TYPES) week[day][mealType] = plan?.[day]?.[mealType] || null;
+        }
+        state.weekPlans[id] = week;
+        saveToStorage();
+        emit('weekPlan:updated', { templateId: id, weekPlan: week });
+        return true;
+    };
+
     const assignMeal = (day, mealType, recipeId) => {
         const id = state.currentTemplateId;
         if (!id || !VALID_MEAL_TYPES.includes(mealType)) return false;
@@ -1589,7 +1604,7 @@ const State = (function() {
         getRecipes, getRecipe, getRecipesByCategory, calculateRecipeNutrition, calculateMealNutrition,
         addRecipe, updateRecipe, deleteRecipe,
         // Week Plan
-        getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan,
+        getWeekPlan, getDayMeals, setWeekPlan, assignMeal, removeMeal, clearWeekPlan,
         getDailyCalories, getWeeklyAverage, getWeeklyTotal,
         calculateDayNutrition, calculateWeekNutrition, getEmptyNutritionObject,
         // Diet

@@ -26,6 +26,13 @@ const Sync = (function() {
         document.getElementById('btn-sync')?.addEventListener('click', manualSync);
         updateSyncStatus();
         console.log('[Sync] Initialized, online:', isOnline);
+
+        // First visit (nothing stored in this browser): bring the server data
+        if (isOnline && !State.getPatients().length && !State.getRecipes().length) {
+            pullFromBackend()
+                .then(() => console.log('[Sync] Initial data loaded from server'))
+                .catch(e => console.warn('[Sync] Initial load failed:', e.message));
+        }
     }
 
     /**
@@ -132,6 +139,9 @@ const Sync = (function() {
             version: serverData.version || localData.version,
             ingredients: mergeArrays(localData.ingredients, serverData.ingredients),
             recipes: mergeArrays(localData.recipes, serverData.recipes),
+            patients: mergeArrays(localData.patients, serverData.patients),
+            patientMetrics: mergeArrays(localData.patientMetrics, serverData.patientMetrics),
+            patientConditions: mergeArrays(localData.patientConditions, serverData.patientConditions),
             weekPlan: serverData.weekPlan || localData.weekPlan,
             dietProfile: serverData.dietProfile || localData.dietProfile
         });

@@ -32,8 +32,8 @@ const NUTRIENTS = [
 const columns = NUTRIENTS.map(n => n.replace(/[A-Z]/g, c => '_' + c.toLowerCase()) + '_per_100g');
 
 const insert = db.prepare(`
-    INSERT INTO ingredients (id, name, category_id, unit_id, ${columns.join(', ')})
-    VALUES (?, ?, ?, ?, ${columns.map(() => '?').join(', ')})
+    INSERT INTO ingredients (id, name, category_id, unit_id, source, ${columns.join(', ')})
+    VALUES (?, ?, ?, ?, 'calories_in', ${columns.map(() => '?').join(', ')})
 `);
 
 const existingNames = new Set(db.prepare('SELECT LOWER(name) AS n FROM ingredients').all().map(r => r.n));

@@ -51,7 +51,10 @@ app.get('/billing/*', (req, res) => {
 // ==========================================
 
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+// no-cache: the browser revalidates (ETag) instead of running stale JS after an update
+app.use(express.static(path.join(__dirname, '..', 'frontend'), {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+}));
 
 // Serve index.html for root
 app.get('/', (req, res) => {
@@ -72,6 +75,10 @@ if (!fs.existsSync(dbDir)) {
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+
+// Accent/case-insensitive search: unaccent('Limón') = 'limon'
+const unaccent = (text) => (text == null ? null : String(text).normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase());
+db.function('unaccent', { deterministic: true }, unaccent);
 
 function initializeDatabase() {
     // ==========================================
@@ -368,6 +375,63 @@ function initializeDatabase() {
     `).run(...MEAL_CATEGORIES);
 
     // ==========================================
+    // FULL NUTRIENT PROFILE (USDA FoodData Central)
+    // The fixed *_per_100g columns keep the common nutrients for the
+    // frontend; ingredient_nutrients holds every nutrient the source has.
+    // ==========================================
+
+    const ingredientCols = db.prepare('PRAGMA table_info(ingredients)').all().map(c => c.name);
+    const addIngredientCol = (name, def) => {
+        if (!ingredientCols.includes(name)) db.exec(`ALTER TABLE ingredients ADD COLUMN ${name} ${def}`);
+    };
+    addIngredientCol('source', "TEXT NOT NULL DEFAULT 'user'"); // user | calories_in | usda_foundation | usda_sr_legacy
+    addIngredientCol('fdc_id', 'INTEGER');
+    addIngredientCol('ndb_number', 'INTEGER');
+    addIngredientCol('source_category', 'TEXT');
+    addIngredientCol('name_en', 'TEXT');                       // original USDA name (name holds the Spanish one)
+    addIngredientCol('name_edited', 'INTEGER NOT NULL DEFAULT 0'); // 1 = renamed by a user, re-imports keep it
+
+    db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_ingredients_fdc_id ON ingredients(fdc_id);
+        CREATE INDEX IF NOT EXISTS idx_ingredients_source ON ingredients(source);
+
+        CREATE TABLE IF NOT EXISTS nutrients (
+            id INTEGER PRIMARY KEY,              -- USDA nutrient id
+            name TEXT NOT NULL,
+            unit TEXT NOT NULL,
+            number TEXT,                          -- USDA nutrient number (e.g. 203 = protein)
+            rank INTEGER,                         -- USDA display order
+            nutrient_group TEXT NOT NULL DEFAULT 'other',
+            name_es TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS ingredient_nutrients (
+            ingredient_id TEXT NOT NULL REFERENCES ingredients(id) ON DELETE CASCADE,
+            nutrient_id INTEGER NOT NULL REFERENCES nutrients(id),
+            amount REAL NOT NULL,                 -- per 100 g
+            PRIMARY KEY (ingredient_id, nutrient_id)
+        ) WITHOUT ROWID;
+
+        CREATE INDEX IF NOT EXISTS idx_ingredient_nutrients_nutrient ON ingredient_nutrients(nutrient_id, amount);
+
+        CREATE TABLE IF NOT EXISTS ingredient_portions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ingredient_id TEXT NOT NULL REFERENCES ingredients(id) ON DELETE CASCADE,
+            amount REAL,
+            unit TEXT,                            -- cup, tbsp, piece...
+            modifier TEXT,                        -- "chopped", "1 medium"...
+            gram_weight REAL NOT NULL,
+            sequence INTEGER
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_ingredient_portions_ingredient ON ingredient_portions(ingredient_id);
+    `);
+
+    if (!db.prepare('PRAGMA table_info(nutrients)').all().some(c => c.name === 'name_es')) {
+        db.exec('ALTER TABLE nutrients ADD COLUMN name_es TEXT');
+    }
+
+    // ==========================================
     // WEEK_PLANNER (2NF - Depends on patient PK)
     // ==========================================
 
@@ -566,6 +630,7 @@ app.get('/api/ingredients', (req, res) => {
         const { 
             search = '', 
             category = '',
+            source = '',
             page = 1, 
             limit = 50,
             sort = 'name',
@@ -579,10 +644,12 @@ app.get('/api/ingredients', (req, res) => {
         let whereClause = '1=1';
         const params = [];
 
-        // Search filter (uses index)
-        if (search) {
-            whereClause += ' AND LOWER(name) LIKE ?';
-            params.push(`%${search.toLowerCase()}%`);
+        // Search filter: every word must appear in the Spanish or English name,
+        // in any order, ignoring accents and case ("pollo pechuga", "limon")
+        const terms = unaccent(search).split(/\s+/).filter(Boolean);
+        for (const term of terms) {
+            whereClause += ' AND (unaccent(name) LIKE ? OR unaccent(name_en) LIKE ?)';
+            params.push(`%${term}%`, `%${term}%`);
         }
 
         // Category filter (uses index)
@@ -591,9 +658,26 @@ app.get('/api/ingredients', (req, res) => {
             params.push(category);
         }
 
+        // Source filter: 'usda' matches both USDA datasets
+        if (source === 'usda') {
+            whereClause += " AND source LIKE 'usda%'";
+        } else if (source) {
+            whereClause += ' AND source = ?';
+            params.push(source);
+        }
+
         // Sorting
         const sortColumn = ['name', 'kcal_per_100g', 'category'].includes(sort) ? sort : 'name';
         const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
+
+        // Searching without an explicit sort: names starting with the first word
+        // first, then shorter (more basic) names: "Limón, crudo" before drinks
+        let orderBy = `${sortColumn} ${sortOrder}`;
+        const orderParams = [];
+        if (terms.length && !req.query.sort) {
+            orderBy = 'unaccent(name) LIKE ? DESC, LENGTH(name) ASC, name ASC';
+            orderParams.push(`${terms[0]}%`);
+        }
 
         // Get total count
         const countStmt = db.prepare(`SELECT COUNT(*) as total FROM v_ingredient_with_category WHERE ${whereClause}`);
@@ -603,12 +687,12 @@ app.get('/api/ingredients', (req, res) => {
         const query = `
             SELECT * FROM v_ingredient_with_category 
             WHERE ${whereClause}
-            ORDER BY ${sortColumn} ${sortOrder}
+            ORDER BY ${orderBy}
             LIMIT ? OFFSET ?
         `;
         
         const stmt = db.prepare(query);
-        const ingredients = stmt.all(...params, limitNum, offset);
+        const ingredients = stmt.all(...params, ...orderParams, limitNum, offset);
 
         // Transform to camelCase for frontend
         const transformed = ingredients.map(transformIngredient);
@@ -639,7 +723,7 @@ app.get('/api/ingredients/:id', (req, res) => {
             return res.status(404).json({ success: false, error: 'Ingredient not found' });
         }
 
-        res.json({ success: true, data: transformIngredient(ingredient) });
+        res.json({ success: true, data: { ...transformIngredient(ingredient), ...getIngredientDetails(ingredient.id) } });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -737,6 +821,7 @@ app.put('/api/ingredients/:id', (req, res) => {
         const stmt = db.prepare(`
             UPDATE ingredients SET
                 name = COALESCE(?, name),
+                name_edited = CASE WHEN ? IS NOT NULL THEN 1 ELSE name_edited END,
                 category_id = COALESCE(?, category_id),
                 unit_id = COALESCE(?, unit_id),
                 updated_at = ?,
@@ -755,7 +840,7 @@ app.put('/api/ingredients/:id', (req, res) => {
         `);
 
         stmt.run(
-            data.name, data.category, data.unit, now,
+            data.name, data.name, data.category, data.unit, now,
             data.kcalPer100g, data.proteinPer100g, data.carbsPer100g, data.fatPer100g,
             data.saturatedFatPer100g, data.polyunsaturatedFatPer100g, data.monounsaturatedFatPer100g,
             data.sugarPer100g, data.fiberPer100g, data.cholesterolPer100g, data.sodiumPer100g,
@@ -811,6 +896,56 @@ app.post('/api/ingredients/bulk', (req, res) => {
 
         insertMany(ingredients);
         res.json({ success: true, count: ingredients.length });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// API ENDPOINTS - NUTRIENTS
+// ==========================================
+
+// GET /api/nutrients - Nutrient catalog with how many ingredients have each one
+app.get('/api/nutrients', (req, res) => {
+    try {
+        const { group = '' } = req.query;
+        const nutrients = db.prepare(`
+            SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group",
+                   (SELECT COUNT(*) FROM ingredient_nutrients inut WHERE inut.nutrient_id = n.id) AS ingredientCount
+            FROM nutrients n
+            WHERE (? = '' OR n.nutrient_group = ?)
+            ORDER BY n.rank, n.id
+        `).all(group, group);
+        res.json({ success: true, data: nutrients });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// GET /api/nutrients/:id/ingredients - Ingredients richest in a nutrient (per 100 g)
+app.get('/api/nutrients/:id/ingredients', (req, res) => {
+    try {
+        const nutrient = db.prepare('SELECT id, COALESCE(name_es, name) AS name, name AS nameEn, unit, nutrient_group AS "group" FROM nutrients WHERE id = ?').get(req.params.id);
+        if (!nutrient) {
+            return res.status(404).json({ success: false, error: 'Nutrient not found' });
+        }
+
+        const { category = '', order = 'desc' } = req.query;
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+        const rows = db.prepare(`
+            SELECT v.*, inut.amount AS nutrient_amount
+            FROM ingredient_nutrients inut
+            JOIN v_ingredient_with_category v ON v.id = inut.ingredient_id
+            WHERE inut.nutrient_id = ? AND (? = '' OR v.category_id = ?)
+            ORDER BY inut.amount ${order === 'asc' ? 'ASC' : 'DESC'}
+            LIMIT ?
+        `).all(nutrient.id, category, category, limit);
+
+        res.json({
+            success: true,
+            nutrient,
+            data: rows.map(r => ({ ...transformIngredient(r), amountPer100g: r.nutrient_amount }))
+        });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -910,9 +1045,11 @@ app.get('/api/recipes', (req, res) => {
 app.get('/api/recipes/:id', (req, res) => {
     try {
         const recipe = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
             FROM recipes r
             JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             WHERE r.id = ?
         `).get(req.params.id);
 
@@ -928,6 +1065,18 @@ app.get('/api/recipes/:id', (req, res) => {
             WHERE ri.recipe_id = ?
         `).all(req.params.id);
 
+        // Full nutrient totals from ingredients with a detailed profile
+        const nutrients = db.prepare(`
+            SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group",
+                   SUM(inut.amount * ri.grams / 100) AS amount
+            FROM recipe_ingredients ri
+            JOIN ingredient_nutrients inut ON inut.ingredient_id = ri.ingredient_id
+            JOIN nutrients n ON n.id = inut.nutrient_id
+            WHERE ri.recipe_id = ?
+            GROUP BY n.id
+            ORDER BY n.rank, n.id
+        `).all(req.params.id);
+
         res.json({
             success: true,
             data: {
@@ -936,7 +1085,8 @@ app.get('/api/recipes/:id', (req, res) => {
                     ingredientId: ri.ingredient_id,
                     ingredientName: ri.ingredient_name,
                     grams: ri.grams
-                }))
+                })),
+                nutrients
             }
         });
     } catch (error) {
@@ -996,8 +1146,11 @@ app.post('/api/recipes', (req, res) => {
         }
 
         const recipe = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             WHERE r.id = ?
         `).get(id);
 
@@ -1071,8 +1224,11 @@ app.put('/api/recipes/:id', (req, res) => {
         }
 
         const recipe = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             WHERE r.id = ?
         `).get(req.params.id);
 
@@ -1399,11 +1555,14 @@ app.get('/api/patients/:id/billing', (req, res) => {
 // GET /api/sync/init - Full sync (for initial load)
 app.get('/api/sync/init', (req, res) => {
     try {
-        const ingredients = db.prepare('SELECT * FROM v_ingredient_with_category').all().map(transformIngredient);
+        const ingredients = db.prepare(LIBRARY_INGREDIENTS_SQL).all().map(transformIngredient);
         
         const recipesRaw = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
         `).all();
         
         const recipes = recipesRaw.map(r => {
@@ -1465,11 +1624,14 @@ app.post('/api/sync/push', (req, res) => {
 // GET /api/sync/pull - Pull data for frontend (same as init)
 app.get('/api/sync/pull', (req, res) => {
     try {
-        const ingredients = db.prepare('SELECT * FROM v_ingredient_with_category').all().map(transformIngredient);
+        const ingredients = db.prepare(LIBRARY_INGREDIENTS_SQL).all().map(transformIngredient);
         
         const recipesRaw = db.prepare(`
-            SELECT r.*, c.name as category, c.display_name as category_display
-            FROM recipes r JOIN categories c ON r.category_id = c.id
+            SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
         `).all();
         
         const recipes = recipesRaw.map(r => {
@@ -1491,14 +1653,17 @@ app.get('/api/sync/pull', (req, res) => {
         });
         
         const patients = db.prepare('SELECT * FROM patients').all().map(transformPatient);
-        
+        const patientMetrics = db.prepare('SELECT * FROM patient_metrics').all().map(transformMetric);
+        const patientConditions = db.prepare('SELECT * FROM patient_conditions').all().map(transformCondition);
+
+        // Week plan and diet profile live only in the browser: not sent, so a
+        // sync does not overwrite them
         res.json({
             ingredients,
             recipes,
             patients,
-            weekPlan: {},
-            currentTemplateId: null,
-            dietProfile: { goal: 'maintenance', dailyTarget: 2000 }
+            patientMetrics,
+            patientConditions
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -1512,10 +1677,13 @@ app.get('/api/backup/export', (req, res) => {
         const backup = {
             version: '3.0-normalized',
             exportedAt: new Date().toISOString(),
-            ingredients: db.prepare('SELECT * FROM v_ingredient_with_category').all().map(transformIngredient),
+            ingredients: db.prepare(LIBRARY_INGREDIENTS_SQL).all().map(transformIngredient),
             recipes: db.prepare(`
-                SELECT r.*, c.name as category, c.display_name as category_display
-                FROM recipes r JOIN categories c ON r.category_id = c.id
+                SELECT r.*, c.name as category, c.display_name as category_display,
+                   n.total_calories, n.total_protein, n.total_carbs, n.total_fat
+            FROM recipes r
+            JOIN categories c ON r.category_id = c.id
+            LEFT JOIN v_recipe_nutrition n ON n.recipe_id = r.id
             `).all().map(r => {
                 const ingredients = db.prepare('SELECT * FROM recipe_ingredients WHERE recipe_id = ?').all(r.id);
                 return { ...transformRecipe(r), ingredients };
@@ -1705,7 +1873,7 @@ app.put('/api/planner/:id', (req, res) => {
         if (meals && Array.isArray(meals)) {
             db.prepare('DELETE FROM week_planner_meals WHERE planner_id = ?').run(req.params.id);
             
-            const validMealTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
+            const validMealTypes = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'snack', 'dinner'];
             const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             
             const insertMeal = db.prepare(`
@@ -1814,9 +1982,37 @@ function transformIngredient(row) {
         seleniumPer100g: row.selenium_per_100g,
         zincPer100g: row.zinc_per_100g,
         manganesePer100g: row.manganese_per_100g,
-        copperPer100g: row.copper_per_100g
+        copperPer100g: row.copper_per_100g,
+        nameEn: row.name_en,
+        source: row.source,
+        fdcId: row.fdc_id,
+        sourceCategory: row.source_category
     };
 }
+
+// Full nutrient profile (per 100 g) and household portions of one ingredient
+function getIngredientDetails(id) {
+    const nutrients = db.prepare(`
+        SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group", inut.amount
+        FROM ingredient_nutrients inut
+        JOIN nutrients n ON n.id = inut.nutrient_id
+        WHERE inut.ingredient_id = ?
+        ORDER BY n.rank, n.id
+    `).all(id);
+    const portions = db.prepare(`
+        SELECT amount, unit, modifier, gram_weight AS gramWeight
+        FROM ingredient_portions WHERE ingredient_id = ? ORDER BY sequence, id
+    `).all(id);
+    return { nutrients, portions };
+}
+
+// USDA catalog rows are served through the API, not synced/backed up,
+// unless a recipe uses them (8k+ foods do not fit in localStorage)
+const LIBRARY_INGREDIENTS_SQL = `
+    SELECT * FROM v_ingredient_with_category
+    WHERE source NOT LIKE 'usda%'
+       OR id IN (SELECT ingredient_id FROM recipe_ingredients)
+`;
 
 function transformRecipe(row) {
     if (!row) return null;
