@@ -26,7 +26,8 @@ const State = (function() {
     };
 
     // Enums - Sincronizado con backend (server.js)
-    const VALID_CATEGORIES = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
+    const VALID_CATEGORIES = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack']; // recipes (meal type)
+    const INGREDIENT_CATEGORIES = ['protein', 'carbs', 'fats', 'vegetables', 'fruits', 'dairy', 'mixed']; // ingredients (food group)
     const VALID_MEAL_TYPES = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'snack', 'dinner'];
     const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const GENDERS = ['male', 'female', 'other'];
@@ -320,7 +321,7 @@ const State = (function() {
             zincPer100g: clamp(parseFloat(data.zincPer100g) || 0, 0, 100),
             manganesePer100g: clamp(parseFloat(data.manganesePer100g) || 0, 0, 100),
             copperPer100g: clamp(parseFloat(data.copperPer100g) || 0, 0, 100),
-            category: VALID_CATEGORIES.includes(data.category) ? data.category : 'mixed',
+            category: INGREDIENT_CATEGORIES.includes(data.category) ? data.category : 'mixed',
             unit: data.unit === 'oz' ? 'oz' : 'g',
             createdAt: getTimestamp(), updatedAt: getTimestamp()
         };
@@ -380,7 +381,7 @@ const State = (function() {
             zincPer100g: data.zincPer100g !== undefined ? clamp(parseFloat(data.zincPer100g), 0, 100) : orig.zincPer100g,
             manganesePer100g: data.manganesePer100g !== undefined ? clamp(parseFloat(data.manganesePer100g), 0, 100) : orig.manganesePer100g,
             copperPer100g: data.copperPer100g !== undefined ? clamp(parseFloat(data.copperPer100g), 0, 100) : orig.copperPer100g,
-            category: VALID_CATEGORIES.includes(data.category) ? data.category : orig.category,
+            category: INGREDIENT_CATEGORIES.includes(data.category) ? data.category : orig.category,
             unit: data.unit === 'oz' ? 'oz' : orig.unit,
             updatedAt: getTimestamp()
         };
@@ -468,7 +469,7 @@ const State = (function() {
                     saturatedFatPer100g: clamp(parseFloat(ing.saturatedFatPer100g) || 0, 0, 100),
                     fiberPer100g: clamp(parseFloat(ing.fiberPer100g) || 0, 0, 100),
                     sugarPer100g: clamp(parseFloat(ing.sugarPer100g) || 0, 0, 100),
-                    category: VALID_CATEGORIES.includes(ing.category) ? ing.category : 'mixed',
+                    category: INGREDIENT_CATEGORIES.includes(ing.category) ? ing.category : 'mixed',
                     updatedAt: getTimestamp()
                 });
                 result.imported.push(existingById);
@@ -512,7 +513,7 @@ const State = (function() {
                     manganesePer100g: clamp(parseFloat(ing.manganesePer100g) || 0, 0, 100),
                     copperPer100g: clamp(parseFloat(ing.copperPer100g) || 0, 0, 100),
                     cholinePer100g: clamp(parseFloat(ing.cholinePer100g) || 0, 0, 10000),
-                    category: VALID_CATEGORIES.includes(ing.category) ? ing.category : 'mixed',
+                    category: INGREDIENT_CATEGORIES.includes(ing.category) ? ing.category : 'mixed',
                     unit: 'g',
                     createdAt: getTimestamp(), updatedAt: getTimestamp()
                 };
@@ -647,7 +648,7 @@ const State = (function() {
 
         const recipe = {
             id: generateId(), name,
-            category: VALID_CATEGORIES.includes(data.category) ? data.category : 'mixed',
+            category: VALID_CATEGORIES.includes(data.category) ? data.category : 'lunch',
             ingredients: data.ingredients.map(ri => ({
                 ingredientId: ri.ingredientId,
                 grams: clamp(parseInt(ri.grams) || 100, 1, 10000)
@@ -1577,7 +1578,7 @@ const State = (function() {
     return {
         init, subscribe, emit,
         // Enums
-        VALID_CATEGORIES, VALID_MEAL_TYPES, DAYS, GENDERS,
+        VALID_CATEGORIES, INGREDIENT_CATEGORIES, VALID_MEAL_TYPES, DAYS, GENDERS,
         ACTIVITY_LEVELS, CONDITION_TYPES, CONDITION_SEVERITIES, PLAN_STATUSES, DIET_GOALS,
         // Utilities
         calculateAge, calculateBMI, getBMICategory, generateId,

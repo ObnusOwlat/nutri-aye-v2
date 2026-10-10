@@ -444,7 +444,7 @@ const Ingredients = (function() {
                 <div class="form-group">
                     <label class="form-label" for="ingredient-category">Category</label>
                     <select id="ingredient-category" class="form-select">
-                        ${State.VALID_CATEGORIES.map(cat => 
+                        ${State.INGREDIENT_CATEGORIES.map(cat => 
                             `<option value="${cat}" ${ingredient.category === cat ? 'selected' : ''}>${UI.capitalize(cat)}</option>`
                         ).join('')}
                     </select>
@@ -898,6 +898,8 @@ const Ingredients = (function() {
         if (v.includes('carb') || v.includes('carbo') || v.includes('bread') || v.includes('pasta')) return 'carbs';
         if (v.includes('fat') || v.includes('grasa') || v.includes('oil')) return 'fats';
         if (v.includes('veg') || v.includes('verdura') || v.includes('salad')) return 'vegetables';
+        if (v.includes('fruit') || v.includes('fruta')) return 'fruits';
+        if (v.includes('dairy') || v.includes('lácteo') || v.includes('lacteo') || v.includes('milk') || v.includes('leche') || v.includes('cheese') || v.includes('queso')) return 'dairy';
         return 'mixed';
     }
 

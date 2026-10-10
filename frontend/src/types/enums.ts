@@ -1,6 +1,6 @@
 // Enums and constants for the application
 
-export const VALID_CATEGORIES = ['protein', 'carbs', 'fats', 'vegetables', 'mixed'] as const;
+export const VALID_CATEGORIES = ['protein', 'carbs', 'fats', 'vegetables', 'fruits', 'dairy', 'mixed'] as const;
 export type Category = typeof VALID_CATEGORIES[number];
 
 export const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'snack', 'dinner'] as const;

@@ -24,6 +24,10 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Ingredients are grouped by food group; recipes by meal type
+const INGREDIENT_CATEGORIES = ['protein', 'carbs', 'fats', 'vegetables', 'fruits', 'dairy', 'mixed'];
+const MEAL_CATEGORIES = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -346,9 +350,22 @@ function initializeDatabase() {
             ('carbs', 'carbs', 'Carbs'),
             ('fats', 'fats', 'Fats'),
             ('vegetables', 'vegetables', 'Vegetables'),
+            ('fruits', 'fruits', 'Fruits'),
             ('dairy', 'dairy', 'Dairy'),
             ('mixed', 'mixed', 'Mixed');
     `);
+
+    // Ingredients created with a meal type as category (old validation) -> 'mixed'
+    db.prepare(`
+        UPDATE ingredients SET category_id = 'mixed'
+        WHERE category_id NOT IN (${INGREDIENT_CATEGORIES.map(() => '?').join(', ')})
+    `).run(...INGREDIENT_CATEGORIES);
+
+    // Recipes created with a food group as category (old validation) -> 'lunch'
+    db.prepare(`
+        UPDATE recipes SET category_id = 'lunch'
+        WHERE category_id NOT IN (${MEAL_CATEGORIES.map(() => '?').join(', ')})
+    `).run(...MEAL_CATEGORIES);
 
     // ==========================================
     // WEEK_PLANNER (2NF - Depends on patient PK)
@@ -634,14 +651,12 @@ app.post('/api/ingredients', (req, res) => {
         const data = req.body;
         
         // Validation
-        const validCategories = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
-        
         if (!data.name || !data.name.trim()) {
             return res.status(400).json({ success: false, error: 'Name is required' });
         }
         
-        if (data.category && !validCategories.includes(data.category)) {
-            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` });
+        if (data.category && !INGREDIENT_CATEGORIES.includes(data.category)) {
+            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${INGREDIENT_CATEGORIES.join(', ')}` });
         }
         
         if (data.kcalPer100g !== undefined && data.kcalPer100g < 0) {
@@ -666,7 +681,7 @@ app.post('/api/ingredients', (req, res) => {
         `);
 
         stmt.run(
-            id, data.name.trim(), data.category || 'breakfast', data.unit || 'gram', now, now,
+            id, data.name.trim(), data.category || 'mixed', data.unit || 'gram', now, now,
             data.kcalPer100g || 0,
             data.proteinPer100g || 0,
             data.carbsPer100g || 0,
@@ -714,6 +729,10 @@ app.put('/api/ingredients/:id', (req, res) => {
     try {
         const data = req.body;
         const now = new Date().toISOString();
+
+        if (data.category && !INGREDIENT_CATEGORIES.includes(data.category)) {
+            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${INGREDIENT_CATEGORIES.join(', ')}` });
+        }
 
         const stmt = db.prepare(`
             UPDATE ingredients SET
@@ -780,7 +799,7 @@ app.post('/api/ingredients/bulk', (req, res) => {
                 insertStmt.run(
                     item.id || uuidv4(),
                     item.name,
-                    item.category || 'lunch',
+                    INGREDIENT_CATEGORIES.includes(item.category) ? item.category : 'mixed',
                     item.unit || 'gram',
                     item.kcalPer100g || 0,
                     item.proteinPer100g || 0,
@@ -943,9 +962,8 @@ app.post('/api/recipes', (req, res) => {
         }
 
         // Validation: All ingredient IDs must exist in database
-        const validCategories = ['protein', 'carbs', 'fats', 'vegetables', 'mixed', 'breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
-        if (category && !validCategories.includes(category)) {
-            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` });
+        if (category && !MEAL_CATEGORIES.includes(category)) {
+            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${MEAL_CATEGORIES.join(', ')}` });
         }
 
         // Validate each ingredient exists
