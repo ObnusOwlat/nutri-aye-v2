@@ -96,7 +96,21 @@ unzip -o '*.zip' && cd ../..
 cd backend && node import-usda.js
 ```
 
-Re-running the import updates nutrient data and keeps names/categories you edited. USDA foods are served through the API and are not included in sync/backup unless a recipe uses them.
+Food and nutrient names are imported in Spanish (`name`), keeping the USDA original in `name_en`. Search matches both, ignoring accents ("limon" finds "Limón"). Re-running the import updates nutrient data and names, but keeps names you renamed and categories you changed.
+
+### Spanish names (free, offline)
+
+`foods-data/translations/usda-names-es.json` is versioned, so the import works without this step. To regenerate it (e.g. after a new USDA release or glossary edits):
+
+```bash
+python3 -m venv tools/.venv
+tools/.venv/bin/pip install ctranslate2 sentencepiece
+mkdir -p tools/models && curl -L -o /tmp/en_es.zip https://argos-net.com/v1/translate-en_es-1_0.argosmodel
+unzip -o /tmp/en_es.zip -d tools/models          # -> tools/models/en_es/
+tools/.venv/bin/python tools/translate-usda.py   # ~40 s, then re-run node import-usda.js
+```
+
+It uses `tools/glossary-usda-es.json` (~880 frequent USDA terms in Paraguayan/Rioplatense Spanish: porotos, batata, palta, cuts of meat) and an offline OPUS-MT model (Argos Translate) for the rest. Adjectives agree with the food's gender/number. Nutrient names are hand-translated in `foods-data/translations/nutrients-es.json`. USDA foods are served through the API and are not included in sync/backup unless a recipe uses them.
 
 | Endpoint | Description |
 |----------|-------------|

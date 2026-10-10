@@ -73,6 +73,10 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+// Accent/case-insensitive search: unaccent('Limón') = 'limon'
+const unaccent = (text) => (text == null ? null : String(text).normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase());
+db.function('unaccent', { deterministic: true }, unaccent);
+
 function initializeDatabase() {
     // ==========================================
     // NUTRITIONAL_REFERENCES - Lookup tables
@@ -381,6 +385,8 @@ function initializeDatabase() {
     addIngredientCol('fdc_id', 'INTEGER');
     addIngredientCol('ndb_number', 'INTEGER');
     addIngredientCol('source_category', 'TEXT');
+    addIngredientCol('name_en', 'TEXT');                       // original USDA name (name holds the Spanish one)
+    addIngredientCol('name_edited', 'INTEGER NOT NULL DEFAULT 0'); // 1 = renamed by a user, re-imports keep it
 
     db.exec(`
         CREATE UNIQUE INDEX IF NOT EXISTS idx_ingredients_fdc_id ON ingredients(fdc_id);
@@ -392,7 +398,8 @@ function initializeDatabase() {
             unit TEXT NOT NULL,
             number TEXT,                          -- USDA nutrient number (e.g. 203 = protein)
             rank INTEGER,                         -- USDA display order
-            nutrient_group TEXT NOT NULL DEFAULT 'other'
+            nutrient_group TEXT NOT NULL DEFAULT 'other',
+            name_es TEXT
         );
 
         CREATE TABLE IF NOT EXISTS ingredient_nutrients (
@@ -416,6 +423,10 @@ function initializeDatabase() {
 
         CREATE INDEX IF NOT EXISTS idx_ingredient_portions_ingredient ON ingredient_portions(ingredient_id);
     `);
+
+    if (!db.prepare('PRAGMA table_info(nutrients)').all().some(c => c.name === 'name_es')) {
+        db.exec('ALTER TABLE nutrients ADD COLUMN name_es TEXT');
+    }
 
     // ==========================================
     // WEEK_PLANNER (2NF - Depends on patient PK)
@@ -630,10 +641,12 @@ app.get('/api/ingredients', (req, res) => {
         let whereClause = '1=1';
         const params = [];
 
-        // Search filter (uses index)
-        if (search) {
-            whereClause += ' AND LOWER(name) LIKE ?';
-            params.push(`%${search.toLowerCase()}%`);
+        // Search filter: every word must appear in the Spanish or English name,
+        // in any order, ignoring accents and case ("pollo pechuga", "limon")
+        const terms = unaccent(search).split(/\s+/).filter(Boolean);
+        for (const term of terms) {
+            whereClause += ' AND (unaccent(name) LIKE ? OR unaccent(name_en) LIKE ?)';
+            params.push(`%${term}%`, `%${term}%`);
         }
 
         // Category filter (uses index)
@@ -654,6 +667,15 @@ app.get('/api/ingredients', (req, res) => {
         const sortColumn = ['name', 'kcal_per_100g', 'category'].includes(sort) ? sort : 'name';
         const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
 
+        // Searching without an explicit sort: names starting with the first word
+        // first, then shorter (more basic) names: "Limón, crudo" before drinks
+        let orderBy = `${sortColumn} ${sortOrder}`;
+        const orderParams = [];
+        if (terms.length && !req.query.sort) {
+            orderBy = 'unaccent(name) LIKE ? DESC, LENGTH(name) ASC, name ASC';
+            orderParams.push(`${terms[0]}%`);
+        }
+
         // Get total count
         const countStmt = db.prepare(`SELECT COUNT(*) as total FROM v_ingredient_with_category WHERE ${whereClause}`);
         const { total } = countStmt.get(...params);
@@ -662,12 +684,12 @@ app.get('/api/ingredients', (req, res) => {
         const query = `
             SELECT * FROM v_ingredient_with_category 
             WHERE ${whereClause}
-            ORDER BY ${sortColumn} ${sortOrder}
+            ORDER BY ${orderBy}
             LIMIT ? OFFSET ?
         `;
         
         const stmt = db.prepare(query);
-        const ingredients = stmt.all(...params, limitNum, offset);
+        const ingredients = stmt.all(...params, ...orderParams, limitNum, offset);
 
         // Transform to camelCase for frontend
         const transformed = ingredients.map(transformIngredient);
@@ -796,6 +818,7 @@ app.put('/api/ingredients/:id', (req, res) => {
         const stmt = db.prepare(`
             UPDATE ingredients SET
                 name = COALESCE(?, name),
+                name_edited = CASE WHEN ? IS NOT NULL THEN 1 ELSE name_edited END,
                 category_id = COALESCE(?, category_id),
                 unit_id = COALESCE(?, unit_id),
                 updated_at = ?,
@@ -814,7 +837,7 @@ app.put('/api/ingredients/:id', (req, res) => {
         `);
 
         stmt.run(
-            data.name, data.category, data.unit, now,
+            data.name, data.name, data.category, data.unit, now,
             data.kcalPer100g, data.proteinPer100g, data.carbsPer100g, data.fatPer100g,
             data.saturatedFatPer100g, data.polyunsaturatedFatPer100g, data.monounsaturatedFatPer100g,
             data.sugarPer100g, data.fiberPer100g, data.cholesterolPer100g, data.sodiumPer100g,
@@ -884,7 +907,7 @@ app.get('/api/nutrients', (req, res) => {
     try {
         const { group = '' } = req.query;
         const nutrients = db.prepare(`
-            SELECT n.id, n.name, n.unit, n.nutrient_group AS "group",
+            SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group",
                    (SELECT COUNT(*) FROM ingredient_nutrients inut WHERE inut.nutrient_id = n.id) AS ingredientCount
             FROM nutrients n
             WHERE (? = '' OR n.nutrient_group = ?)
@@ -899,7 +922,7 @@ app.get('/api/nutrients', (req, res) => {
 // GET /api/nutrients/:id/ingredients - Ingredients richest in a nutrient (per 100 g)
 app.get('/api/nutrients/:id/ingredients', (req, res) => {
     try {
-        const nutrient = db.prepare('SELECT id, name, unit, nutrient_group AS "group" FROM nutrients WHERE id = ?').get(req.params.id);
+        const nutrient = db.prepare('SELECT id, COALESCE(name_es, name) AS name, name AS nameEn, unit, nutrient_group AS "group" FROM nutrients WHERE id = ?').get(req.params.id);
         if (!nutrient) {
             return res.status(404).json({ success: false, error: 'Nutrient not found' });
         }
@@ -1039,7 +1062,7 @@ app.get('/api/recipes/:id', (req, res) => {
 
         // Full nutrient totals from ingredients with a detailed profile
         const nutrients = db.prepare(`
-            SELECT n.id, n.name, n.unit, n.nutrient_group AS "group",
+            SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group",
                    SUM(inut.amount * ri.grams / 100) AS amount
             FROM recipe_ingredients ri
             JOIN ingredient_nutrients inut ON inut.ingredient_id = ri.ingredient_id
@@ -1937,6 +1960,7 @@ function transformIngredient(row) {
         zincPer100g: row.zinc_per_100g,
         manganesePer100g: row.manganese_per_100g,
         copperPer100g: row.copper_per_100g,
+        nameEn: row.name_en,
         source: row.source,
         fdcId: row.fdc_id,
         sourceCategory: row.source_category
@@ -1946,7 +1970,7 @@ function transformIngredient(row) {
 // Full nutrient profile (per 100 g) and household portions of one ingredient
 function getIngredientDetails(id) {
     const nutrients = db.prepare(`
-        SELECT n.id, n.name, n.unit, n.nutrient_group AS "group", inut.amount
+        SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group", inut.amount
         FROM ingredient_nutrients inut
         JOIN nutrients n ON n.id = inut.nutrient_id
         WHERE inut.ingredient_id = ?

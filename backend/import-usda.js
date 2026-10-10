@@ -3,7 +3,9 @@
  *
  * Stores every nutrient in ingredient_nutrients, household portions in
  * ingredient_portions, and fills the fixed *_per_100g columns the frontend uses.
- * Re-running updates nutrient data but keeps a name/category you edited.
+ * Names come in Spanish from foods-data/translations/ (original kept in name_en).
+ * Re-running updates nutrient data and names, but keeps a name you edited
+ * (name_edited = 1) and the category.
  *
  * Usage: node import-usda.js [file.json ...]
  *   Defaults to every FoodData_Central_*.json in foods-data/usda/.
@@ -32,6 +34,20 @@ if (files.length === 0) {
 
 const db = new Database(path.join(__dirname, 'db', 'database.sqlite'));
 db.pragma('foreign_keys = ON');
+
+// Spanish names: foods from tools/translate-usda.py, nutrients hand-translated
+const translationsDir = path.join(__dirname, '..', 'foods-data', 'translations');
+const readJson = (file) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {});
+const foodNamesEs = readJson(path.join(translationsDir, 'usda-names-es.json'));
+const nutrientNamesEs = readJson(path.join(translationsDir, 'nutrients-es.json'));
+
+// Fatty acid codes: SFA 16:0 -> AGS 16:0, PUFA 22:6 n-3 (DHA) -> AGP 22:6 n-3 (DHA)
+const FATTY_ACID_PREFIX = { SFA: 'AGS', MUFA: 'AGM', PUFA: 'AGP', TFA: 'AGT' };
+function nutrientNameEs(n) {
+    if (nutrientNamesEs[n.id]) return nutrientNamesEs[n.id];
+    const m = /^(SFA|MUFA|PUFA|TFA) (.+)$/.exec(n.name);
+    return m ? `${FATTY_ACID_PREFIX[m[1]]} ${m[2]}` : null;
+}
 
 // USDA food category -> Nutri Aye food group
 const CATEGORY_MAP = {
@@ -110,20 +126,21 @@ function nutrientGroup(n) {
 }
 
 const upsertNutrient = db.prepare(`
-    INSERT INTO nutrients (id, name, unit, number, rank, nutrient_group)
-    VALUES (@id, @name, @unit, @number, @rank, @group)
+    INSERT INTO nutrients (id, name, name_es, unit, number, rank, nutrient_group)
+    VALUES (@id, @name, @nameEs, @unit, @number, @rank, @group)
     ON CONFLICT(id) DO UPDATE SET
-        name = excluded.name, unit = excluded.unit, number = excluded.number,
+        name = excluded.name, name_es = excluded.name_es, unit = excluded.unit, number = excluded.number,
         rank = excluded.rank, nutrient_group = excluded.nutrient_group
 `);
 
 const upsertIngredient = db.prepare(`
-    INSERT INTO ingredients (id, name, category_id, unit_id, source, fdc_id, ndb_number, source_category,
+    INSERT INTO ingredients (id, name, name_en, category_id, unit_id, source, fdc_id, ndb_number, source_category,
                              ${legacyCols.join(', ')})
-    VALUES (@id, @name, @category, 'gram', @source, @fdcId, @ndbNumber, @sourceCategory,
+    VALUES (@id, @name, @nameEn, @category, 'gram', @source, @fdcId, @ndbNumber, @sourceCategory,
             ${legacyCols.map(c => '@' + c).join(', ')})
     ON CONFLICT(id) DO UPDATE SET
-        source = excluded.source, fdc_id = excluded.fdc_id, ndb_number = excluded.ndb_number,
+        name = CASE WHEN ingredients.name_edited = 1 THEN ingredients.name ELSE excluded.name END,
+        name_en = excluded.name_en, source = excluded.source, fdc_id = excluded.fdc_id, ndb_number = excluded.ndb_number,
         source_category = excluded.source_category, updated_at = datetime('now'),
         ${legacyCols.map(c => `${c} = excluded.${c}`).join(', ')}
 `);
@@ -173,7 +190,7 @@ const importFoods = db.transaction((foods, source) => {
             const n = fn.nutrient;
             if (!n || typeof fn.amount !== 'number') continue;
             if (!seenNutrients.has(n.id)) {
-                upsertNutrient.run({ id: n.id, name: n.name, unit: n.unitName, number: n.number || null, rank: n.rank ?? null, group: nutrientGroup(n) });
+                upsertNutrient.run({ id: n.id, name: n.name, nameEs: nutrientNameEs(n), unit: n.unitName, number: n.number || null, rank: n.rank ?? null, group: nutrientGroup(n) });
                 seenNutrients.add(n.id);
             }
             amounts.set(n.id, fn.amount);
@@ -182,7 +199,8 @@ const importFoods = db.transaction((foods, source) => {
         const sourceCategory = food.foodCategory?.description || null;
         const row = {
             id: `usda-${food.fdcId}`,
-            name: food.description.trim(),
+            name: foodNamesEs[food.fdcId] || food.description.trim(),
+            nameEn: food.description.trim(),
             category: CATEGORY_MAP[sourceCategory] || 'mixed',
             source,
             fdcId: food.fdcId,
@@ -221,6 +239,12 @@ for (const file of files) {
     importFoods(data[key], source);
     console.log(`  ${source}: ${totals.foods - before} foods`);
 }
+
+// Nutrients only present in skipped foods were created by earlier runs: name them too
+const setNutrientEs = db.prepare('UPDATE nutrients SET name_es = ? WHERE id = ?');
+db.transaction(() => {
+    for (const n of db.prepare('SELECT id, name FROM nutrients').all()) setNutrientEs.run(nutrientNameEs(n), n.id);
+})();
 
 const count = (sql) => db.prepare(sql).get().c;
 console.log(`
