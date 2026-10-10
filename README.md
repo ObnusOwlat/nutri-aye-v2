@@ -81,6 +81,31 @@ meal-prep-planner/
 | `/api/backup/export` | GET | Download full backup |
 | `/api/backup/import` | POST | Restore from backup |
 
+## Food Database (USDA FoodData Central)
+
+The backend can load ~7,900 foods from USDA FoodData Central (Foundation Foods + SR Legacy, public domain / CC0) with their full nutrient profile (246 nutrients: macros, vitamins, minerals, fatty acids, amino acids, sterols...) and household portions.
+
+```bash
+# 1. Download the JSON files into foods-data/usda/ (not versioned)
+mkdir -p foods-data/usda && cd foods-data/usda
+curl -LO https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip
+curl -LO https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip
+unzip -o '*.zip' && cd ../..
+
+# 2. Start the server once (creates the schema), then import
+cd backend && node import-usda.js
+```
+
+Re-running the import updates nutrient data and keeps names/categories you edited. USDA foods are served through the API and are not included in sync/backup unless a recipe uses them.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/ingredients?source=usda` | Filter by source (`usda`, `usda_foundation`, `usda_sr_legacy`, `calories_in`, `user`) |
+| `GET /api/ingredients/:id` | Ingredient with `nutrients` (full profile per 100 g) and `portions` (grams per cup, piece...) |
+| `GET /api/nutrients?group=vitamins` | Nutrient catalog and how many ingredients have each one |
+| `GET /api/nutrients/:id/ingredients?category=vegetables&limit=20` | Ingredients richest in a nutrient |
+| `GET /api/recipes/:id` | Recipe with `nutrients` (full totals for the recipe) |
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
