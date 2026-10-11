@@ -1,0 +1,126 @@
+/* planner-nutrients.css - Panel lateral de nutrientes del planificador */
+
+/* ===========================================
+   GRID + SIDE PANEL
+   =========================================== */
+
+.planner__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--space-md);
+    align-items: start;
+}
+
+.nutrients-panel {
+    background-color: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    position: sticky;
+    top: var(--space-md);
+    max-height: calc(100vh - 2 * var(--space-md));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.nutrients-panel__header {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.nutrients-panel__title {
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-lg);
+    margin: 0;
+}
+
+.nutrients-panel__body {
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+    overflow-y: auto;
+}
+
+.nutrients-panel__note {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+    margin: var(--space-sm) 0;
+}
+
+.nutrients-panel__note--small {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.nutrients-panel__block {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-primary-dark);
+    margin: var(--space-md) 0 var(--space-xs);
+}
+
+.nutrients-panel__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: 3px 0;
+    border-bottom: 1px dashed var(--color-border);
+    font-size: var(--font-size-sm);
+}
+
+.nutrients-panel__name {
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nutrients-panel__amount {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.nutrients-panel__amount small {
+    font-weight: 400;
+    color: var(--color-text-light);
+}
+
+.nutrients-panel__group {
+    margin: var(--space-xs) 0;
+}
+
+.nutrients-panel__group summary {
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: var(--space-xs) 0;
+}
+
+.nutrients-panel__group summary span {
+    color: var(--color-text-muted);
+    font-weight: 400;
+}
+
+/* Day shown in the panel; its header is clickable */
+.day-card__header {
+    cursor: pointer;
+}
+
+.day-card--nutrients-selected {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Narrow screens: the panel goes under the week */
+@media (max-width: 1280px) {
+    .planner__body {
+        grid-template-columns: 1fr;
+    }
+
+    .nutrients-panel {
+        position: static;
+        max-height: none;
+    }
+}

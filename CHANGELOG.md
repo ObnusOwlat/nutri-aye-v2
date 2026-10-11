@@ -2,6 +2,15 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Planner: panel lateral de nutrientes
+
+- **Panel "Nutrientes" a la derecha de la semana** (`js/planner-nutrients.js`, `css/planner-nutrients.css`):
+  - Muestra el promedio diario de la semana (solo cuenta los días con comidas) o el total de un día. El día se elige en el selector o tocando el encabezado del día en la grilla; tocarlo de nuevo vuelve al promedio.
+  - Arriba van los 26 nutrientes principales en tres bloques: energía y macronutrientes, vitaminas y minerales. Abajo, en "Ver todos", el resto de los datos USDA, plegados por grupo.
+- **Cálculo:** pide a `POST /api/nutrition/analyze` solo las recetas que todavía no tiene y suma en el navegador. Si cambia una comida, se actualiza solo; si se edita una receta, se recalcula.
+- **Pantallas de menos de 1280 px:** el panel pasa debajo de la semana.
+- Todavía no compara contra la recomendación diaria (eso es la Fase 7).
+
 ## Planner: nutrientes de lo planificado (parte backend)
 
 - **`POST /api/nutrition/analyze` `{ recipeIds }`:** devuelve la lista de nutrientes y la cantidad de cada uno por receta. El navegador suma por día o semana, así que cambiar de día no hace otra consulta. Las recetas de otro consultorio o desactivadas se ignoran y vuelven en `skipped`. Es solo lectura: no queda en el registro de cambios.
