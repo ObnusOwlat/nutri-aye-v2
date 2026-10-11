@@ -13,6 +13,7 @@ const { createViews } = require('./schema/views');
 const { createOrganizationTables } = require('./schema/organizations');
 const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
+const { createServerFirstTables } = require('./schema/server-first');
 
 const MIGRATIONS = [
     {
@@ -56,6 +57,11 @@ const MIGRATIONS = [
         version: 5,
         name: 'registro de cambios (solo agregar)',
         up: createAuditLog
+    },
+    {
+        version: 6,
+        name: 'todo en el servidor: actividad física, medidas, planes y plantillas',
+        up: createServerFirstTables
     }
 ];
 

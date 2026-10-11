@@ -17,7 +17,7 @@ test('patients, metrics and conditions of another consultorio answer 404', async
     assert.equal((await api(b).delete(`/api/patients/${patient.id}/metrics/${metric.id}`)).status, 404);
     assert.equal((await api(b).get(`/api/patients/${patient.id}/billing`)).status, 404);
     assert.equal((await api(b).post('/api/planner').send({ patientId: patient.id })).status, 400);
-    assert.ok(!(await api(b).get('/api/sync/pull')).body.data.patients.some(p => p.id === patient.id));
+    assert.ok(!(await api(b).get('/api/bootstrap')).body.data.patients.some(p => p.id === patient.id));
     // A still has everything
     assert.equal((await api(a).get(`/api/patients/${patient.id}`)).body.data.metrics.length, 1);
 });
@@ -91,8 +91,8 @@ test('no DELETE statement removes consultorio data anywhere in the code', () => 
         if (e.isDirectory()) walk(full); else if (e.name.endsWith('.js')) files.push(full);
     });
     walk(path.join(__dirname, '..', 'src'));
-    // Allowed: replacing the lines of a recipe, a week or an invoice while editing it
-    const allowed = /DELETE FROM (recipe_ingredients|week_planner_meals|\$\{k\.items\})/;
+    // Allowed: replacing the lines of a recipe, a week, a plan or an invoice while editing it
+    const allowed = /DELETE FROM (recipe_ingredients|week_planner_meals|patient_plan_meals|\$\{k\.items\})/;
     const offenders = files.flatMap(f => fs.readFileSync(f, 'utf8').split('\n')
         .filter(l => /DELETE FROM/i.test(l) && !allowed.test(l)).map(l => `${path.basename(f)}: ${l.trim()}`));
     assert.deepEqual(offenders, []);

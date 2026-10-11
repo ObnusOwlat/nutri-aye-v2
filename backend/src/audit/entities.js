@@ -13,6 +13,13 @@ const ENTITIES = {
         patientId: (row) => row.patient_id,
         extra: { meals: lines('SELECT day, meal_type, recipe_id FROM week_planner_meals WHERE planner_id = ? ORDER BY day, meal_type') }
     },
+    plan: {
+        table: 'patient_plans',
+        patientId: (row) => row.patient_id,
+        extra: { meals: lines('SELECT day_of_week, meal_type, recipe_id FROM patient_plan_meals WHERE patient_plan_id = ? ORDER BY day_of_week, meal_type') }
+    },
+    progress: { table: 'patient_progress', patientId: (row) => row.patient_id },
+    template: { table: 'diet_templates' },
     recipe: {
         table: 'recipes',
         extra: { ingredients: lines('SELECT ingredient_id, grams FROM recipe_ingredients WHERE recipe_id = ? ORDER BY ingredient_id') }

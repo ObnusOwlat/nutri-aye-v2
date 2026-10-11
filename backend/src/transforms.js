@@ -1,6 +1,10 @@
 // Database rows (snake_case) -> API objects (camelCase)
 const { NUTRIENT_FIELDS } = require('./nutrient-fields');
 
+const parseJson = (text, fallback) => {
+    try { return text ? JSON.parse(text) : fallback; } catch { return fallback; }
+};
+
 // Generic row -> camelCase keys (billing, planner); integer flags stay numbers
 const camelKey = (k) => k.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
 function camelizeRow(row) {
@@ -71,6 +75,7 @@ function transformPatient(row) {
         photo: row.photo,
         status: row.status,
         billingClientId: row.billing_client_id,  // Integration: billing link
+        physicalActivity: parseJson(row.physical_activity, { active: false }),
         createdAt: row.created_at,
         updatedAt: row.updated_at
     };
@@ -91,6 +96,10 @@ function transformMetric(row) {
         waist: row.waist,
         chest: row.chest,
         hips: row.hips,
+        ciaAbdominal: row.cia_abdominal,
+        ciaBrazo: row.cia_brazo,
+        ciaPierna: row.cia_pierna,
+        cadera: row.cadera,
         activityLevel: row.activity_level,
         notes: row.notes,
         createdAt: row.created_at
@@ -112,4 +121,4 @@ function transformCondition(row) {
     };
 }
 
-module.exports = { camelizeRow, transformIngredient, transformRecipe, transformPatient, transformMetric, transformCondition };
+module.exports = { parseJson, camelizeRow, transformIngredient, transformRecipe, transformPatient, transformMetric, transformCondition };

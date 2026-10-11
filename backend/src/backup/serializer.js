@@ -50,8 +50,9 @@ function upsert(name, row) {
     `).run(row);
 }
 
-// Throws (rolling everything back) when a row would touch another consultorio
-const importBackup = db.transaction((ctx, backup) => {
+// Throws (rolling everything back) when a row would touch another consultorio.
+// onlyNew: rows whose id already exists are left as they are (browser data import)
+const importBackup = db.transaction((ctx, backup, { onlyNew = false } = {}) => {
     const counts = {};
     const foreign = (where) => { throw badRequest(`El respaldo tiene datos de otro consultorio (${where}); no se importó nada`); };
 
@@ -62,6 +63,7 @@ const importBackup = db.transaction((ctx, backup) => {
             const owner = ownerOf(name, row.id);
             // Catalog foods are shared and read-only
             if (name === 'ingredients' && owner === null) continue;
+            if (onlyNew && owner !== undefined) continue;
             if (owner !== undefined && owner !== ctx.orgId) foreign(`${name} ${row.id}`);
             if (parent && ownerOf(parent[1], row[parent[0]]) !== ctx.orgId) foreign(`${name} ${row.id} → ${parent[1]}`);
             for (const [column, target] of Object.entries(REFERENCES[name] || {})) {
