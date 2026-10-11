@@ -23,6 +23,7 @@ const TABLES = [
     { name: 'billing_quotes', org: true },
     { name: 'billing_quote_items', parent: ['quote_id', 'billing_quotes'] },
     { name: 'billing_payment_methods', org: true },
+    { name: 'billing_payments', org: true },
     { name: 'diet_templates', org: true }
 ];
 const BY_NAME = Object.fromEntries(TABLES.map(t => [t.name, t]));
@@ -36,7 +37,8 @@ const REFERENCES = {
     billing_clients: { company_id: 'billing_company' },
     billing_invoices: { client_id: 'billing_clients', company_id: 'billing_company' },
     billing_quotes: { client_id: 'billing_clients', company_id: 'billing_company' },
-    billing_payment_methods: { company_id: 'billing_company' }
+    billing_payment_methods: { company_id: 'billing_company' },
+    billing_payments: { invoice_id: 'billing_invoices', method_id: 'billing_payment_methods' }
 };
 
 // SQL condition selecting the consultorio's rows of a table (named param @orgId)

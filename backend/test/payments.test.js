@@ -89,3 +89,12 @@ test('patient billing includes the balance; payments are isolated per consultori
     assert.equal((await other.post(`/billing-api/invoices/${invoice.id}/void`)).status, 404);
     assert.equal((await other.get('/billing-api/balances')).body.data.length, 0);
 });
+
+test('payments are part of the consultorio backup', async () => {
+    const { invoice } = await receipt(50000);
+    await api().post(`/billing-api/invoices/${invoice.id}/payments`).send({ amount: 50000 });
+    const backup = (await api().get('/api/backup/export')).body;
+    assert.ok(backup.tables.billing_payments.some(p => p.invoice_id === invoice.id && p.amount === 50000));
+    assert.equal((await api().post('/api/backup/import').send(backup)).status, 200);
+    assert.equal((await api().get(`/billing-api/invoices/${invoice.id}`)).body.data.status, 'PAID');
+});

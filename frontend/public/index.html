@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="css/patient-progress.css">
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="css/activity.css">
+    <link rel="stylesheet" href="css/billing.css">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2322c55e'/><text x='50' y='68' text-anchor='middle' font-size='55' font-family='system-ui' font-weight='bold' fill='white'>N</text></svg>">
@@ -75,6 +76,10 @@
             <button class="tabs__tab" data-tab="recipes">
                 <span class="tabs__icon">&#128214;</span>
                 <span class="tabs__label">Recetas</span>
+            </button>
+            <button class="tabs__tab" data-tab="billing">
+                <span class="tabs__icon">&#128176;</span>
+                <span class="tabs__label">Cobros</span>
             </button>
             <button class="tabs__tab" data-tab="activity">
                 <span class="tabs__icon">&#128221;</span>
@@ -247,7 +252,10 @@
             </div>
         </section>
 
-        <!-- Patients Tab -->
+        <section class="tab-content" id="tab-billing">
+            <div class="billing" id="billing"></div>
+        </section>
+
         <section class="tab-content" id="tab-activity">
             <h2 class="section-title">Actividad del consultorio</h2>
             <p class="text-muted">Quién hizo cada cambio y cuándo. Este registro no se puede editar ni borrar.</p>
@@ -287,7 +295,7 @@
                     <button class="patient-tabs__tab" data-tab="conditions">Condiciones</button>
                     <button class="patient-tabs__tab" data-tab="plans">Planes</button>
                     <button class="patient-tabs__tab" data-tab="progress">Seguimiento</button>
-                    <button class="patient-tabs__tab" data-tab="billing">Facturación</button>
+                    <button class="patient-tabs__tab" data-tab="billing">Cobros</button>
                     <button class="patient-tabs__tab" data-tab="history">Historial</button>
                 </nav>
 
@@ -356,6 +364,11 @@
     <script src="js/planner-sidebar-activity.js"></script>
     <script src="js/patient-form.js"></script>
     <script src="js/patient-profile.js"></script>
+    <script src="js/billing.js"></script>
+    <script src="js/billing-editor.js"></script>
+    <script src="js/billing-detail.js"></script>
+    <script src="js/billing-print.js"></script>
+    <script src="js/billing-company.js"></script>
     <script src="js/patient-billing.js"></script>
     <script src="js/audit-view.js"></script>
     <script src="js/patient-history.js"></script>
@@ -366,5 +379,6 @@
     <script src="js/patient-plan.js"></script>
     <script src="js/progress.js"></script>
     <script src="js/app.js"></script>
+    <div id="print-area" class="print-area" aria-hidden="true"></div>
 </body>
 </html>

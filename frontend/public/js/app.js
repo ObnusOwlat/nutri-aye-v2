@@ -100,9 +100,9 @@ const App = (function() {
      */
     function handleKeyboard(e) {
         // Alt + number for quick tab switch
-        if (e.altKey && e.key >= '1' && e.key <= '5') {
+        if (e.altKey && e.key >= '1' && e.key <= '6') {
             e.preventDefault();
-            const tabMap = { '1': 'patients', '2': 'planner', '3': 'ingredients', '4': 'recipes', '5': 'activity' };
+            const tabMap = { '1': 'patients', '2': 'planner', '3': 'ingredients', '4': 'recipes', '5': 'billing', '6': 'activity' };
             switchTab(tabMap[e.key]);
         }
 
