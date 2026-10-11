@@ -1,0 +1,34 @@
+/* activity.css - Activity tab (admins) and patient History tab */
+
+/* Only admins see the Activity tab */
+body:not([data-role="admin"]) .tabs__tab[data-tab="activity"] { display: none; }
+
+.activity__filters {
+    display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center;
+    margin: var(--space-md) 0; padding: var(--space-md);
+    background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 12px;
+}
+.activity__filters select { flex: 1 1 160px; width: auto; min-width: 0; }
+.activity__filters input { width: auto; }
+.activity__filters label { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--font-size-sm); color: var(--color-text-light); }
+.activity__pager { display: flex; justify-content: center; align-items: center; gap: var(--space-md); margin: var(--space-md) 0; font-size: var(--font-size-sm); }
+
+.audit-list { list-style: none; margin: 0; padding: 0; background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 12px; }
+.audit-entry { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); border-left: 3px solid var(--color-border); }
+.audit-entry:last-child { border-bottom: 0; }
+.audit-entry--create { border-left-color: var(--color-primary); }
+.audit-entry--update { border-left-color: #3b82f6; }
+.audit-entry--deactivate, .audit-entry--login_failed { border-left-color: var(--color-danger); }
+.audit-entry--reactivate { border-left-color: var(--color-warning); }
+.audit-entry__line { display: flex; gap: var(--space-md); align-items: baseline; flex-wrap: wrap; }
+.audit-entry__line time { color: var(--color-text-light); font-size: var(--font-size-sm); min-width: 110px; font-variant-numeric: tabular-nums; }
+.audit-entry__patient { color: var(--color-primary-dark); }
+.audit-entry__changes { margin: var(--space-xs) 0 0 calc(110px + var(--space-md)); font-size: var(--font-size-sm); }
+.audit-entry__changes summary { cursor: pointer; color: var(--color-text-light); }
+.audit-entry__changes ul { margin: var(--space-xs) 0; padding-left: var(--space-md); }
+.audit-entry__changes li span { color: var(--color-text-light); }
+.patient-history__note { margin-top: var(--space-md); font-size: var(--font-size-sm); }
+
+@media (max-width: 768px) {
+    .audit-entry__changes { margin-left: 0; }
+}

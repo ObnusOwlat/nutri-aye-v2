@@ -2,6 +2,7 @@
 const express = require('express');
 const auth = require('../repos/auth');
 const users = require('../repos/users');
+const { tracked, record } = require('../audit/log');
 const { validate } = require('../validation');
 const schemas = require('../validation/auth');
 const { temporaryPassword } = require('../lib/passwords');
@@ -38,14 +39,15 @@ router.post('/api/users', validate(schemas.userCreate), (req, res) => {
         password = temporaryPassword();
         user = auth.createUser({ email, name, password, mustChangePassword: true });
     }
-    auth.addMembership(user.id, req.ctx.orgId, role);
+    const userId = user.id;
+    tracked(req.ctx, 'user', userId, () => { auth.addMembership(userId, req.ctx.orgId, role); return { id: userId }; });
     res.status(201).json({ success: true, data: { ...users.get(req.ctx.orgId, user.id), temporaryPassword: password } });
 });
 
 router.put('/api/users/:id', validate(schemas.userUpdate), (req, res) => {
     const target = member(req);
     if (req.body.role) keepsAnAdmin(req, target, req.body.role);
-    res.json({ success: true, data: users.update(req.ctx.orgId, target.id, req.body) });
+    res.json({ success: true, data: tracked(req.ctx, 'user', target.id, () => users.update(req.ctx.orgId, target.id, req.body)) });
 });
 
 // "Delete" = deactivate in this consultorio and close their sessions here
@@ -53,14 +55,14 @@ router.post('/api/users/:id/deactivate', (req, res) => {
     const target = member(req);
     if (target.id === req.ctx.userId) throw badRequest('No podés desactivarte a vos mismo');
     keepsAnAdmin(req, target, null);
-    users.deactivate(req.ctx.orgId, target.id, req.ctx.userId);
+    tracked(req.ctx, 'user', target.id, () => users.deactivate(req.ctx.orgId, target.id, req.ctx.userId));
     auth.revokeUserOrgSessions(target.id, req.ctx.orgId);
     res.json({ success: true, data: users.get(req.ctx.orgId, target.id) });
 });
 
 router.post('/api/users/:id/reactivate', (req, res) => {
     const target = member(req);
-    users.reactivate(req.ctx.orgId, target.id);
+    tracked(req.ctx, 'user', target.id, () => users.reactivate(req.ctx.orgId, target.id));
     res.json({ success: true, data: users.get(req.ctx.orgId, target.id) });
 });
 
@@ -70,6 +72,7 @@ router.post('/api/users/:id/reset-password', (req, res) => {
     const password = temporaryPassword();
     auth.setPassword(target.id, password, { mustChange: true });
     auth.revokeUserSessions(target.id);
+    record(req.ctx, { action: 'password_reset', entity: 'user', entityId: target.id });
     res.json({ success: true, data: { temporaryPassword: password } });
 });
 

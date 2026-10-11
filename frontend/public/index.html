@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="css/patient-plans.css">
     <link rel="stylesheet" href="css/patient-progress.css">
     <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/activity.css">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2322c55e'/><text x='50' y='68' text-anchor='middle' font-size='55' font-family='system-ui' font-weight='bold' fill='white'>N</text></svg>">
@@ -72,6 +73,10 @@
             <button class="tabs__tab" data-tab="recipes">
                 <span class="tabs__icon">&#128214;</span>
                 <span class="tabs__label">Recipes</span>
+            </button>
+            <button class="tabs__tab" data-tab="activity">
+                <span class="tabs__icon">&#128221;</span>
+                <span class="tabs__label">Actividad</span>
             </button>
         </div>
     </nav>
@@ -194,6 +199,12 @@
         </section>
 
         <!-- Patients Tab -->
+        <section class="tab-content" id="tab-activity">
+            <h2 class="section-title">Actividad del consultorio</h2>
+            <p class="text-muted">Quién hizo cada cambio y cuándo. Este registro no se puede editar ni borrar.</p>
+            <div class="activity" id="activity"></div>
+        </section>
+
         <section class="tab-content active" id="tab-patients">
             <!-- Patient List View -->
             <div class="patients" id="patients-list-container">
@@ -228,6 +239,7 @@
                     <button class="patient-tabs__tab" data-tab="plans">Meal Plans</button>
                     <button class="patient-tabs__tab" data-tab="progress">Progress</button>
                     <button class="patient-tabs__tab" data-tab="billing">Billing</button>
+                    <button class="patient-tabs__tab" data-tab="history">Historial</button>
                 </nav>
 
                 <!-- Tab Content -->
@@ -237,6 +249,7 @@
                 <div class="patient-tab-content" data-tab="plans"></div>
                 <div class="patient-tab-content" data-tab="progress"></div>
                 <div class="patient-tab-content" data-tab="billing"></div>
+                <div class="patient-tab-content" data-tab="history"></div>
             </div>
         </section>
     </main>
@@ -278,6 +291,9 @@
     <script src="js/patient-form.js"></script>
     <script src="js/patient-profile.js"></script>
     <script src="js/patient-billing.js"></script>
+    <script src="js/audit-view.js"></script>
+    <script src="js/patient-history.js"></script>
+    <script src="js/activity.js"></script>
     <script src="js/patients.js"></script>
     <script src="js/metrics.js"></script>
     <script src="js/conditions.js"></script>

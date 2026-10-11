@@ -1,6 +1,7 @@
 // Ingredients: list/search, CRUD, bulk import. "Delete" deactivates.
 const express = require('express');
 const ingredients = require('../repos/ingredients');
+const { tracked, record } = require('../audit/log');
 const { validate } = require('../validation');
 const { ingredientCreate, ingredientUpdate, ingredientBulk } = require('../validation/catalog');
 const { HttpError, notFound, pageParams, sendPage } = require('../lib/http');
@@ -31,26 +32,27 @@ router.get('/api/ingredients/:id', (req, res) => {
 
 router.post('/api/ingredients/bulk', validate(ingredientBulk), (req, res) => {
     const count = ingredients.bulkCreate(req.ctx, req.body.ingredients);
+    record(req.ctx, { action: 'import', entity: 'ingredient', changes: { count: [null, count] } });
     res.json({ success: true, data: { count } });
 });
 
 router.post('/api/ingredients', validate(ingredientCreate), (req, res) => {
-    res.status(201).json({ success: true, data: ingredients.create(req.ctx, req.body) });
+    res.status(201).json({ success: true, data: tracked(req.ctx, 'ingredient', null, () => ingredients.create(req.ctx, req.body)) });
 });
 
 router.put('/api/ingredients/:id', validate(ingredientUpdate), (req, res) => {
     ownOrThrow(req);
-    res.json({ success: true, data: ingredients.update(req.ctx, req.params.id, req.body) });
+    res.json({ success: true, data: tracked(req.ctx, 'ingredient', req.params.id, () => ingredients.update(req.ctx, req.params.id, req.body)) });
 });
 
 router.delete('/api/ingredients/:id', (req, res) => {
     ownOrThrow(req);
-    ingredients.deactivate(req.ctx, req.params.id);
+    tracked(req.ctx, 'ingredient', req.params.id, () => ingredients.deactivate(req.ctx, req.params.id));
     res.json({ success: true });
 });
 
 router.post('/api/ingredients/:id/reactivate', (req, res) => {
-    if (!ingredients.reactivate(req.ctx, req.params.id)) throw notFound('Alimento');
+    if (!tracked(req.ctx, 'ingredient', req.params.id, () => ingredients.reactivate(req.ctx, req.params.id))) throw notFound('Alimento');
     res.json({ success: true, data: ingredients.getById(req.ctx, req.params.id) });
 });
 

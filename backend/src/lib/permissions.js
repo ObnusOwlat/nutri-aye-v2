@@ -11,6 +11,7 @@ const GROUPS = {
 // [path pattern, group, applies to reads too?] - first match wins
 const RULES = [
     [/^\/api\/users(\/|$)/, 'admin', true],
+    [/^\/api\/activity(\/|$)/, 'admin', true],
     [/^\/api\/backup(\/|$)/, 'admin', true],
     [/^\/billing-api\/(company|pdf-config)(\/|$)/, 'admin', false],
     [/^\/api\/patients\/[^/]+\/(metrics|conditions)(\/|$)/, 'clinical', false],

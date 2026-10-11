@@ -1,6 +1,7 @@
 // Billing clients
 const express = require('express');
 const clients = require('../../repos/billing/clients');
+const { tracked } = require('../../audit/log');
 const { validate } = require('../../validation');
 const schemas = require('../../validation/billing');
 const { notFound, pageParams, sendPage } = require('../../lib/http');
@@ -20,18 +21,18 @@ router.get('/billing-api/clients/:id', (req, res) => {
 });
 
 router.post('/billing-api/clients', validate(schemas.client), (req, res) => {
-    res.status(201).json({ success: true, data: clients.create(req.ctx, req.body) });
+    res.status(201).json({ success: true, data: tracked(req.ctx, 'billing_client', null, () => clients.create(req.ctx, req.body)) });
 });
 
 router.put('/billing-api/clients/:id', validate(schemas.client), (req, res) => {
-    const updated = clients.update(req.ctx, req.params.id, req.body);
+    const updated = tracked(req.ctx, 'billing_client', req.params.id, () => clients.update(req.ctx, req.params.id, req.body));
     if (!updated) throw notFound('Cliente');
     res.json({ success: true, data: updated });
 });
 
 // "Delete" deactivates; their invoices and quotes stay
 router.delete('/billing-api/clients/:id', (req, res) => {
-    if (!clients.deactivate(req.ctx, req.params.id)) throw notFound('Cliente');
+    if (!tracked(req.ctx, 'billing_client', req.params.id, () => clients.deactivate(req.ctx, req.params.id))) throw notFound('Cliente');
     res.json({ success: true });
 });
 
