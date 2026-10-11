@@ -2,6 +2,15 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Frontend: pacientes en archivos chicos
+
+- **División:** `patients.js` pasó de 1.048 líneas a 162. El resto quedó en `patient-form.js` (alta y edición), `patient-profile.js` (ficha, pestañas y resumen) y `patient-billing.js` (pestaña de facturación).
+- **Botones de la ficha:** "Edit Patient" y "Export" no tenían nada conectado. Ya funcionan.
+- **Borrar un paciente:** ahora también se borra en el server. Antes volvía a aparecer al sincronizar.
+- **Alta de paciente:** ya no se pierde la actividad física.
+- **Nombres con `&` o comillas:** se mostraban escapados dos veces en el formulario.
+- **Pestaña "Billing":** ya existía en el código, pero ningún botón la abría. Ahora muestra el vínculo con el cliente y los montos en ₲.
+
 ## Fase 1: backend modular y calidad
 
 ### Estructura
