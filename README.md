@@ -69,6 +69,7 @@ Reglas del código:
 - Errores `{ success: false, error, code, details? }`, con `code` en `VALIDATION_ERROR` (400), `UNAUTHENTICATED` (401), `FORBIDDEN` / `PASSWORD_CHANGE_REQUIRED` / `CATALOG_READONLY` (403), `NOT_FOUND` (404), `CONFLICT` (409) o `INTERNAL_ERROR` (500, sin detalles internos).
 - Todo requiere sesión salvo `/api/health`, `/api/auth/status`, `/api/auth/login` y `/api/auth/setup`.
 - `DELETE` desactiva; `POST /…/:id/reactivate` reactiva.
+- **Formato:** en el frontend, números, fechas y montos se muestran con `UI.formatNumber`, `formatDecimal`, `formatDate` y `formatMoney` (formato es-PY: 1.234,5 · 31/12/2026 · ₲ 150.000), y los valores guardados con `UI.label(grupo, valor)`.
 - **Textos en español:** los valores se guardan en inglés (`breakfast`, `male`, `UNPAID`…). Sus nombres en español están en `src/labels.js` y se sirven en `GET /api/labels`. Los mensajes de error y de validación están en español y nombran los campos en español.
 - Los ids los genera siempre el server. Los totales de facturas y presupuestos se calculan en el server a partir de los ítems.
 - Cada respuesta lleva `X-Request-Id`, que aparece en el log. Los logs nunca incluyen el cuerpo de las solicitudes.
@@ -108,6 +109,8 @@ mkdir -p tools/models && curl -L -o /tmp/en_es.zip https://argos-net.com/v1/tran
 unzip -o /tmp/en_es.zip -d tools/models          # -> tools/models/en_es/
 tools/.venv/bin/python tools/translate-usda.py   # ~40 s; después, node import-usda.js
 ```
+
+El catálogo básico (calories-in) se traduce con `tools/translate-basic.py` (mismo traductor, más las correcciones de `tools/basic-overrides-es.json`); el resultado está versionado en `foods-data/translations/calories-in-names-es.json` y lo aplica la migración 8.
 
 Usa `tools/glossary-usda-es.json` (~900 términos con nombres de la región: porotos, batata, palta, cortes de carne) y un modelo OPUS-MT local (Argos Translate) para el resto.
 

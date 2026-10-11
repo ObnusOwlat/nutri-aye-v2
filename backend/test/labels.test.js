@@ -60,3 +60,15 @@ test('no English messages are left in the backend', () => {
     const offenders = files.flatMap(f => fs.readFileSync(f, 'utf8').split('\n').filter(l => ENGLISH.test(l)).map(l => `${path.basename(f)}: ${l.trim()}`));
     assert.deepEqual(offenders, []);
 });
+
+test('basic catalog foods get Spanish names, the English name stays searchable, hand edits are kept', async () => {
+    const { db } = require('./helpers');
+    const { translateBasicFoods } = require('../src/db/schema/spanish-names');
+    db.prepare("INSERT INTO ingredients (id, name, category_id, source, kcal_per_100g) VALUES ('ci-1', 'Peanut Butter', 'fats', 'calories_in', 588), ('ci-2', 'Strawberries', 'fruits', 'calories_in', 32)").run();
+    db.prepare("UPDATE ingredients SET name = 'Frutilla del consultorio', name_edited = 1 WHERE id = 'ci-2'").run();
+    translateBasicFoods(db);
+    assert.equal(db.prepare("SELECT name FROM ingredients WHERE id = 'ci-1'").get().name, 'Manteca de maní');
+    assert.equal(db.prepare("SELECT name FROM ingredients WHERE id = 'ci-2'").get().name, 'Frutilla del consultorio');
+    const found = await api().get('/api/ingredients?search=peanut');
+    assert.ok(found.body.data.some(i => i.name === 'Manteca de maní'));
+});

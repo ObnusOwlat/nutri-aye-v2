@@ -6,7 +6,7 @@ const PatientPlan = (function() {
 
     function render(patientId) {
         currentPatientId = patientId;
-        const content = document.querySelector('[data-tab="plans"]');
+        const content = document.querySelector('.patient-tab-content[data-tab="plans"]');
         if (!content) return;
 
         const plans = State.getPatientPlans(patientId);
@@ -15,22 +15,22 @@ const PatientPlan = (function() {
         content.innerHTML = `
             <div class="plans-section">
                 <div class="plans-section__header">
-                    <h4>Meal Plans</h4>
-                    <button class="btn btn--primary btn--sm" id="btn-create-plan">+ Create Plan</button>
+                    <h4>Planes</h4>
+                    <button class="btn btn--primary btn--sm" id="btn-create-plan">+ Crear plan</button>
                 </div>
 
                 ${active ? `
                     <div class="active-plan">
-                        <div class="active-plan__badge">Active</div>
+                        <div class="active-plan__badge">Activo</div>
                         <h3>${UI.escapeHtml(active.name)}</h3>
-                        <p>Goal: ${UI.capitalize(active.dietGoal)} | Target: ${active.dailyTarget} kcal/day | Started: ${active.startDate}</p>
+                        <p>Objetivo: ${UI.label('dietGoal', active.dietGoal)} | ${UI.formatNumber(active.dailyTarget)} kcal/día | Desde el ${UI.formatDate(active.startDate)}</p>
                         ${active.notes ? `<p>${UI.escapeHtml(active.notes)}</p>` : ''}
                         <div class="active-plan__actions">
-                            <button class="btn btn--primary btn-view-plan" data-id="${active.id}">Edit</button>
+                            <button class="btn btn--primary btn-view-plan" data-id="${active.id}">Editar</button>
                             <button class="btn btn--secondary btn-complete-plan" data-id="${active.id}">Complete</button>
                         </div>
                     </div>
-                ` : `<div class="empty-state"><div class="empty-state__icon"></div><p class="empty-state__text">No meal plans</p></div>`}
+                ` : `<div class="empty-state"><div class="empty-state__icon"></div><p class="empty-state__text">Sin planes</p></div>`}
 
                 ${plans.filter(p => p.status !== 'active').length > 0 ? `
                     <div class="plans-history">
@@ -39,12 +39,12 @@ const PatientPlan = (function() {
                             <div class="plan-card">
                                 <div>
                                     <strong>${UI.escapeHtml(plan.name)}</strong>
-                                    <p>${UI.capitalize(plan.dietGoal)} | ${plan.dailyTarget} kcal | ${plan.startDate} - ${plan.endDate || 'ongoing'}</p>
-                                    <span class="plan-card__status status-${plan.status}">${UI.capitalize(plan.status)}</span>
+                                    <p>${UI.label('dietGoal', plan.dietGoal)} | ${UI.formatNumber(plan.dailyTarget)} kcal | ${UI.formatDate(plan.startDate)} - ${plan.endDate ? UI.formatDate(plan.endDate) : 'en curso'}</p>
+                                    <span class="plan-card__status status-${plan.status}">${UI.label('planStatus', plan.status)}</span>
                                 </div>
                                 <div class="plan-card__actions">
-                                    <button class="btn btn--secondary btn--sm btn-view-plan" data-id="${plan.id}">View</button>
-                                    <button class="btn btn--danger btn--sm btn-delete-plan" data-id="${plan.id}">Delete</button>
+                                    <button class="btn btn--secondary btn--sm btn-view-plan" data-id="${plan.id}">Ver</button>
+                                    <button class="btn btn--danger btn--sm btn-delete-plan" data-id="${plan.id}">Desactivar</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -70,29 +70,29 @@ const PatientPlan = (function() {
         const content = document.createElement('div');
         content.innerHTML = `
             <div class="form-group">
-                <label class="form-label" for="plan-name">Plan Name *</label>
-                <input type="text" id="plan-name" class="form-input" placeholder="e.g., Week 1 - Deficit" required>
+                <label class="form-label" for="plan-name">Nombre del plan *</label>
+                <input type="text" id="plan-name" class="form-input" placeholder="ej.: Semana 1 - Déficit" required>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label" for="plan-goal">Goal</label>
+                    <label class="form-label" for="plan-goal">Objetivo</label>
                     <select id="plan-goal" class="form-select">
-                        ${State.DIET_GOALS.map(g => `<option value="${g}">${UI.capitalize(g)}</option>`).join('')}
+                        ${State.DIET_GOALS.map(g => `<option value="${g}">${UI.label('dietGoal', g)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="plan-calories">Daily Target (kcal)</label>
+                    <label class="form-label" for="plan-calories">Objetivo diario (kcal)</label>
                     <input type="number" id="plan-calories" class="form-input" value="${suggested}" min="500" max="10000">
                     <p class="form-hint">Suggested: ${suggested} kcal</p>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label" for="plan-start">Start Date</label>
+                    <label class="form-label" for="plan-start">Fecha de inicio</label>
                     <input type="date" id="plan-start" class="form-input" value="${today}">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="plan-end">End Date</label>
+                    <label class="form-label" for="plan-end">Fecha de fin</label>
                     <input type="date" id="plan-end" class="form-input">
                 </div>
             </div>
@@ -103,12 +103,12 @@ const PatientPlan = (function() {
                 </div>
             ` : ''}
             <div class="form-group">
-                <label class="form-label" for="plan-notes">Notes</label>
+                <label class="form-label" for="plan-notes">Notas</label>
                 <textarea id="plan-notes" class="form-input" rows="2"></textarea>
             </div>
         `;
 
-        UI.openModal({ title: 'Create Meal Plan', content, confirmText: 'Create', onConfirm: handleCreate, size: 'medium' });
+        UI.openModal({ title: 'Crear plan de alimentación', content, confirmText: 'Crear', onConfirm: handleCreate, size: 'medium' });
     }
 
     async function handleCreate() {
@@ -121,10 +121,10 @@ const PatientPlan = (function() {
             notes: document.getElementById('plan-notes')?.value?.trim(),
             status: 'active'
         };
-        if (!data.name) { UI.toastError('Name is required'); return false; }
+        if (!data.name) { UI.toastError('El nombre es obligatorio'); return false; }
         try {
             const plan = await State.addPatientPlan(currentPatientId, data);
-            UI.toastSuccess('Plan created'); render(currentPatientId); openEditor(plan.id); return true;
+            UI.toastSuccess('Plan creado'); render(currentPatientId); openEditor(plan.id); return true;
         } catch (e) { UI.toastError(e.message); return false; }
     }
 
@@ -134,9 +134,9 @@ const PatientPlan = (function() {
 
         const content = document.createElement('div');
         content.className = 'plan-editor';
-        content.innerHTML = `<div class="plan-editor__header"><h4>${UI.escapeHtml(plan.name)}</h4><p>Target: ${plan.dailyTarget} kcal/day</p></div><div class="plan-editor__grid" id="plan-editor-grid">${renderGrid(plan)}</div>`;
+        content.innerHTML = `<div class="plan-editor__header"><h4>${UI.escapeHtml(plan.name)}</h4><p>${UI.formatNumber(plan.dailyTarget)} kcal/día</p></div><div class="plan-editor__grid" id="plan-editor-grid">${renderGrid(plan)}</div>`;
 
-        UI.openModal({ title: 'Edit Plan', content, confirmText: 'Done', hideCancel: true, size: 'fullscreen', onConfirm: () => { render(currentPatientId); return true; } });
+        UI.openModal({ title: 'Editar plan', content, confirmText: 'Listo', hideCancel: true, size: 'fullscreen', onConfirm: () => { render(currentPatientId); return true; } });
         setTimeout(() => bindEditorEvents(planId), 100);
     }
 
@@ -144,13 +144,13 @@ const PatientPlan = (function() {
         return State.DAYS.map(day => {
             const meals = plan.weekPlan?.[day] || {};
             return `<div class="plan-editor__day">
-                <div class="plan-editor__day-header">${UI.capitalize(day)}</div>
+                <div class="plan-editor__day-header">${UI.label('day', day)}</div>
                 ${State.VALID_MEAL_TYPES.map(type => {
                     const recipeId = meals[type];
                     const recipe = recipeId ? State.getRecipe(recipeId) : null;
                     return `<div class="plan-editor__meal" data-day="${day}" data-meal="${type}">
-                        <span>${UI.capitalize(type)}</span>
-                        ${recipe ? `<span>${UI.escapeHtml(recipe.name)}</span><span>${UI.formatCalories(recipe.nutrition?.calories || 0)}</span>` : '<span>+ Add</span>'}
+                        <span>${UI.label('mealType', type)}</span>
+                        ${recipe ? `<span>${UI.escapeHtml(recipe.name)}</span><span>${UI.formatCalories(recipe.nutrition?.calories || 0)}</span>` : '<span>+ Agregar</span>'}
                     </div>`;
                 }).join('')}
                 <div>Total: ${UI.formatCalories(State.getPatientDailyCalories(currentPatientId, day))} / ${plan.dailyTarget}</div>
@@ -169,13 +169,13 @@ const PatientPlan = (function() {
 
         const content = document.createElement('div');
         content.innerHTML = `
-            <p>Select recipe for <strong>${UI.capitalize(meal)}</strong> on <strong>${UI.capitalize(day)}</strong>:</p>
-            <input type="text" id="plan-recipe-search" class="form-input" placeholder="Search..." style="margin: 16px 0">
+            <p>Elegir receta para <strong>${UI.label('mealType', meal)}</strong> el <strong>${UI.label('day', day)}</strong>:</p>
+            <input type="text" id="plan-recipe-search" class="form-input" placeholder="Buscar..." style="margin: 16px 0">
             <div id="plan-recipe-list">${renderRecipeList(recipes, current)}</div>
-            ${current ? '<button class="btn btn--danger btn--sm" id="btn-remove-meal" style="margin-top:16px">Remove</button>' : ''}
+            ${current ? '<button class="btn btn--danger btn--sm" id="btn-remove-meal" style="margin-top:16px">Quitar</button>' : ''}
         `;
 
-        UI.openModal({ title: 'Select Recipe', content, hideFooter: true, size: 'medium' });
+        UI.openModal({ title: 'Elegir receta', content, hideFooter: true, size: 'medium' });
 
         requestAnimationFrame(() => {
             document.getElementById('plan-recipe-search')?.addEventListener('input', e => {
@@ -190,9 +190,9 @@ const PatientPlan = (function() {
     }
 
     function renderRecipeList(recipes, currentId) {
-        if (!recipes.length) return '<p style="text-align:center;padding:20px;color:var(--color-text-light)">No recipes found</p>';
+        if (!recipes.length) return '<p style="text-align:center;padding:20px;color:var(--color-text-light)">No se encontraron recetas</p>';
         return recipes.map(r => `<div class="ingredient-select__item ${r.id === currentId ? 'selected' : ''}" data-id="${r.id}">
-            <span><span class="category-badge category-badge--${r.category}">${UI.capitalize(r.category)}</span> ${UI.escapeHtml(r.name)}</span>
+            <span><span class="category-badge category-badge--${r.category}">${UI.label('mealCategory', r.category)}</span> ${UI.escapeHtml(r.name)}</span>
             <span>${UI.formatCalories(r.nutrition?.calories || 0)}</span>
         </div>`).join('');
     }
@@ -220,7 +220,7 @@ const PatientPlan = (function() {
         if (e.target.closest('#btn-create-plan')) showCreateModal();
         if (e.target.closest('.btn-view-plan')) openEditor(e.target.closest('.btn-view-plan').dataset.id);
         const complete = e.target.closest('.btn-complete-plan')?.dataset.id;
-        if (complete) UI.confirm('Mark as completed?', async () => { await State.updatePatientPlan(complete, { status: 'completed' }); UI.toastSuccess('Completed'); render(currentPatientId); });
+        if (complete) UI.confirm('¿Marcar el plan como completado?', async () => { await State.updatePatientPlan(complete, { status: 'completed' }); UI.toastSuccess('Plan completado'); render(currentPatientId); });
         const remove = e.target.closest('.btn-delete-plan')?.dataset.id;
         if (remove) UI.confirmDanger('¿Desactivar este plan?', async () => { await State.deletePatientPlan(remove); UI.toastSuccess('Plan desactivado'); render(currentPatientId); });
     });

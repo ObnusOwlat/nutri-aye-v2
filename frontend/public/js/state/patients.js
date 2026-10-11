@@ -1,6 +1,6 @@
 /**
  * state/patients.js - Patients, measurements and conditions (saved in the server).
- * "Delete" deactivates in the server; the record stays and can be reactivated.
+ * "Desactivar" deactivates in the server; the record stays and can be reactivated.
  */
 
 Object.assign(State, (function() {

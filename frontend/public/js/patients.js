@@ -48,8 +48,8 @@ const Patients = (function() {
             patientsList.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state__icon"></div>
-                    <p class="empty-state__text">${searchQuery ? 'No patients match your search' : 'No patients yet'}</p>
-                    <p class="empty-state__hint">${searchQuery ? 'Try a different search term' : 'Add your first patient to get started'}</p>
+                    <p class="empty-state__text">${searchQuery ? 'Ningún paciente coincide con la búsqueda' : 'Todavía no hay pacientes'}</p>
+                    <p class="empty-state__hint">${searchQuery ? 'Try a different search term' : 'Agregá tu primer paciente para empezar'}</p>
                 </div>
             `;
             return;
@@ -69,29 +69,29 @@ const Patients = (function() {
                     <div class="patient-card__info">
                         <h4 class="patient-card__name">${UI.escapeHtml(patient.firstName)} ${UI.escapeHtml(patient.lastName)}</h4>
                         <p class="patient-card__meta">
-                            ${age ? `${age} years` : ''}
-                            ${patient.gender ? ` | ${UI.capitalize(patient.gender)}` : ''}
+                            ${age ? `${age} años` : ''}
+                            ${patient.gender ? ` | ${UI.label('gender', patient.gender)}` : ''}
                             ${patient.email ? ` | ${UI.escapeHtml(patient.email)}` : ''}
                         </p>
                         <div class="patient-card__stats">
                             ${latestMetrics ? `
                                 <span class="patient-card__stat">
-                                    <strong>${latestMetrics.weight?.toFixed(1) || '-'}</strong> kg
+                                    <strong>${UI.formatDecimal(latestMetrics.weight, 1) || '-'}</strong> kg
                                 </span>
                                 <span class="patient-card__stat">
-                                    <strong>${bmi?.toFixed(1) || '-'}</strong> BMI
+                                    <strong>${UI.formatDecimal(bmi)}</strong> IMC
                                 </span>
-                            ` : '<span class="patient-card__stat text-muted">No metrics</span>'}
+                            ` : '<span class="patient-card__stat text-muted">Sin mediciones</span>'}
                             ${activePlan ? `
                                 <span class="patient-card__stat patient-card__stat--active">
-                                    Active Plan
+                                    Plan activo
                                 </span>
                             ` : ''}
                         </div>
                     </div>
                     <div class="patient-card__actions">
-                        <button class="btn btn--secondary btn--sm btn-edit" data-id="${patient.id}">Edit</button>
-                        <button class="btn btn--danger btn--sm btn-delete" data-id="${patient.id}">Delete</button>
+                        <button class="btn btn--secondary btn--sm btn-edit" data-id="${patient.id}">Editar</button>
+                        <button class="btn btn--danger btn--sm btn-delete" data-id="${patient.id}">Desactivar</button>
                     </div>
                 </div>
             `;
@@ -121,7 +121,7 @@ const Patients = (function() {
     function exportPatient(id) {
         const data = State.exportPatientData(id);
         if (!data) {
-            UI.toastError('Patient not found');
+            UI.toastError('Paciente no encontrado');
             return;
         }
 
@@ -129,13 +129,13 @@ const Patients = (function() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `patient_${data.patient.firstName}_${data.patient.lastName}_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `paciente_${data.patient.firstName}_${data.patient.lastName}_${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        UI.toastSuccess('Patient data exported');
+        UI.toastSuccess('Datos del paciente exportados');
     }
 
     return { init, exportPatient };

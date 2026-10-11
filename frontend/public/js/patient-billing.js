@@ -6,15 +6,15 @@ const PatientBilling = (function() {
     let container = null;
     let patientId = null;
 
-    const money = (n) => `₲ ${Math.round(n || 0).toLocaleString('es-PY')}`;
-    const date = (d) => (d ? new Date(d).toLocaleDateString('es-PY') : '-');
-    const badge = (status) => `<span class="badge badge-${UI.escapeHtml(String(status).toLowerCase())}">${UI.escapeHtml(status)}</span>`;
+    const money = (n) => UI.formatMoney(n);
+    const date = (d) => UI.formatDate(d);
+    const badge = (status) => `<span class="badge badge-${UI.escapeHtml(String(status).toLowerCase())}">${UI.escapeHtml(UI.label('invoiceStatus', status) || UI.label('quoteStatus', status))}</span>`;
 
     async function render(id, element) {
         if (!id || !element) return;
         patientId = id;
         bind(element);
-        element.innerHTML = '<div class="patient-billing"><div class="loading">Loading billing information...</div></div>';
+        element.innerHTML = '<div class="patient-billing"><div class="loading">Cargando facturación...</div></div>';
 
         try {
             const response = await (await fetch(`/api/patients/${id}/billing`)).json();
@@ -25,8 +25,8 @@ const PatientBilling = (function() {
             }
             element.innerHTML = response.data.linked ? linkedHtml(response.data) : notLinkedHtml();
         } catch (err) {
-            console.error('Error loading billing:', err);
-            element.innerHTML = '<div class="empty-state"><p>Error connecting to the server</p></div>';
+            console.error('Error al cargar la facturación:', err);
+            element.innerHTML = '<div class="empty-state"><p>Error de conexión con el servidor</p></div>';
         }
     }
 
@@ -45,9 +45,9 @@ const PatientBilling = (function() {
             <div class="patient-billing">
                 <div class="patient-billing__not-linked">
                     <div class="empty-state">
-                        <h3>Not Linked to Billing</h3>
-                        <p>Link this patient to create invoices and quotes and track payments.</p>
-                        <button class="btn btn--primary" data-action="link-billing">Link to Billing &amp; Create Client</button>
+                        <h3>Sin vincular a facturación</h3>
+                        <p>Vinculá a este paciente para hacerle facturas y presupuestos y seguir sus pagos.</p>
+                        <button class="btn btn--primary" data-action="link-billing">Vincular y crear cliente</button>
                     </div>
                 </div>
             </div>
@@ -62,22 +62,22 @@ const PatientBilling = (function() {
             <div class="patient-billing">
                 <div class="patient-billing__header">
                     <div class="patient-billing__client">
-                        <h4>Billing Client</h4>
+                        <h4>Cliente de facturación</h4>
                         <p><strong>${UI.escapeHtml(client.name)}</strong></p>
                         <p>${UI.escapeHtml(client.email || '')}</p>
                         <p>${UI.escapeHtml(client.phone || '')}</p>
-                        <span class="badge badge-paid">Linked</span>
+                        <span class="badge badge-paid">Vinculado</span>
                     </div>
                     <div class="patient-billing__stats">
-                        ${stat('Paid', money(paid), 'money')}
-                        ${stat('Pending', money(pending), 'warning')}
-                        ${stat('Invoices', invoices.length)}
-                        ${stat('Quotes', quotes.length)}
+                        ${stat('Cobrado', money(paid), 'money')}
+                        ${stat('Pendiente', money(pending), 'warning')}
+                        ${stat('Facturas', invoices.length)}
+                        ${stat('Presupuestos', quotes.length)}
                     </div>
                 </div>
-                ${table('Recent Invoices', ['Invoice #', 'Date', 'Total', 'Status'],
+                ${table('Últimas facturas', ['Factura N.º', 'Fecha', 'Total', 'Estado'],
                     invoices.map(i => [i.invoiceNumber, date(i.date), money(i.total), i.status]))}
-                ${table('Quotes', ['Quote #', 'Valid Until', 'Total', 'Status'],
+                ${table('Presupuestos', ['Presupuesto N.º', 'Válido hasta', 'Total', 'Estado'],
                     quotes.map(q => [q.quoteNumber, date(q.validUntil), money(q.total), q.status]))}
             </div>
         `;
@@ -111,18 +111,18 @@ const PatientBilling = (function() {
     async function linkToBilling(button) {
         const id = patientId;
         button.disabled = true;
-        button.textContent = 'Linking...';
+        button.textContent = 'Vinculando...';
         try {
             const result = await (await fetch(`/api/patients/${id}/sync-to-billing`, { method: 'POST' })).json();
-            if (!result.success) throw new Error(result.error || 'Failed to link');
+            if (!result.success) throw new Error(result.error || 'No se pudo vincular');
             await State.refreshPatient(id);
-            UI.toastSuccess(result.alreadyLinked ? 'Patient already linked to billing' : 'Patient linked to billing');
+            UI.toastSuccess(result.alreadyLinked ? 'El paciente ya estaba vinculado a facturación' : 'Paciente vinculado a facturación');
             render(id, container);
         } catch (error) {
             console.error('Link error:', error);
             UI.toastError(error.message);
             button.disabled = false;
-            button.textContent = 'Link to Billing & Create Client';
+            button.textContent = 'Vincular y crear cliente';
         }
     }
 

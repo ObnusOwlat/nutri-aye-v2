@@ -33,18 +33,43 @@ const AuditView = (function() {
         invoice_number: 'número', quote_number: 'número', kcal_per_100g: 'kcal/100 g', count: 'cantidad',
         diet_goal: 'objetivo', daily_target: 'calorías diarias', start_date: 'inicio', end_date: 'fin', adherence: 'adherencia',
         energy_level: 'energía', sleep_quality: 'sueño', mood: 'ánimo', symptoms: 'síntomas', physical_activity: 'actividad física',
-        week_plan: 'semana', goal: 'objetivo', cia_abdominal: 'circ. abdominal', cia_brazo: 'circ. brazo', cia_pierna: 'circ. pierna', cadera: 'cadera'
+        week_plan: 'semana', goal: 'objetivo', patient_id: 'paciente', address: 'dirección', planner_id: 'planificación',
+        template_id: 'plantilla', recipe_id: 'receta', ingredient_id: 'alimento', unit_id: 'unidad', source: 'origen', email_verified: 'email verificado',
+        name_en: 'nombre en inglés', name_edited: 'nombre editado', instructions_md: 'preparación', is_default: 'predeterminado', meal_distribution: 'distribución de comidas',
+        payment_method_id: 'medio de pago', vat_id: 'RUC', country: 'país', currency: 'moneda', website: 'sitio web', paid_at: 'pagada el', quantity: 'cantidad', unit_price: 'precio unitario', cia_abdominal: 'circ. abdominal', cia_brazo: 'circ. brazo', cia_pierna: 'circ. pierna', cadera: 'cadera'
     };
 
+    // Stored values shown with their Spanish label (group per field; status depends on the entity)
+    const VALUE_GROUPS = {
+        gender: 'gender', severity: 'severity', diet_goal: 'dietGoal', goal: 'dietGoal', meal_type: 'mealType',
+        day: 'day', day_of_week: 'day', role: 'role', activity_level: 'activityLevel', bmi_category: 'bmiCategory',
+        unit_id: 'unit', source: 'source'
+    };
+    const ENTITY_GROUPS = {
+        status: { patient: 'patientStatus', plan: 'planStatus', invoice: 'invoiceStatus', quote: 'quoteStatus' },
+        type: { condition: 'conditionType', payment_method: 'paymentType', billing_client: 'clientType' },
+        category_id: { recipe: 'mealCategory', ingredient: 'ingredientCategory' }
+    };
+    const groupFor = (field, entity) => VALUE_GROUPS[field] || ENTITY_GROUPS[field]?.[entity];
     const esc = (v) => UI.escapeHtml(v);
     const dateTime = (iso) => new Date(iso).toLocaleString('es-PY', { dateStyle: 'short', timeStyle: 'short' });
 
-    function value(v) {
+    function value(v, field, entity) {
         if (v === null || v === undefined || v === '') return '<em>vacío</em>';
+        const group = groupFor(field, entity);
+        if (group && typeof v === 'string') return esc(UI.label(group, v));
+        if (field === 'physical_activity') return esc(activityText(v));
         if (Array.isArray(v)) return `${v.length} ${v.length === 1 ? 'línea' : 'líneas'}`;
         if (typeof v === 'object') return esc(JSON.stringify(v));
         if (/^\d{4}-\d{2}-\d{2}T/.test(v)) return esc(dateTime(v));
         return esc(String(v).length > 80 ? `${String(v).slice(0, 80)}…` : v);
+    }
+
+    function activityText(json) {
+        let a;
+        try { a = typeof json === 'string' ? JSON.parse(json) : json; } catch { return String(json); }
+        if (!a?.active) return 'No realiza';
+        return ['Sí', a.level && UI.label('activityLevel', a.level), a.frequency && `${a.frequency} días/semana`, a.types].filter(Boolean).join(', ');
     }
 
     // "campo: antes → después" for each changed field (creations show only the value)
@@ -55,8 +80,8 @@ const AuditView = (function() {
             .map(([field, [before, after]]) => {
                 const label = esc(FIELDS[field] || field);
                 return entry.action === 'create' || before === null && entry.entity === 'backup'
-                    ? `<li><span>${label}:</span> ${value(after)}</li>`
-                    : `<li><span>${label}:</span> ${value(before)} → ${value(after)}</li>`;
+                    ? `<li><span>${label}:</span> ${value(after, field, entry.entity)}</li>`
+                    : `<li><span>${label}:</span> ${value(before, field, entry.entity)} → ${value(after, field, entry.entity)}</li>`;
             });
         return rows.length ? `<details class="audit-entry__changes"><summary>Ver detalle</summary><ul>${rows.join('')}</ul></details>` : '';
     }

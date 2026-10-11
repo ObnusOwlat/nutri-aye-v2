@@ -11,19 +11,19 @@ const RecipePicker = (function() {
         const recipes = State.getRecipes();
 
         if (recipes.length === 0) {
-            UI.toastWarning('Create some recipes first in the Recipes tab');
+            UI.toastWarning('Primero creá recetas en la pestaña Recetas');
             return;
         }
 
         const content = `
             <p style="margin-bottom: 16px;">
-                Select a recipe for <strong>${State.MEAL_LABELS[mealType]}</strong> 
-                on <strong>${UI.capitalize(day)}</strong>:
-                ${PlannerPatient.getSelectedId() ? `<br><small style="color:var(--color-text-light)">Recipes with allergen warnings may affect the patient</small>` : ''}
+                Elegí una receta para <strong>${State.MEAL_LABELS[mealType]}</strong> 
+                el <strong>${UI.label('day', day)}</strong>:
+                ${PlannerPatient.getSelectedId() ? `<br><small style="color:var(--color-text-light)">Las recetas con aviso de alérgenos pueden afectar al paciente</small>` : ''}
             </p>
             <div class="ingredient-select__search" style="margin-bottom: 16px;">
                 <input type="text" id="recipe-search" class="form-input" 
-                       placeholder="Search recipes..." autocomplete="off">
+                       placeholder="Buscar recetas..." autocomplete="off">
             </div>
             <div class="ingredient-select__list" id="recipe-select-list">
                 ${renderRecipeSelectList(recipes)}
@@ -31,7 +31,7 @@ const RecipePicker = (function() {
         `;
 
         UI.openModal({
-            title: 'Select Recipe',
+            title: 'Elegir receta',
             content,
             hideFooter: true,
             size: 'medium',
@@ -57,7 +57,7 @@ const RecipePicker = (function() {
      */
     function renderRecipeSelectList(recipes) {
         if (recipes.length === 0) {
-            return '<p style="text-align: center; padding: 20px; color: var(--color-text-light);">No recipes found</p>';
+            return '<p style="text-align: center; padding: 20px; color: var(--color-text-light);">No se encontraron recetas</p>';
         }
 
         return recipes.map(recipe => {
@@ -68,7 +68,7 @@ const RecipePicker = (function() {
                 const check = State.checkRecipeAllergens(recipe.id, PlannerPatient.getSelectedId());
                 hasAllergens = check.hasAllergens;
                 if (check.hasAllergens) {
-                    allergenWarning = `<span class="allergen-badge" title="Contains: ${UI.escapeHtml(check.allergens.join(', '))}">⚠ Allergen</span>`;
+                    allergenWarning = `<span class="allergen-badge" title="Contiene: ${UI.escapeHtml(check.allergens.join(', '))}">⚠ Alérgeno</span>`;
                 }
             }
 
@@ -77,13 +77,13 @@ const RecipePicker = (function() {
             return `
                 <div class="ingredient-select__item ${hasAllergens ? 'has-allergen' : ''}" data-id="${recipe.id}">
                     <div class="ingredient-select__item-info">
-                        <span class="category-badge category-badge--${recipe.category}">${UI.capitalize(recipe.category)}</span>
+                        <span class="category-badge category-badge--${recipe.category}">${UI.label('mealCategory', recipe.category)}</span>
                         <span class="ingredient-select__item-name">${UI.escapeHtml(recipe.name)}</span>
                         ${allergenWarning}
                     </div>
                     <div class="ingredient-select__item-nutrition">
                         <span class="ingredient-select__item-kcal">${Math.round(nutrition.calories)} kcal</span>
-                        <span class="ingredient-select__item-macros">P:${Math.round(nutrition.protein)}g C:${Math.round(nutrition.carbs)}g F:${Math.round(nutrition.fat)}g</span>
+                        <span class="ingredient-select__item-macros">P:${Math.round(nutrition.protein)}g C:${Math.round(nutrition.carbs)}g G:${Math.round(nutrition.fat)}g</span>
                     </div>
                 </div>
             `;
@@ -101,11 +101,11 @@ const RecipePicker = (function() {
                     const check = State.checkRecipeAllergens(item.dataset.id, PlannerPatient.getSelectedId());
                     if (check.hasAllergens) {
                         UI.confirm(
-                            `This recipe contains allergens: ${check.allergens.join(', ')}. Add anyway?`,
+                            `Esta receta tiene alérgenos del paciente: ${check.allergens.join(', ')}. ¿Agregarla igual?`,
                             () => {
                                 State.assignMeal(day, mealType, item.dataset.id);
                                 UI.closeModal();
-                                UI.toastWarning('Meal added with allergen warning');
+                                UI.toastWarning('Comida agregada con aviso de alérgenos');
                             }
                         );
                         return;
@@ -113,7 +113,7 @@ const RecipePicker = (function() {
                 }
                 State.assignMeal(day, mealType, item.dataset.id);
                 UI.closeModal();
-                UI.toastSuccess('Meal added');
+                UI.toastSuccess('Comida agregada');
             });
         });
     }

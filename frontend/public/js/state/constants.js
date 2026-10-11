@@ -22,25 +22,25 @@ const StateConstants = (function() {
         BRL: { symbol: 'R$', name: 'Real Brasileño', code: 'BRL' }
     };
 
-    // Meal Labels (for UI display) - Sincronizado con VALID_MEAL_TYPES
+    // Meal labels (Spanish names arrive with GET /api/labels)
     const MEAL_LABELS = {
-        breakfast: 'Breakfast',
-        morning_snack: 'Morning Snack',
-        lunch: 'Lunch',
-        afternoon_snack: 'Afternoon Snack',
-        snack: 'Snack',
-        dinner: 'Dinner'
+        breakfast: 'Desayuno',
+        morning_snack: 'Media mañana',
+        lunch: 'Almuerzo',
+        afternoon_snack: 'Merienda',
+        snack: 'Colación',
+        dinner: 'Cena'
     };
 
-    // Day Labels (English - consistent language)
+    // Day labels (Spanish names arrive with GET /api/labels)
     const DAY_LABELS = {
-        monday: 'Monday',
-        tuesday: 'Tuesday',
-        wednesday: 'Wednesday',
-        thursday: 'Thursday',
-        friday: 'Friday',
-        saturday: 'Saturday',
-        sunday: 'Sunday'
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo'
     };
 
     // Suggested Activities (Physical Exercises)

@@ -32,7 +32,7 @@ const PatientProfile = (function() {
     function open(id) {
         const patient = State.getPatient(id);
         if (!patient) {
-            UI.toastError('This patient no longer exists');
+            UI.toastError('Ese paciente ya no existe');
             return;
         }
         currentPatientId = id;
@@ -69,35 +69,35 @@ const PatientProfile = (function() {
             <div class="patient-profile__info">
                 <h2 class="patient-profile__name">${UI.escapeHtml(patient.firstName)} ${UI.escapeHtml(patient.lastName)}</h2>
                 <p class="patient-profile__meta">
-                    ${age ? `${age} years old` : ''}
-                    ${patient.gender ? `• ${UI.capitalize(patient.gender)}` : ''}
+                    ${age ? `${age} años` : ''}
+                    ${patient.gender ? `• ${UI.label('gender', patient.gender)}` : ''}
                     ${patient.email ? `• ${UI.escapeHtml(patient.email)}` : ''}
                     ${patient.phone ? `• ${UI.escapeHtml(patient.phone)}` : ''}
                 </p>
                 <div class="patient-profile__stats">
                     ${latestMetrics ? `
                         <div class="patient-profile__stat">
-                            <span class="patient-profile__stat-value">${latestMetrics.weight?.toFixed(1) || '-'}</span>
-                            <span class="patient-profile__stat-label">Weight (kg)</span>
+                            <span class="patient-profile__stat-value">${UI.formatDecimal(latestMetrics.weight, 1) || '-'}</span>
+                            <span class="patient-profile__stat-label">Peso (kg)</span>
                         </div>
                         <div class="patient-profile__stat">
-                            <span class="patient-profile__stat-value">${bmi?.toFixed(1) || '-'}</span>
-                            <span class="patient-profile__stat-label">BMI (${bmiCategory ? UI.capitalize(bmiCategory) : '-'})</span>
+                            <span class="patient-profile__stat-value">${UI.formatDecimal(bmi, 1) || '-'}</span>
+                            <span class="patient-profile__stat-label">IMC (${bmiCategory ? UI.label('bmiCategory', bmiCategory) : '-'})</span>
                         </div>
                         ${latestMetrics.height ? `
                             <div class="patient-profile__stat">
                                 <span class="patient-profile__stat-value">${latestMetrics.height}</span>
-                                <span class="patient-profile__stat-label">Height (cm)</span>
+                                <span class="patient-profile__stat-label">Talla (cm)</span>
                             </div>
                         ` : ''}
                     ` : `
-                        <p class="text-muted">No metrics recorded yet</p>
+                        <p class="text-muted">Todavía no hay mediciones</p>
                     `}
                 </div>
             </div>
             <div class="patient-profile__actions">
-                <button class="btn btn--secondary" data-action="edit-patient" data-patient-id="${patient.id}">Edit Patient</button>
-                <button class="btn btn--secondary" data-action="export-patient" data-patient-id="${patient.id}">Export</button>
+                <button class="btn btn--secondary" data-action="edit-patient" data-patient-id="${patient.id}">Editar paciente</button>
+                <button class="btn btn--secondary" data-action="export-patient" data-patient-id="${patient.id}">Exportar</button>
             </div>
         `;
     }
@@ -128,7 +128,7 @@ const PatientProfile = (function() {
      * Load overview tab content
      */
     function loadOverviewTab(patient) {
-        const content = patientProfile?.querySelector('[data-tab="overview"]');
+        const content = patientProfile?.querySelector('.patient-tab-content[data-tab="overview"]');
         if (!content) return;
 
         const latestMetrics = State.getLatestMetrics(patient.id);
@@ -139,17 +139,17 @@ const PatientProfile = (function() {
         content.innerHTML = `
             <div class="patient-overview">
                 <div class="patient-overview__section">
-                    <h4>Contact Information</h4>
+                    <h4>Datos de contacto</h4>
                     <dl class="patient-info-list">
                         ${patient.email ? `<dt>Email:</dt><dd>${UI.escapeHtml(patient.email)}</dd>` : ''}
-                        ${patient.phone ? `<dt>Phone:</dt><dd>${UI.escapeHtml(patient.phone)}</dd>` : ''}
-                        ${patient.address?.city ? `<dt>Location:</dt><dd>${UI.escapeHtml(patient.address.city)}</dd>` : ''}
+                        ${patient.phone ? `<dt>Teléfono:</dt><dd>${UI.escapeHtml(patient.phone)}</dd>` : ''}
+                        ${patient.address?.city ? `<dt>Ciudad:</dt><dd>${UI.escapeHtml(patient.address.city)}</dd>` : ''}
                     </dl>
                 </div>
 
                 ${allergies.length > 0 ? `
                     <div class="patient-overview__section patient-overview__section--warning">
-                        <h4>Allergies & Intolerances</h4>
+                        <h4>Alergias e intolerancias</h4>
                         <ul class="patient-allergies">
                             ${allergies.map(a => `
                                 <li class="severity-${a.severity}">
@@ -163,12 +163,12 @@ const PatientProfile = (function() {
 
                 ${conditions.filter(c => c.type === 'condition').length > 0 ? `
                     <div class="patient-overview__section">
-                        <h4>Medical Conditions</h4>
+                        <h4>Condiciones médicas</h4>
                         <ul class="patient-conditions">
                             ${conditions.filter(c => c.type === 'condition').map(c => `
                                 <li>
                                     <strong>${UI.escapeHtml(c.name)}</strong>
-                                    <span class="severity-${c.severity}">${UI.capitalize(c.severity)}</span>
+                                    <span class="severity-${c.severity}">${UI.label('severity', c.severity)}</span>
                                     ${c.dietaryNotes ? `<br><small>${UI.escapeHtml(c.dietaryNotes)}</small>` : ''}
                                 </li>
                             `).join('')}
@@ -178,21 +178,21 @@ const PatientProfile = (function() {
 
                 ${activePlan ? `
                     <div class="patient-overview__section patient-overview__section--success">
-                        <h4>Active Meal Plan</h4>
+                        <h4>Plan de alimentación activo</h4>
                         <p><strong>${UI.escapeHtml(activePlan.name)}</strong></p>
-                        <p>Goal: ${UI.capitalize(activePlan.dietGoal)} • Target: ${activePlan.dailyTarget} kcal/day</p>
-                        <p>Started: ${activePlan.startDate}</p>
+                        <p>Objetivo: ${UI.label('dietGoal', activePlan.dietGoal)} • ${UI.formatNumber(activePlan.dailyTarget)} kcal/día</p>
+                        <p>Desde el ${UI.formatDate(activePlan.startDate)}</p>
                     </div>
                 ` : `
                     <div class="patient-overview__section">
-                        <h4>Meal Plan</h4>
-                        <p class="text-muted">No active meal plan. Go to "Plans" tab to create one.</p>
+                        <h4>Plan de alimentación</h4>
+                        <p class="text-muted">Sin plan activo. Creá uno en la pestaña "Planes".</p>
                     </div>
                 `}
 
                 ${patient.notes ? `
                     <div class="patient-overview__section">
-                        <h4>Notes</h4>
+                        <h4>Notas</h4>
                         <p>${UI.escapeHtml(patient.notes)}</p>
                     </div>
                 ` : ''}

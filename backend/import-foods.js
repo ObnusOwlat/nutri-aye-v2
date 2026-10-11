@@ -1,12 +1,14 @@
 /**
  * Import foods-data/calories-in-ingredients.json into the SQLite database.
- * Skips ingredients whose name already exists (case-insensitive).
+ * Skips ingredients whose name already exists (case-insensitive), then applies
+ * the Spanish names (foods-data/translations/calories-in-names-es.json).
  *
  * Usage: node import-foods.js [path/to/foods.json]
  * Run the server once first so the schema (and food-group categories) exist.
  */
 
 const Database = require('better-sqlite3');
+const { translateBasicFoods } = require('./src/db/schema/spanish-names');
 const path = require('path');
 const fs = require('fs');
 
@@ -36,7 +38,8 @@ const insert = db.prepare(`
     VALUES (?, ?, ?, ?, 'calories_in', ${columns.map(() => '?').join(', ')})
 `);
 
-const existingNames = new Set(db.prepare('SELECT LOWER(name) AS n FROM ingredients').all().map(r => r.n));
+// Spanish or original English name (the catalog is translated after importing)
+const existingNames = new Set(db.prepare('SELECT LOWER(name) AS n FROM ingredients UNION SELECT LOWER(name_en) FROM ingredients WHERE name_en IS NOT NULL').all().map(r => r.n));
 
 let imported = 0, skipped = 0;
 const run = db.transaction(() => {
@@ -57,5 +60,6 @@ const run = db.transaction(() => {
 run();
 
 const total = db.prepare('SELECT COUNT(*) AS c FROM ingredients').get().c;
+translateBasicFoods(db); // Spanish names (foods-data/translations/calories-in-names-es.json)
 console.log(`Importados: ${imported}, omitidos (nombre repetido): ${skipped}, alimentos en total: ${total}`);
 db.close();

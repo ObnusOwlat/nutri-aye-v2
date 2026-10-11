@@ -22,6 +22,29 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 - El panel del Planner en pantalla llega después de la Fase 4.
 - **Tests:** de 57 a 60.
 
+## Fase 5 (frontend): toda la interfaz en español y formato paraguayo
+
+- **Interfaz en español:** pestañas, formularios, ventanas, avisos, confirmaciones, estados vacíos y placeholders con ejemplos locales (0981…, Asunción). `lang="es"`.
+- **Valores guardados:** se muestran con `UI.label(grupo, valor)` usando las etiquetas de `GET /api/labels`, que se cargan junto con los datos. Reemplaza los 28 `UI.capitalize` que mostraban "Breakfast", "Male" o "Severe" tal cual. Los valores siguen en inglés en la base.
+- **Formato paraguayo:**
+  - `UI.formatNumber` y `formatDecimal`: 1.234,5.
+  - `UI.formatDate`: 05/03/2026, sin correrse por la zona horaria.
+  - `UI.formatMoney`: ₲ 150.000.
+  - `UI.plural` para las cantidades.
+  - Se usa en pesos, IMC, medidas, calorías, montos y fechas.
+- **Macros:** P/C/G (proteínas, carbohidratos, grasas) en lugar de P/C/F.
+- **Registro de cambios:** el detalle muestra los valores con su nombre en español ("Objetivo: Mantenimiento → Déficit") y la actividad física en texto.
+- **Catálogo básico:** los 298 alimentos (calories-in) tienen nombre en español (migración 8).
+  - Se tradujeron con el mismo traductor local y gratuito que USDA (`tools/translate-basic.py`), más 125 correcciones revisadas a mano (`tools/basic-overrides-es.json`).
+  - El nombre original queda en `name_en`, así que la búsqueda en inglés sigue funcionando, y se respetan los nombres editados a mano.
+  - `import-foods.js` aplica la traducción y no duplica alimentos al volver a correrlo.
+- **Arreglos:**
+  - Abrir la app con `?tab=planner` dejaba la pestaña vacía, y hacer clic en ella no la mostraba.
+  - Las pestañas Resumen, Mediciones, Condiciones, Planes y Seguimiento de la ficha escribían su contenido dentro del botón de la pestaña: se veían dos secciones a la vez y la barra de pestañas se estiraba.
+  - Se quitaron las referencias a pestañas inexistentes ("billing", "reports").
+- **Verificación:** un recorrido automático por todas las pantallas y ventanas no encuentra palabras en inglés. La única excepción es el tooltip del panel de nutrientes, que muestra a propósito el nombre original de USDA.
+- **Tests:** de 71 a 72.
+
 ## Fase 5 (backend): textos en español
 
 - **`src/labels.js`:** reúne los nombres en español de todos los valores guardados: tipos de comida, días, categorías, unidades, sexo, estados, nivel de actividad, condiciones, severidad, objetivos, roles, estados de factura y presupuesto, medios de pago, nutrientes y origen de los alimentos. Se sirven en `GET /api/labels`. Un test verifica que todo valor permitido tenga su nombre.

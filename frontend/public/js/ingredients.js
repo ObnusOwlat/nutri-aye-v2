@@ -127,29 +127,29 @@ const Ingredients = (function() {
             <div class="ingredients-summary">
                 <div class="ingredients-summary__stat">
                     <span class="ingredients-summary__value">${stats.total}</span>
-                    <span class="ingredients-summary__label">${currentFilter !== 'all' ? currentFilter : 'Total'}</span>
+                    <span class="ingredients-summary__label">${currentFilter !== 'all' ? UI.label('ingredientCategory', currentFilter) : 'Total'}</span>
                 </div>
                 <div class="ingredients-summary__divider"></div>
                 <div class="ingredients-summary__stat">
                     <span class="ingredients-summary__value">${Math.round(stats.kcal.avg || 0)}</span>
-                    <span class="ingredients-summary__label">Avg kcal</span>
+                    <span class="ingredients-summary__label">kcal promedio</span>
                 </div>
                 <div class="ingredients-summary__stat">
                     <span class="ingredients-summary__value">${Math.round(stats.protein.avg || 0)}g</span>
-                    <span class="ingredients-summary__label">Avg Protein</span>
+                    <span class="ingredients-summary__label">Proteínas prom.</span>
                 </div>
                 <div class="ingredients-summary__stat">
                     <span class="ingredients-summary__value">${Math.round(stats.carbs.avg || 0)}g</span>
-                    <span class="ingredients-summary__label">Avg Carbs</span>
+                    <span class="ingredients-summary__label">Carbohidratos prom.</span>
                 </div>
                 <div class="ingredients-summary__stat">
                     <span class="ingredients-summary__value">${Math.round(stats.fat.avg || 0)}g</span>
-                    <span class="ingredients-summary__label">Avg Fat</span>
+                    <span class="ingredients-summary__label">Grasas prom.</span>
                 </div>
                 <div class="ingredients-summary__divider"></div>
                 <div class="ingredients-summary__categories">
                     ${Object.entries(stats.byCategory).slice(0, 4).map(([cat, count]) => `
-                        <span class="category-badge category-badge--${cat}">${UI.capitalize(cat)}: ${count}</span>
+                        <span class="category-badge category-badge--${cat}">${UI.label('ingredientCategory', cat)}: ${count}</span>
                     `).join('')}
                 </div>
             </div>
@@ -166,8 +166,8 @@ const Ingredients = (function() {
             ingredientsList.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state__icon"></div>
-                <p class="empty-state__text">No ingredients yet</p>
-                <p class="empty-state__hint">Add ingredients manually or import from CSV</p>
+                <p class="empty-state__text">Todavía no hay alimentos</p>
+                <p class="empty-state__hint">Agregá alimentos a mano o importalos desde un CSV</p>
             </div>
             `;
             return;
@@ -179,7 +179,7 @@ const Ingredients = (function() {
             <div class="ingredient-item" data-id="${ingredient.id}">
                 <div class="ingredient-item__compact" data-action="toggle-ingredient">
                     <div class="ingredient-item__title">
-                        <span class="category-badge category-badge--${ingredient.category}">${UI.capitalize(ingredient.category)}</span>
+                        <span class="category-badge category-badge--${ingredient.category}">${UI.label('ingredientCategory', ingredient.category)}</span>
                         <span class="ingredient-item__name">${UI.escapeHtml(ingredient.name)}</span>
                     </div>
                     <div class="ingredient-item__macros">
@@ -187,24 +187,24 @@ const Ingredients = (function() {
                         <span class="macro-divider">|</span>
                         <span class="macro-p">P: ${round(ingredient.proteinPer100g)}g</span>
                         <span class="macro-c">C: ${round(ingredient.carbsPer100g)}g</span>
-                        <span class="macro-f">F: ${round(ingredient.fatPer100g)}g</span>
+                        <span class="macro-f">G: ${round(ingredient.fatPer100g)}g</span>
                     </div>
-                    <button class="btn btn--secondary btn--sm btn-edit" data-action="edit-ingredient" data-id="${ingredient.id}">Edit</button>
-                    <button class="btn btn--danger btn--sm btn-delete" data-action="delete-ingredient" data-id="${ingredient.id}">Delete</button>
+                    <button class="btn btn--secondary btn--sm btn-edit" data-action="edit-ingredient" data-id="${ingredient.id}">Editar</button>
+                    <button class="btn btn--danger btn--sm btn-delete" data-action="delete-ingredient" data-id="${ingredient.id}">Desactivar</button>
                 </div>
                 <div class="ingredient-item__nutrition" id="nutrition-${ingredient.id}" style="display: none;">
                     <div class="ingredient-nutrition-panel ingredient-nutrition-panel--expanded">
                         <div class="ingredient-nutrition-panel__header">
-                            <strong>Nutrition Facts</strong>
-                            <span>per 100g</span>
+                            <strong>Información nutricional</strong>
+                            <span>por 100 g</span>
                         </div>
                         <div class="ingredient-nutrition-panel__calories">
-                            <strong>Calories</strong>
+                            <strong>Calorías</strong>
                             <span class="calories-value">${Math.round(ingredient.kcalPer100g)} kcal</span>
                         </div>
                         <div class="ingredient-nutrition-panel__section">
                             <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--bold">
-                                <span>Fat</span>
+                                <span>Grasas</span>
                                 <span>${round(ingredient.fatPer100g)}g</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--sub">
@@ -220,11 +220,11 @@ const Ingredients = (function() {
                                 <span>${round(ingredient.monounsaturatedFatPer100g)}g</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row">
-                                <span>Cholesterol</span>
+                                <span>Colesterol</span>
                                 <span>${round(ingredient.cholesterolPer100g)}mg</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row">
-                                <span>Sodium</span>
+                                <span>Sodio</span>
                                 <span>${round(ingredient.sodiumPer100g)}mg</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--bold">
@@ -232,15 +232,15 @@ const Ingredients = (function() {
                                 <span>${round(ingredient.carbsPer100g)}g</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--sub">
-                                <span>Sugar</span>
+                                <span>Azúcares</span>
                                 <span>${round(ingredient.sugarPer100g)}g</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--sub">
-                                <span>Fiber</span>
+                                <span>Fibra</span>
                                 <span>${round(ingredient.fiberPer100g)}g</span>
                             </div>
                             <div class="ingredient-nutrition-panel__row ingredient-nutrition-panel__row--bold ingredient-nutrition-panel__row--protein">
-                                <span>Protein</span>
+                                <span>Proteínas</span>
                                 <span>${round(ingredient.proteinPer100g)}g</span>
                             </div>
                         </div>
@@ -249,51 +249,51 @@ const Ingredients = (function() {
                             <div class="nutrition-grid-header">Vitamins</div>
                             <div class="nutrition-grid">
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin A</span>
+                                    <span class="nutrition-label">Vitamina A</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminAPer100g)} mcg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B1</span>
+                                    <span class="nutrition-label">Vitamina B1</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB1Per100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B2</span>
+                                    <span class="nutrition-label">Vitamina B2</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB2Per100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B3</span>
+                                    <span class="nutrition-label">Vitamina B3</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB3Per100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B5</span>
+                                    <span class="nutrition-label">Vitamina B5</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB5Per100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B6</span>
+                                    <span class="nutrition-label">Vitamina B6</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB6Per100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B9</span>
+                                    <span class="nutrition-label">Vitamina B9</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB9Per100g)} mcg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin B12</span>
+                                    <span class="nutrition-label">Vitamina B12</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminB12Per100g)} mcg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin C</span>
+                                    <span class="nutrition-label">Vitamina C</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminCPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin D</span>
+                                    <span class="nutrition-label">Vitamina D</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminDPer100g)} mcg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin E</span>
+                                    <span class="nutrition-label">Vitamina E</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminEPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Vitamin K</span>
+                                    <span class="nutrition-label">Vitamina K</span>
                                     <span class="nutrition-value">${round(ingredient.vitaminKPer100g)} mcg</span>
                                 </div>
                             </div>
@@ -301,30 +301,30 @@ const Ingredients = (function() {
                         ` : ''}
                         ${hasMinerals(ingredient) ? `
                         <div class="ingredient-nutrition-panel__section ingredient-nutrition-panel__section--full">
-                            <div class="nutrition-grid-header">Minerals</div>
+                            <div class="nutrition-grid-header">Minerales</div>
                             <div class="nutrition-grid">
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Calcium</span>
+                                    <span class="nutrition-label">Calcio</span>
                                     <span class="nutrition-value">${round(ingredient.calciumPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Iron</span>
+                                    <span class="nutrition-label">Hierro</span>
                                     <span class="nutrition-value">${round(ingredient.ironPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Magnesium</span>
+                                    <span class="nutrition-label">Magnesio</span>
                                     <span class="nutrition-value">${round(ingredient.magnesiumPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Phosphorus</span>
+                                    <span class="nutrition-label">Fósforo</span>
                                     <span class="nutrition-value">${round(ingredient.phosphorusPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Potassium</span>
+                                    <span class="nutrition-label">Potasio</span>
                                     <span class="nutrition-value">${round(ingredient.potassiumPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Selenium</span>
+                                    <span class="nutrition-label">Selenio</span>
                                     <span class="nutrition-value">${round(ingredient.seleniumPer100g)} mcg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
@@ -332,11 +332,11 @@ const Ingredients = (function() {
                                     <span class="nutrition-value">${round(ingredient.zincPer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Manganese</span>
+                                    <span class="nutrition-label">Manganeso</span>
                                     <span class="nutrition-value">${round(ingredient.manganesePer100g)} mg</span>
                                 </div>
                                 <div class="nutrition-grid-item">
-                                    <span class="nutrition-label">Copper</span>
+                                    <span class="nutrition-label">Cobre</span>
                                     <span class="nutrition-value">${round(ingredient.copperPer100g)} mg</span>
                                 </div>
                             </div>
@@ -389,9 +389,9 @@ const Ingredients = (function() {
         const content = createIngredientForm();
 
         UI.openModal({
-            title: 'Add Ingredient',
+            title: 'Agregar alimento',
             content,
-            confirmText: 'Add',
+            confirmText: 'Agregar',
             onConfirm: handleSaveIngredient,
             size: 'large'
         });
@@ -407,9 +407,9 @@ const Ingredients = (function() {
         const content = createIngredientForm(ingredient);
 
         UI.openModal({
-            title: 'Edit Ingredient',
+            title: 'Editar alimento',
             content,
-            confirmText: 'Save',
+            confirmText: 'Guardar',
             onConfirm: () => handleSaveIngredient(id),
             size: 'large'
         });
@@ -422,7 +422,7 @@ const Ingredients = (function() {
         const form = document.createElement('div');
         form.innerHTML = `
             <div class="form-group">
-                <label class="form-label" for="ingredient-name">Name *</label>
+                <label class="form-label" for="ingredient-name">Nombre *</label>
                 <input type="text" id="ingredient-name" class="form-input" 
                        value="${UI.escapeHtml(ingredient.name ? UI.escapeHtml(ingredient.name) : '')}" 
                        placeholder="e.g., Chicken Breast" required autocomplete="off">
@@ -430,31 +430,31 @@ const Ingredients = (function() {
             
             <div class="nutrition-form-row">
                 <div class="form-group">
-                    <label class="form-label" for="ingredient-category">Category</label>
+                    <label class="form-label" for="ingredient-category">Categoría</label>
                     <select id="ingredient-category" class="form-select">
                         ${State.INGREDIENT_CATEGORIES.map(cat => 
-                            `<option value="${cat}" ${ingredient.category === cat ? 'selected' : ''}>${UI.capitalize(cat)}</option>`
+                            `<option value="${cat}" ${ingredient.category === cat ? 'selected' : ''}>${UI.label('ingredientCategory', cat)}</option>`
                         ).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="ingredient-unit">Unit</label>
+                    <label class="form-label" for="ingredient-unit">Unidad</label>
                     <select id="ingredient-unit" class="form-select">
-                        <option value="g" ${(!ingredient.unit || ingredient.unit === 'g') ? 'selected' : ''}>Grams (g)</option>
-                        <option value="oz" ${ingredient.unit === 'oz' ? 'selected' : ''}>Ounces (oz)</option>
+                        <option value="g" ${(!ingredient.unit || ingredient.unit === 'g') ? 'selected' : ''}>Gramos (g)</option>
+                        <option value="oz" ${ingredient.unit === 'oz' ? 'selected' : ''}>Onzas (oz)</option>
                     </select>
                 </div>
             </div>
             
             <div class="nutrition-panel">
                 <div class="nutrition-panel__header">
-                    <span class="nutrition-panel__title">Nutrition Facts</span>
-                    <span class="nutrition-panel__serving">per 100g</span>
+                    <span class="nutrition-panel__title">Información nutricional</span>
+                    <span class="nutrition-panel__serving">por 100 g</span>
                 </div>
                 
                 <div class="nutrition-panel__section">
                     <div class="nutrition-panel__row nutrition-panel__row--main">
-                        <span>Calories</span>
+                        <span>Calorías</span>
                         <input type="number" id="ingredient-kcal" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.kcalPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>kcal</span>
@@ -462,27 +462,27 @@ const Ingredients = (function() {
                 </div>
                 
                 <div class="nutrition-panel__section">
-                    <div class="nutrition-panel__label">Fat</div>
+                    <div class="nutrition-panel__label">Grasas</div>
                     <div class="nutrition-panel__row">
-                        <span>Total Fat</span>
+                        <span>Grasas totales</span>
                         <input type="number" id="ingredient-fat" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.fatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
-                        <span>Saturated Fat</span>
+                        <span>Grasas saturadas</span>
                         <input type="number" id="ingredient-satfat" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.saturatedFatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
-                        <span>Polyunsaturated Fat</span>
+                        <span>Grasas poliinsaturadas</span>
                         <input type="number" id="ingredient-polyfat" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.polyunsaturatedFatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
-                        <span>Monounsaturated Fat</span>
+                        <span>Grasas monoinsaturadas</span>
                         <input type="number" id="ingredient-monosatfat" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.monounsaturatedFatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
@@ -491,13 +491,13 @@ const Ingredients = (function() {
                 
                 <div class="nutrition-panel__section">
                     <div class="nutrition-panel__row">
-                        <span>Cholesterol</span>
+                        <span>Colesterol</span>
                         <input type="number" id="ingredient-cholesterol" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.cholesterolPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>mg</span>
                     </div>
                     <div class="nutrition-panel__row">
-                        <span>Sodium</span>
+                        <span>Sodio</span>
                         <input type="number" id="ingredient-sodium" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.sodiumPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>mg</span>
@@ -507,19 +507,19 @@ const Ingredients = (function() {
                 <div class="nutrition-panel__section">
                     <div class="nutrition-panel__label">Carbohydrates</div>
                     <div class="nutrition-panel__row">
-                        <span>Total Carbs</span>
+                        <span>Carbohidratos totales</span>
                         <input type="number" id="ingredient-carbs" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.carbsPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
-                        <span>Sugar</span>
+                        <span>Azúcares</span>
                         <input type="number" id="ingredient-sugar" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.sugarPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
-                        <span>Fiber</span>
+                        <span>Fibra</span>
                         <input type="number" id="ingredient-fiber" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.fiberPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
@@ -528,7 +528,7 @@ const Ingredients = (function() {
                 
                 <div class="nutrition-panel__section">
                     <div class="nutrition-panel__row nutrition-panel__row--main">
-                        <span>Protein</span>
+                        <span>Proteínas</span>
                         <input type="number" id="ingredient-protein" class="nutrition-input" 
                                value="${UI.escapeHtml(ingredient.proteinPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
@@ -586,30 +586,30 @@ const Ingredients = (function() {
                 </div>
                 
                 <div class="nutrition-panel__section">
-                    <div class="nutrition-panel__label">Minerals</div>
+                    <div class="nutrition-panel__label">Minerales</div>
                     <div class="nutrition-form-grid-4">
                         <div class="nutrition-mini-input">
-                            <label>Magnesium (mg)</label>
+                            <label>Magnesio (mg)</label>
                             <input type="number" id="ingredient-magnesium" value="${UI.escapeHtml(ingredient.magnesiumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Calcium (mg)</label>
+                            <label>Calcio (mg)</label>
                             <input type="number" id="ingredient-calcium" value="${UI.escapeHtml(ingredient.calciumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Phosphorus (mg)</label>
+                            <label>Fósforo (mg)</label>
                             <input type="number" id="ingredient-phosphorus" value="${UI.escapeHtml(ingredient.phosphorusPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Potassium (mg)</label>
+                            <label>Potasio (mg)</label>
                             <input type="number" id="ingredient-potassium" value="${UI.escapeHtml(ingredient.potassiumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Iron (mg)</label>
+                            <label>Hierro (mg)</label>
                             <input type="number" id="ingredient-iron" value="${UI.escapeHtml(ingredient.ironPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Selenium (mcg)</label>
+                            <label>Selenio (mcg)</label>
                             <input type="number" id="ingredient-selenium" value="${UI.escapeHtml(ingredient.seleniumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
@@ -617,11 +617,11 @@ const Ingredients = (function() {
                             <input type="number" id="ingredient-zinc" value="${UI.escapeHtml(ingredient.zincPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Manganese (mg)</label>
+                            <label>Manganeso (mg)</label>
                             <input type="number" id="ingredient-manganese" value="${UI.escapeHtml(ingredient.manganesePer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
-                            <label>Copper (mg)</label>
+                            <label>Cobre (mg)</label>
                             <input type="number" id="ingredient-copper" value="${UI.escapeHtml(ingredient.copperPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                     </div>
@@ -641,11 +641,11 @@ const Ingredients = (function() {
         const unit = document.getElementById('ingredient-unit')?.value;
 
         if (!name) {
-            UI.toastError('Please enter an ingredient name');
+            UI.toastError('Escribí el nombre del alimento');
             return false;
         }
         if (isNaN(kcal) || kcal < 0) {
-            UI.toastError('Please enter valid calories');
+            UI.toastError('Escribí calorías válidas');
             return false;
         }
 
@@ -689,10 +689,10 @@ const Ingredients = (function() {
         try {
             if (existingId) {
                 await State.updateIngredient(existingId, data);
-                UI.toastSuccess('Ingredient updated');
+                UI.toastSuccess('Alimento actualizado');
             } else {
                 await State.addIngredient(data);
-                UI.toastSuccess('Ingredient added');
+                UI.toastSuccess('Alimento agregado');
             }
             return true;
         } catch (error) {
@@ -741,10 +741,10 @@ const Ingredients = (function() {
                     }
                     showImportPreview(data, true);
                 } catch (error) {
-                    UI.toastError('Error parsing JSON: ' + error.message);
+                    UI.toastError('Error al leer el JSON: ' + error.message);
                 }
             };
-            reader.onerror = () => UI.toastError('Error reading file');
+            reader.onerror = () => UI.toastError('Error al leer el archivo');
             reader.readAsText(file);
         };
         input.click();
@@ -766,15 +766,15 @@ const Ingredients = (function() {
                 try {
                     const result = parseCSV(event.target.result);
                     if (result.length === 0) {
-                        UI.toastError('No valid ingredients found in CSV');
+                        UI.toastError('El CSV no tiene alimentos válidos');
                         return;
                     }
                     showImportPreview(result);
                 } catch (error) {
-                    UI.toastError('Error parsing CSV: ' + error.message);
+                    UI.toastError('Error al leer el CSV: ' + error.message);
                 }
             };
-            reader.onerror = () => UI.toastError('Error reading file');
+            reader.onerror = () => UI.toastError('Error al leer el archivo');
             reader.readAsText(file);
         };
         input.click();
@@ -786,7 +786,7 @@ const Ingredients = (function() {
     function parseCSV(content) {
         const rows = parseCSVLines(content);
         if (rows.length < 2) {
-            throw new Error('CSV must have a header row and at least one data row');
+            throw new Error('El CSV debe tener una fila de encabezado y al menos una fila de datos');
         }
 
         const headers = rows[0].map(h => h.trim().toLowerCase());
@@ -799,7 +799,7 @@ const Ingredients = (function() {
         });
 
         if (headerMap.name === undefined || headerMap.kcal === undefined) {
-            throw new Error('CSV must have "name" and "kcalPer100g" columns');
+            throw new Error('El CSV debe tener las columnas "name" y "kcalPer100g"');
         }
 
         const ingredients = [];
@@ -913,7 +913,7 @@ const Ingredients = (function() {
                             <div style="display: flex; gap: 12px; font-size: 12px; color: var(--color-text-light);">
                                 <span>P: ${i.proteinPer100g}g</span>
                                 <span>C: ${i.carbsPer100g}g</span>
-                                <span>F: ${i.fatPer100g}g</span>
+                                <span>G: ${i.fatPer100g}g</span>
                                 ${i.fiberPer100g ? `<span>Fi: ${i.fiberPer100g}g</span>` : ''}
                             </div>
                         </div>
@@ -945,17 +945,17 @@ const Ingredients = (function() {
         }
 
         UI.openModal({
-            title: 'Import Ingredients',
+            title: 'Importar alimentos',
             content,
-            confirmText: 'Import All',
-            cancelText: 'Cancel',
+            confirmText: 'Importar todo',
+            cancelText: 'Cancelar',
             onConfirm: async () => {
                 const result = await (isFullData ? State.importIngredientsFull(ingredients) : State.importIngredients(ingredients));
                 if (result.imported.length > 0) {
-                    UI.toastSuccess(`Imported ${result.imported.length} ingredient${result.imported.length !== 1 ? 's' : ''}`);
+                    UI.toastSuccess(`Importados: ${UI.plural(result.imported.length, 'alimento')}`);
                 }
                 if (result.errors.length > 0) {
-                    UI.toastWarning(`${result.errors.length} ingredient${result.errors.length !== 1 ? 's' : ''} skipped (duplicates)`);
+                    UI.toastWarning(`Omitidos: ${UI.plural(result.errors.length, 'alimento')} (faltan datos)`);
                 }
             },
             size: 'medium'
@@ -969,7 +969,7 @@ const Ingredients = (function() {
         const ingredients = State.getIngredients();
 
         if (ingredients.length === 0) {
-            UI.toastWarning('No ingredients to export');
+            UI.toastWarning('No hay alimentos para exportar');
             return;
         }
 
