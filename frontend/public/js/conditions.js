@@ -93,7 +93,7 @@ const Conditions = (function() {
         `;
     }
 
-    function handleSave(existingId) {
+    async function handleSave(existingId) {
         const data = {
             type: document.getElementById('condition-type')?.value,
             name: document.getElementById('condition-name')?.value.trim(),
@@ -104,8 +104,8 @@ const Conditions = (function() {
         };
         if (!data.name) { UI.toastError('Name is required'); return false; }
         try {
-            if (existingId) { State.updatePatientCondition(existingId, data); UI.toastSuccess('Updated'); }
-            else { State.addPatientCondition(currentPatientId, data); UI.toastSuccess('Added'); }
+            if (existingId) { await State.updatePatientCondition(existingId, data); UI.toastSuccess('Updated'); }
+            else { await State.addPatientCondition(currentPatientId, data); UI.toastSuccess('Added'); }
             render(currentPatientId); return true;
         } catch (e) { UI.toastError(e.message); return false; }
     }
@@ -114,7 +114,8 @@ const Conditions = (function() {
         if (e.target.closest('#btn-add-condition')) showAddModal();
         if (e.target.closest('.btn-edit-condition')) showEditModal(e.target.closest('.btn-edit-condition').dataset.id);
         if (e.target.closest('.btn-delete-condition')) {
-            UI.confirmDanger('Delete this condition?', () => { State.deletePatientCondition(e.target.closest('.btn-delete-condition').dataset.id); UI.toastSuccess('Deleted'); render(currentPatientId); });
+            const id = e.target.closest('.btn-delete-condition').dataset.id;
+            UI.confirmDanger('¿Desactivar esta condición?', async () => { await State.deletePatientCondition(id); UI.toastSuccess('Condición desactivada'); render(currentPatientId); });
         }
     });
 

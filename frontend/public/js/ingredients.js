@@ -41,7 +41,6 @@ const Ingredients = (function() {
         document.getElementById('btn-import-json')?.addEventListener('click', handleImportJSON);
         document.getElementById('btn-import-csv')?.addEventListener('click', handleImportCSV);
         document.getElementById('btn-export-csv')?.addEventListener('click', handleExportCSV);
-        document.getElementById('btn-delete-all-ingredients')?.addEventListener('click', deleteAllIngredients);
 
         // Search
         document.getElementById('ingredient-search')?.addEventListener('input', (e) => {
@@ -57,16 +56,6 @@ const Ingredients = (function() {
                 renderIngredients();
             }
         });
-    }
-
-    /**
-     * Delete all ingredients
-     */
-    function deleteAllIngredients() {
-        UI.confirmDanger('Delete ALL ingredients? This cannot be undone!', () => {
-            State.deleteAllIngredients();
-            UI.toastSuccess('All ingredients deleted');
-        }, 'Borrar del navegador');
     }
 
     /**
@@ -645,7 +634,7 @@ const Ingredients = (function() {
     /**
      * Handle save ingredient
      */
-    function handleSaveIngredient(existingId) {
+    async function handleSaveIngredient(existingId) {
         const name = document.getElementById('ingredient-name')?.value.trim();
         const kcal = parseFloat(document.getElementById('ingredient-kcal')?.value);
         const category = document.getElementById('ingredient-category')?.value;
@@ -699,10 +688,10 @@ const Ingredients = (function() {
 
         try {
             if (existingId) {
-                State.updateIngredient(existingId, data);
+                await State.updateIngredient(existingId, data);
                 UI.toastSuccess('Ingredient updated');
             } else {
-                State.addIngredient(data);
+                await State.addIngredient(data);
                 UI.toastSuccess('Ingredient added');
             }
             return true;
@@ -720,10 +709,10 @@ const Ingredients = (function() {
         if (!ingredient) return;
 
         UI.confirmDanger(
-            `Delete "${ingredient.name}"? This will also remove it from any recipes.`,
-            () => {
-                State.deleteIngredient(id);
-                UI.toastSuccess('Ingredient deleted');
+            `¿Desactivar "${ingredient.name}"? Deja de aparecer en las búsquedas; las recetas que lo usan no cambian.`,
+            async () => {
+                await State.deleteIngredient(id);
+                UI.toastSuccess('Alimento desactivado');
             }
         );
     }
@@ -960,8 +949,8 @@ const Ingredients = (function() {
             content,
             confirmText: 'Import All',
             cancelText: 'Cancel',
-            onConfirm: () => {
-                const result = isFullData ? State.importIngredientsFull(ingredients) : State.importIngredients(ingredients);
+            onConfirm: async () => {
+                const result = await (isFullData ? State.importIngredientsFull(ingredients) : State.importIngredients(ingredients));
                 if (result.imported.length > 0) {
                     UI.toastSuccess(`Imported ${result.imported.length} ingredient${result.imported.length !== 1 ? 's' : ''}`);
                 }

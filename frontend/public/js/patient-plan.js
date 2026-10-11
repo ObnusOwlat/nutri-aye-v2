@@ -111,7 +111,7 @@ const PatientPlan = (function() {
         UI.openModal({ title: 'Create Meal Plan', content, confirmText: 'Create', onConfirm: handleCreate, size: 'medium' });
     }
 
-    function handleCreate() {
+    async function handleCreate() {
         const data = {
             name: document.getElementById('plan-name')?.value.trim(),
             dietGoal: document.getElementById('plan-goal')?.value,
@@ -123,7 +123,7 @@ const PatientPlan = (function() {
         };
         if (!data.name) { UI.toastError('Name is required'); return false; }
         try {
-            const plan = State.addPatientPlan(currentPatientId, data);
+            const plan = await State.addPatientPlan(currentPatientId, data);
             UI.toastSuccess('Plan created'); render(currentPatientId); openEditor(plan.id); return true;
         } catch (e) { UI.toastError(e.message); return false; }
     }
@@ -201,11 +201,16 @@ const PatientPlan = (function() {
         document.querySelectorAll('.ingredient-select__item').forEach(i => i.addEventListener('click', () => updateMeal(planId, day, meal, i.dataset.id)));
     }
 
-    function updateMeal(planId, day, meal, recipeId) {
+    async function updateMeal(planId, day, meal, recipeId) {
         const plan = State.getPatientPlans(currentPatientId).find(p => p.id === planId);
         if (!plan) return;
         const wp = { ...plan.weekPlan, [day]: { ...plan.weekPlan[day], [meal]: recipeId } };
-        State.updatePatientPlan(planId, { weekPlan: wp });
+        try {
+            await State.updatePatientPlan(planId, { weekPlan: wp });
+        } catch (error) {
+            UI.toastError(error.message);
+            return;
+        }
         const grid = document.getElementById('plan-editor-grid');
         if (grid) { const updated = State.getPatientPlans(currentPatientId).find(p => p.id === planId); grid.innerHTML = renderGrid(updated); bindEditorEvents(planId); }
         UI.closeModal();
@@ -214,8 +219,10 @@ const PatientPlan = (function() {
     document.addEventListener('click', (e) => {
         if (e.target.closest('#btn-create-plan')) showCreateModal();
         if (e.target.closest('.btn-view-plan')) openEditor(e.target.closest('.btn-view-plan').dataset.id);
-        if (e.target.closest('.btn-complete-plan')) UI.confirm('Mark as completed?', () => { State.updatePatientPlan(e.target.closest('.btn-complete-plan').dataset.id, { status: 'completed' }); UI.toastSuccess('Completed'); render(currentPatientId); });
-        if (e.target.closest('.btn-delete-plan')) UI.confirmDanger('Delete plan?', () => { State.deletePatientPlan(e.target.closest('.btn-delete-plan').dataset.id); UI.toastSuccess('Deleted'); render(currentPatientId); });
+        const complete = e.target.closest('.btn-complete-plan')?.dataset.id;
+        if (complete) UI.confirm('Mark as completed?', async () => { await State.updatePatientPlan(complete, { status: 'completed' }); UI.toastSuccess('Completed'); render(currentPatientId); });
+        const remove = e.target.closest('.btn-delete-plan')?.dataset.id;
+        if (remove) UI.confirmDanger('¿Desactivar este plan?', async () => { await State.deletePatientPlan(remove); UI.toastSuccess('Plan desactivado'); render(currentPatientId); });
     });
 
     return { render };

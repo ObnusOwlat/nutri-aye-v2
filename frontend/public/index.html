@@ -42,10 +42,6 @@
         <div class="header__container">
             <h1 class="header__title">Nutri Aye</h1>
             <div class="header__actions">
-                <button class="btn btn--secondary btn--sm" id="btn-sync" title="Sync with backend">
-                    <span class="btn__icon">&#8635;</span>
-                    <span class="btn__text">Sync</span>
-                </button>
                 <button class="btn btn--secondary btn--sm" id="btn-print" title="Print view">
                     <span class="btn__icon">&#9632;</span>
                     <span class="btn__text">Print</span>
@@ -143,9 +139,6 @@
                 <div class="ingredients__header">
                     <h2 class="section-title">Manage Ingredients</h2>
                     <div class="ingredients__actions">
-                        <button class="btn btn--danger" id="btn-delete-all-ingredients">
-                            <span class="btn__icon">🗑</span> Delete All
-                        </button>
                         <button class="btn btn--secondary" id="btn-import-json">
                             <span class="btn__icon">⬆</span> Import JSON
                         </button>
@@ -274,7 +267,14 @@
 
     <!-- Scripts -->
     <script src="js/auth.js"></script>
-    <script src="js/state.js"></script>
+    <script src="js/state/constants.js"></script>
+    <script src="js/state/core.js"></script>
+    <script src="js/state/nutrition.js"></script>
+    <script src="js/state/catalog.js"></script>
+    <script src="js/state/patients.js"></script>
+    <script src="js/state/plans.js"></script>
+    <script src="js/state/planner.js"></script>
+    <script src="js/browser-migration.js"></script>
     <script src="js/ui-toast.js"></script>
     <script src="js/ui-modal.js"></script>
     <script src="js/ui.js"></script>
@@ -287,7 +287,6 @@
     <script src="js/planner-patient.js"></script>
     <script src="js/planner-recipe-picker.js"></script>
     <script src="js/planner.js"></script>
-    <script src="js/sync.js"></script>
     <script src="js/patient-form.js"></script>
     <script src="js/patient-profile.js"></script>
     <script src="js/patient-billing.js"></script>

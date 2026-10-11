@@ -134,9 +134,9 @@ const Recipes = (function() {
         if (e.target.closest('.btn-edit')) {
             RecipeEditor.open(id);
         } else if (e.target.closest('.btn-delete')) {
-            UI.confirmDanger('Delete this recipe?', () => {
-                State.deleteRecipe(id);
-                UI.toastSuccess('Recipe deleted');
+            UI.confirmDanger('¿Desactivar esta receta? Deja de aparecer en la lista; los planes que la usan no cambian.', async () => {
+                await State.deleteRecipe(id);
+                UI.toastSuccess('Receta desactivada');
             });
         }
     }

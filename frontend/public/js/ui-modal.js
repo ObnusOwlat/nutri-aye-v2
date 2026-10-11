@@ -5,6 +5,7 @@
 const Modal = (function() {
     let modalOverlay, modal, modalTitle, modalBody, modalFooter;
     let modalConfirmBtn, modalCancelBtn, modalCloseBtn;
+    let generation = 0; // increases with every modal opened
 
     function init() {
         modalOverlay = document.getElementById('modal-overlay');
@@ -35,7 +36,7 @@ const Modal = (function() {
 
     /**
      * Open the modal. config: title, content (HTML string or element), size,
-     * confirmText, cancelText, onConfirm (return false keeps it open), onCancel,
+     * confirmText, cancelText, onConfirm (may be async; returning false or throwing keeps it open), onCancel,
      * onOpen, hideFooter, hideConfirm, hideCancel, footerSpaceBetween, className
      */
     function openModal(config) {
@@ -80,16 +81,21 @@ const Modal = (function() {
         modalCancelBtn.style.display = config.hideCancel ? 'none' : 'inline-flex';
 
         // Bind confirm handler
+        // onConfirm may be async (it saves to the server): the button waits, an
+        // error keeps the modal open, and a modal opened meanwhile is not closed
+        const opened = ++generation;
+        modalConfirmBtn.disabled = false;
         if (config.onConfirm) {
-            modalConfirmBtn.onclick = () => {
+            modalConfirmBtn.onclick = async () => {
+                modalConfirmBtn.disabled = true;
                 try {
-                    const result = config.onConfirm();
-                    if (result !== false) {
-                        closeModal();
-                    }
+                    const result = await config.onConfirm();
+                    if (result !== false && generation === opened) closeModal();
                 } catch (e) {
                     console.error('[UI] Confirm error:', e);
-                    Toast.error(e.message || 'An error occurred');
+                    Toast.error(e.message || 'Ocurrió un error');
+                } finally {
+                    if (generation === opened) modalConfirmBtn.disabled = false;
                 }
             };
         } else {

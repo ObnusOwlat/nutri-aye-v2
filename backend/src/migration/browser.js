@@ -15,6 +15,9 @@ const oneOf = (v, options, fallback) => (options.includes(v) ? v : fallback);
 const visibleIngredient = db.prepare('SELECT 1 FROM ingredients WHERE id = ? AND (org_id IS NULL OR org_id = ?)');
 const orgRecipe = db.prepare('SELECT 1 FROM recipes WHERE id = ? AND org_id = ?');
 const orgPatient = db.prepare('SELECT 1 FROM patients WHERE id = ? AND org_id = ?');
+// Lines of a recipe or plan that is already in the server are not imported again
+const recipeExists = db.prepare('SELECT 1 FROM recipes WHERE id = ?');
+const planExists = db.prepare('SELECT 1 FROM patient_plans WHERE id = ?');
 
 function convert(ctx, data) {
     const now = nowIso();
@@ -38,6 +41,7 @@ function convert(ctx, data) {
         t.recipes.push({ id: r.id, name: str(r.name, 200) || 'Sin nombre', category_id: oneOf(r.category, C.MEAL_CATEGORIES, 'lunch'),
             instructions: str(r.instructions) || '', notes: str(r.notes) || '', created_at: r.createdAt || now, updated_at: r.updatedAt || now });
         recipeIds.add(r.id);
+        if (recipeExists.get(r.id)) continue;
         const grams = new Map();
         for (const ri of r.ingredients || []) {
             if (ri && ingredientOk(ri.ingredientId) && num(ri.grams) > 0) grams.set(ri.ingredientId, (grams.get(ri.ingredientId) || 0) + num(ri.grams));
@@ -79,6 +83,7 @@ function convert(ctx, data) {
             daily_target: num(p.dailyTarget) || 2000, start_date: str(p.startDate, 10) || now.slice(0, 10), end_date: str(p.endDate, 10),
             notes: str(p.notes) || '', status: oneOf(p.status, ['active', 'completed', 'cancelled'], 'active'),
             created_at: p.createdAt || now, updated_at: p.updatedAt || now });
+        if (planExists.get(p.id)) continue;
         for (const [day, meals] of Object.entries(p.weekPlan || {})) {
             for (const [mealType, recipeId] of Object.entries(meals || {})) {
                 if (recipeId && C.DAYS.includes(day) && C.MEAL_TYPES.includes(mealType) && recipeOk(recipeId)) {

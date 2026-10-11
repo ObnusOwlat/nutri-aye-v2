@@ -138,7 +138,7 @@ const Metrics = (function() {
         UI.openModal({ title: 'Add Measurement', content, confirmText: 'Add', onConfirm: handleAdd });
     }
 
-    function handleAdd() {
+    async function handleAdd() {
         const data = {
             date: document.getElementById('metric-date')?.value,
             weight: parseFloat(document.getElementById('metric-weight')?.value) || null,
@@ -148,7 +148,7 @@ const Metrics = (function() {
             notes: document.getElementById('metric-notes')?.value?.trim()
         };
         if (!data.date) { UI.toastError('Date is required'); return false; }
-        try { State.addPatientMetric(currentPatientId, data); UI.toastSuccess('Measurement added'); render(currentPatientId); return true; }
+        try { await State.addPatientMetric(currentPatientId, data); UI.toastSuccess('Measurement added'); render(currentPatientId); return true; }
         catch (e) { UI.toastError(e.message); return false; }
     }
 
@@ -156,7 +156,7 @@ const Metrics = (function() {
         if (e.target.closest('#btn-add-metric')) showAddModal();
         if (e.target.closest('.btn-delete-metric')) {
             const id = e.target.closest('.btn-delete-metric').dataset.id;
-            UI.confirmDanger('Delete this measurement?', () => { State.deletePatientMetric(id); UI.toastSuccess('Deleted'); render(currentPatientId); });
+            UI.confirmDanger('¿Desactivar esta medición?', async () => { await State.deletePatientMetric(id); UI.toastSuccess('Medición desactivada'); render(currentPatientId); });
         }
     });
 

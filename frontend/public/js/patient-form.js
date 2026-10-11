@@ -1,6 +1,5 @@
 /**
- * patient-form.js - Add/edit patient modal; saves to the server first,
- * then updates the browser state
+ * patient-form.js - Add/edit patient modal (saved in the server through State)
  */
 
 const PatientForm = (function() {
@@ -223,7 +222,6 @@ const PatientForm = (function() {
             gender: text('patient-gender') || null,
             address: { street: text('patient-street'), city: text('patient-city'), zipCode: text('patient-zip') },
             emergencyContact: { name: text('patient-ec-name'), phone: text('patient-ec-phone'), relation: text('patient-ec-relation') },
-            // Physical activity is kept only in this browser until Fase 4
             physicalActivity: {
                 active: text('patient-physically-active') === 'yes',
                 level: text('patient-activity-level') || null,
@@ -249,30 +247,16 @@ const PatientForm = (function() {
         }
 
         try {
-            const response = await fetch(existingId ? `/api/patients/${existingId}` : '/api/patients', {
-                method: existingId ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (!result.success) {
-                UI.toastError(result.error || 'Failed to save patient to database');
-                return false;
-            }
-
-            // Server data wins; fields the server does not store yet (physical activity) are kept
-            const saved = { ...data, ...result.data };
             if (existingId) {
-                State.updatePatient(existingId, saved);
+                await State.updatePatient(existingId, data);
                 UI.toastSuccess('Patient updated');
             } else {
-                State.addPatient(saved);
+                await State.addPatient(data);
                 UI.toastSuccess('Patient added');
             }
             return true;
         } catch (error) {
-            console.error('Error saving patient:', error);
-            UI.toastError('Error connecting to server: ' + error.message);
+            UI.toastError(error.message);
             return false;
         }
     }

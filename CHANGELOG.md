@@ -13,6 +13,38 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 - El panel del Planner en pantalla llega después de la Fase 4.
 - **Tests:** de 57 a 60.
 
+## Fase 4: todo guardado en el server
+
+### Backend
+- **Migración 6:** agrega la actividad física del paciente (JSON), las medidas extra (circunferencias abdominal, de brazo y de pierna, y cadera) y la tabla `diet_templates`. Cada plantilla guarda su semana de borrador del planificador.
+- **Endpoints nuevos:**
+  - Planes del paciente con su semana: `/api/patients/:id/plans`. Un plan activo nuevo completa el anterior.
+  - Seguimiento: `/api/patients/:id/progress`.
+  - Edición de condiciones: `PUT /api/patients/:id/conditions/:conditionId`.
+  - Plantillas de dieta por consultorio: `/api/diet-templates`. Cada consultorio recibe 5 plantillas predeterminadas, que no se pueden desactivar.
+- **`GET /api/bootstrap`:** trae en un solo pedido todo lo que la app necesita al entrar. Reemplaza a `/api/sync/pull`.
+- **`POST /api/migration/browser-data`:** importa una sola vez lo que el navegador guardaba antes.
+  - Convierte esos datos al formato del respaldo y usa el mismo importador seguro, que revisa consultorio, referencias y transacción.
+  - Solo agrega registros nuevos y nunca pisa lo que ya está en el server.
+  - Descarta referencias a cosas que ya no existen.
+- **Registro de cambios:** cubre también planes, seguimiento y plantillas.
+- **Permisos:** recepción no escribe planes, seguimiento ni plantillas.
+
+### Frontend
+- **`state.js` (1.612 líneas):** reemplazado por `js/state/` (`constants`, `core`, `nutrition`, `catalog`, `patients`, `plans` y `planner`, de 70 a 196 líneas cada uno).
+  - Es una copia en memoria que se carga del server después del login.
+  - Cada cambio se guarda primero en el server y la copia se actualiza con su respuesta.
+- **Navegador:** ya no guarda datos. Se borraron `sync.js`, `api.js` y el botón Sync.
+- **Ventanas:** esperan al server. El botón se deshabilita mientras guarda, y si el server da error, la ventana queda abierta con el mensaje.
+- **Planificador:** la semana de una plantilla se guarda sola en el server. La de un paciente se guarda con "Save to Patient", que también crea el plan activo. Al quitar el paciente se vuelve a la semana de la plantilla.
+- **Datos viejos:** si el navegador tiene datos de la versión anterior que el server no tiene, la app ofrece importarlos una vez y después los borra del navegador.
+- **Desactivar en vez de borrar:** "borrar" desactiva en el server pacientes, mediciones, condiciones, planes, seguimiento, recetas, alimentos y plantillas. Se quitó "Borrar todos los alimentos".
+- **Ctrl+S:** descarga el respaldo del server (solo admin).
+- **Arreglo:** varios botones de desactivar leían el elemento clickeado después de cerrar la ventana. Ahora toman el id al momento del click.
+
+### Tests
+- De 60 a 66.
+
 ## Fase 3: registro de cambios
 
 - **Tabla `audit_log` (migración 5):** guarda consultorio, usuario, acción, tipo de dato, id, paciente relacionado, cambios (antes → después de los campos que cambiaron), IP y fecha.

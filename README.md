@@ -51,6 +51,7 @@ backend/
 ├── test/                      # node:test + supertest
 ├── import-usda.js · import-foods.js · seed-demo.js
 frontend/public/               # app sin compilación (HTML, CSS, JS)
+  js/state/                    # copia en memoria de los datos del server (se carga con GET /api/bootstrap)
 tools/                         # traducción offline de nombres USDA
 foods-data/                    # datos de alimentos y traducciones
 ```
@@ -58,6 +59,7 @@ foods-data/                    # datos de alimentos y traducciones
 Reglas del código:
 - Archivos chicos (unas 300 líneas como máximo), un archivo por dominio, el SQL solo en `repos/`.
 - **Nada se borra:** "eliminar" desactiva (`deactivated_at`, `deactivated_by`). Un test falla si aparece un `DELETE FROM` sobre datos.
+- **Todo se guarda en el server:** el navegador no guarda datos. Los métodos de `State` que cambian algo son async: llaman a la API y después actualizan la copia en memoria.
 - Toda consulta filtra por el consultorio de la sesión (`req.ctx.orgId`). Los permisos por rol están en `src/lib/permissions.js`.
 - **Todo cambio se registra:** las rutas que escriben envuelven la llamada al repo en `tracked(ctx, entidad, id, fn)` (`src/audit/log.js`), que guarda el antes y el después en `audit_log`, una tabla de solo agregar.
 

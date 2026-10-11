@@ -1,6 +1,6 @@
 /**
  * patient-history.js - "Historial" tab of the patient profile: every recorded
- * change of the patient, their measurements, conditions and planner weeks
+ * change of the patient: data, measurements, conditions, plans, check-ins and planner weeks
  */
 
 const PatientHistory = (function() {
@@ -11,8 +11,7 @@ const PatientHistory = (function() {
             const res = await fetch(`/api/patients/${encodeURIComponent(patientId)}/history?limit=200`);
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || `Error ${res.status}`);
-            const note = '<p class="text-muted patient-history__note">Lo cargado solo en este navegador (planes, seguimiento) aparecerá aquí cuando se guarde en el servidor (Fase 4).</p>';
-            element.innerHTML = `<div class="patient-history">${AuditView.listHtml(json.data, { showPatient: false })}${note}</div>`;
+            element.innerHTML = `<div class="patient-history">${AuditView.listHtml(json.data, { showPatient: false })}</div>`;
         } catch (error) {
             element.innerHTML = `<p class="text-muted">${UI.escapeHtml(error.message)}</p>`;
         }
