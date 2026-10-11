@@ -97,7 +97,11 @@ const Ingredients = (function() {
             if (seq !== requestSeq) return; // a newer search already answered
             if (!res.ok) throw new Error(json.error);
             if (facets?.success) IngredientFilters.setCounts(facets.data);
-            list.innerHTML = IngredientList.listHtml(json.data, { empty: 'Ningún alimento del catálogo coincide con la búsqueda' });
+            const hidden = FoodPrefs.hideImported() && facets?.success ? facets.data.total - facets.data.py : 0;
+            const empty = hidden > 0
+                ? `No hay alimentos de Paraguay que coincidan. Hay ${UI.plural(hidden, 'importado oculto', 'importados ocultos')}: desmarcá «Ocultar importados» para verlos.`
+                : 'Ningún alimento del catálogo coincide con la búsqueda';
+            list.innerHTML = IngredientList.listHtml(json.data, { empty });
             pager.innerHTML = IngredientList.pagerHtml(json.pagination);
         } catch (error) {
             if (seq === requestSeq) list.innerHTML = `<p class="text-muted">${UI.escapeHtml(error.message || 'Error al buscar')}</p>`;

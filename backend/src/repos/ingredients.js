@@ -133,8 +133,8 @@ function facets(ctx, query) {
         entry.subgroups[subgroup] = n;
     }
     const byPy = filters(ctx, query, ['py']);
-    const py = db.prepare(`SELECT COUNT(*) AS n FROM ingredients WHERE ${byPy.whereSql} AND available_py = 1`).get(...byPy.params).n;
-    return { categories, forms: Object.fromEntries(forms.map(f => [f.form, f.n])), py };
+    const { py, total } = db.prepare(`SELECT COUNT(*) AS total, COALESCE(SUM(available_py), 0) AS py FROM ingredients WHERE ${byPy.whereSql}`).get(...byPy.params);
+    return { categories, forms: Object.fromEntries(forms.map(f => [f.form, f.n])), py, total };
 }
 
 // scope: 'own' (the consultorio's foods), 'catalog' (shared foods) or both

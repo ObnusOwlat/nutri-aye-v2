@@ -3,7 +3,8 @@
  * categories and their subgroups ("origen": Vaca, Cerdo, Pescados…) and the
  * preparation form (crudo, cocido…), each with how many foods it would give.
  * Several options can be checked; a whole category OR chosen subgroups.
- * "⭐ Se consigue en Paraguay" keeps only local foods (they also go first).
+ * "Ocultar importados" (FoodPrefs, shared with Crear receta) hides foods from
+ * other countries; ⭐ local foods always go first.
  */
 
 const IngredientFilters = (function() {
@@ -12,7 +13,6 @@ const IngredientFilters = (function() {
     const categories = new Set();          // whole categories
     const subgroups = new Set();           // "category.subgroup"
     const forms = new Set();
-    let onlyPy = false;                    // ⭐ foods found in Paraguay
     const open = new Set();                // expanded categories
     let root, onChange = () => {};
     let counts = { categories: {}, forms: {} };
@@ -48,31 +48,34 @@ const IngredientFilters = (function() {
                 box.checked ? subgroups.add(key) : subgroups.delete(key);
             } else if (box.dataset.form) {
                 box.checked ? forms.add(box.dataset.form) : forms.delete(box.dataset.form);
-            } else if (box.dataset.py !== undefined) {
-                onlyPy = box.checked;
+            } else if (box.dataset.hideImported !== undefined) {
+                FoodPrefs.setHideImported(box.checked); // redraws through foodPrefs:changed
+                return;
             }
             render();
             onChange();
         });
+        // Also changed from Crear receta
+        UI.on('foodPrefs:changed', () => { render(); onChange(); });
         render();
     }
 
     function clear() {
-        categories.clear(); subgroups.clear(); forms.clear(); onlyPy = false;
+        categories.clear(); subgroups.clear(); forms.clear();
         render();
         onChange();
     }
 
     // Query string values for /api/ingredients and /api/ingredients/facets
-    const query = () => ({ category: [...categories].join(','), subgroup: [...subgroups].join(','), form: [...forms].join(','), py: onlyPy ? '1' : '' });
-    const active = () => categories.size + subgroups.size + forms.size > 0 || onlyPy;
+    const query = () => ({ category: [...categories].join(','), subgroup: [...subgroups].join(','), form: [...forms].join(','), py: FoodPrefs.py() });
+    const active = () => categories.size + subgroups.size + forms.size > 0;
 
     // Same rule as the server, for own foods kept in the browser
     function matches(food) {
         const key = `${food.category}.${food.subgroup || 'other'}`;
         const byGroup = !categories.size && !subgroups.size || categories.has(food.category) || subgroups.has(key);
         const byForm = !forms.size || forms.has(food.form || 'none');
-        return byGroup && byForm && (!onlyPy || food.availablePy);
+        return byGroup && byForm && FoodPrefs.allows(food);
     }
 
     // Counts like /api/ingredients/facets, from a list in memory
@@ -88,6 +91,7 @@ const IngredientFilters = (function() {
         const byGroup = foods.filter(f => !categories.size && !subgroups.size || categories.has(f.category) || subgroups.has(`${f.category}.${f.subgroup || 'other'}`));
         for (const f of byGroup) result.forms[f.form || 'none'] = (result.forms[f.form || 'none'] || 0) + 1;
         result.py = foods.filter(f => f.availablePy).length;
+        result.total = foods.length;
         return result;
     }
 
@@ -131,8 +135,9 @@ const IngredientFilters = (function() {
                 ${active() ? '<button type="button" class="btn btn--secondary btn--sm" data-clear>Limpiar</button>' : ''}
             </div>
             <ul class="food-filters__tree"><li class="food-filters__row">
-                <label><input type="checkbox" data-py ${onlyPy ? 'checked' : ''}> ⭐ Se consigue en Paraguay</label>
-                <span class="food-filters__n">${UI.formatNumber(counts.py || 0)}</span>
+                <label title="Alimentos de otros países que no se consiguen en Paraguay. También vale para Crear receta.">
+                    <input type="checkbox" data-hide-imported ${FoodPrefs.hideImported() ? 'checked' : ''}> Ocultar importados</label>
+                <span class="food-filters__n" title="Importados">${UI.formatNumber(Math.max(0, (counts.total || 0) - (counts.py || 0)))}</span>
             </li></ul>
             <h5>Grupo y origen</h5>
             <ul class="food-filters__tree">${CATEGORIES.map(categoryHtml).join('')}</ul>
@@ -147,15 +152,15 @@ const IngredientFilters = (function() {
             ...[...categories].map(c => [`cat:${c}`, UI.label('ingredientCategory', c)]),
             ...[...subgroups].map(s => [`sub:${s}`, UI.label('foodSubgroup', s.split('.')[1])]),
             ...[...forms].map(f => [`form:${f}`, formLabel(f)]),
-            ...(onlyPy ? [['py:1', '⭐ Paraguay']] : [])
+            ...(FoodPrefs.hideImported() ? [['py:1', 'Sin importados']] : [])
         ];
         return chips.map(([key, text]) => `<button type="button" class="food-filters__chip" data-remove="${esc(key)}">${esc(text)} ×</button>`).join('');
     }
 
     function remove(key) {
         const [kind, value] = key.split(/:(.*)/s);
-        if (kind === 'py') onlyPy = false;
-        else ({ cat: categories, sub: subgroups, form: forms })[kind]?.delete(value);
+        if (kind === 'py') return FoodPrefs.setHideImported(false);
+        ({ cat: categories, sub: subgroups, form: forms })[kind]?.delete(value);
         render();
         onChange();
     }

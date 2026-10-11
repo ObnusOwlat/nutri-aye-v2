@@ -111,7 +111,7 @@ const RecipeEditor = (function() {
                             <select id="recipe-food-subgroup" class="form-select" aria-label="Origen" disabled>
                                 <option value="">Todo origen</option>
                             </select>
-                            <label class="recipe-food-filters__py"><input type="checkbox" id="recipe-food-py" checked> ⭐ Paraguay</label>
+                            <label class="recipe-food-filters__py" title="Alimentos de otros países. La misma opción que en Alimentos."><input type="checkbox" id="recipe-food-py" ${FoodPrefs.hideImported() ? 'checked' : ''}> Ocultar importados</label>
                         </div>
                         <div class="ingredient-combobox">
                             <input type="text" id="recipe-ingredient-search" class="form-input" 
