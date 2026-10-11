@@ -78,3 +78,11 @@ test('targets are private to the consultorio; reception reads but does not adjus
     assert.equal((await api(reception).get(`/api/patients/${p.id}/targets`)).status, 200);
     assert.equal((await api(reception).put(`/api/patients/${p.id}/targets`).send({ energy: 1800 })).status, 403);
 });
+
+test('vitamin A: no upper level on the RAE total (carotenoids); the limit is on preformed retinol', () => {
+    const d = driDetails({ sex: 'male', age: 40 });
+    assert.equal(d[1106].ul, null);
+    assert.equal(d[1105].kind, 'UL');
+    assert.equal(d[1105].target, 3000);
+    assert.equal(driDetails({ sex: 'female', age: 16 })[1105].target, 2800);
+});

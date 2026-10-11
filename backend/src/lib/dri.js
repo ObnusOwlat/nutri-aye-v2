@@ -5,7 +5,7 @@
 // Ages: 14-18 (adolescents), 19-30, 31-50, 51-70, 71+. Under 14 the 14-18 values
 // are used and flagged, since children need a pediatric assessment.
 //
-// driDetails(): { id: { target, ul, kind } }  kind: RDA | AI | CDRR (limit)
+// driDetails(): { id: { target, ul, kind } }  kind: RDA | AI | CDRR (limit) | UL (upper level only)
 // driFor():     { id: target } for the 11 nutrients the recipe suggestions use
 
 const NAMES = {
@@ -27,7 +27,10 @@ const TABLE = [
     [1095, 'RDA', [11, 11, 11, 11, 11], [9, 8, 8, 8, 8], 40, 34],                   // zinc mg
     [1098, 'RDA', [0.89, 0.9, 0.9, 0.9, 0.9], [0.89, 0.9, 0.9, 0.9, 0.9], 10, 8],   // copper mg
     [1103, 'RDA', [55, 55, 55, 55, 55], [55, 55, 55, 55, 55], 400, 400],            // selenium µg
-    [1106, 'RDA', [900, 900, 900, 900, 900], [700, 700, 700, 700, 700], 3000, 2800], // vitamin A µg RAE
+    // Vitamin A: the RAE total (1106) includes carotenoids, which have no upper level;
+    // the UL applies to preformed retinol (1105: animal foods, supplements)
+    [1106, 'RDA', [900, 900, 900, 900, 900], [700, 700, 700, 700, 700]],            // vitamin A µg RAE
+    [1105, 'UL', [2800, 3000, 3000, 3000, 3000], [2800, 3000, 3000, 3000, 3000]],   // retinol µg: upper level only
     [1162, 'RDA', [75, 90, 90, 90, 90], [65, 75, 75, 75, 75], 2000, 1800],          // vitamin C mg
     [1114, 'RDA', [15, 15, 15, 15, 20], [15, 15, 15, 15, 20], 100, 100],            // vitamin D µg
     [1109, 'RDA', [15, 15, 15, 15, 15], [15, 15, 15, 15, 15]],                      // vitamin E mg (UL only supplements)

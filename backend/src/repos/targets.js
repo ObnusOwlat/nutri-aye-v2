@@ -53,8 +53,8 @@ function targetsFor(ctx, patientId) {
 
     const nutrients = {};
     for (const [id, d] of Object.entries(driDetails(profile))) {
-        nutrients[id] = d.kind === 'CDRR'
-            ? { max: d.target, ul: null, kind: 'limit', basis: 'Límite recomendado' }
+        nutrients[id] = d.kind === 'CDRR' || d.kind === 'UL'
+            ? { max: d.target, ul: null, kind: 'limit', basis: d.kind === 'UL' ? 'Máximo tolerable (retinol preformado)' : 'Límite recomendado' }
             : { target: d.target, ul: d.ul, kind: 'goal', basis: d.kind === 'AI' ? 'Ingesta adecuada' : 'Ingesta recomendada' };
     }
     // Protein 0,8 g/kg when the weight is known; saturated fat < 10 % of the energy
