@@ -14,6 +14,7 @@ const IngredientDetail = (function() {
 
     async function open(id) {
         UI.openModal({ title: 'Alimento', content: '<p class="text-muted">Cargando...</p>', size: 'large', hideFooter: true });
+        if (!allergenList.length) allergenList = await State._api('GET', '/api/allergens').catch(() => []);
         let food;
         try {
             food = await State._api('GET', `/api/ingredients/${encodeURIComponent(id)}`);
@@ -40,6 +41,7 @@ const IngredientDetail = (function() {
                     ${UI.escapeHtml(UI.label('source', food.source))}
                     ${food.nameEn ? `· <span title="Nombre original">${UI.escapeHtml(food.nameEn)}</span>` : ''}
                 </p>
+                ${allergensHtml(food)}
                 <div class="food-detail__columns">
                     <section>
                         <h4>Nutrientes principales <small>por 100 g</small></h4>
@@ -67,7 +69,42 @@ const IngredientDetail = (function() {
             </div>`;
     }
 
+    // The 14 allergens: the food's ones marked; a click corrects them for the consultorio
+    let allergenList = [];
+    function allergensHtml(food) {
+        const present = new Map((food.allergens || []).map(a => [a.allergen, a]));
+        const source = { off: 'Open Food Facts', rules: 'reglas por nombre', manual: 'marcado a mano' };
+        return `
+            <section class="food-allergens">
+                <h4>Alérgenos <small>tocá uno para marcarlo o desmarcarlo en tu consultorio</small></h4>
+                <div class="food-allergens__list">${allergenList.map(a => {
+                    const tag = present.get(a.id);
+                    return `<button type="button" class="food-allergen ${tag ? 'food-allergen--on' : ''}" data-allergen="${UI.escapeHtml(a.id)}"
+                        title="${tag ? `Contiene (${source[tag.source]}${tag.term ? `: «${UI.escapeHtml(tag.term)}»` : ''})` : 'No figura'}">${tag ? '⚠ ' : ''}${UI.escapeHtml(a.short)}</button>`;
+                }).join('')}</div>
+                <p class="text-muted">Calculado con la taxonomía de Open Food Facts (ODbL) y reglas propias sobre el nombre. Los alimentos crudos no informan trazas: revisá la etiqueta.</p>
+            </section>`;
+    }
+
+    function bindAllergens(food) {
+        document.querySelector('.food-allergens__list')?.addEventListener('click', async (e) => {
+            const button = e.target.closest('[data-allergen]');
+            if (!button) return;
+            const has = (food.allergens || []).some(a => a.allergen === button.dataset.allergen);
+            try {
+                food.allergens = await State._api('PUT', `/api/ingredients/${encodeURIComponent(food.id)}/allergens`, { allergen: button.dataset.allergen, present: !has });
+                State.cacheIngredient?.({ ...(State.getIngredient(food.id) || food), allergens: food.allergens });
+                document.querySelector('.food-allergens').outerHTML = allergensHtml(food);
+                bindAllergens(food);
+                UI.toastSuccess(has ? 'Alérgeno quitado' : 'Alérgeno marcado');
+            } catch (error) {
+                UI.toastError(error.message);
+            }
+        });
+    }
+
     function bind(food) {
+        bindAllergens(food);
         document.querySelector('.food-detail__actions')?.addEventListener('click', async (e) => {
             const action = e.target.closest('[data-action]')?.dataset.action;
             if (action === 'edit') IngredientForm.showEdit(food.id);

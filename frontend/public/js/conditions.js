@@ -2,9 +2,18 @@
  * conditions.js - Medical Conditions Management
  */
 const Conditions = (function() {
+    // Allergens to choose for allergies/intolerances (GET /api/allergens, once)
+    let allergenList = null;
+    const loadAllergens = () => allergenList
+        ? Promise.resolve(allergenList)
+        : State._api('GET', '/api/allergens').then(list => (allergenList = list)).catch(() => (allergenList = []));
+    const ALLERGY_TYPES = ['allergy', 'intolerance'];
+    const allergenLabel = (id) => allergenList?.find(a => a.id === id)?.short || id;
     let currentPatientId = null;
 
     function render(patientId) {
+        // Allergen names for the chips (loaded once, after login)
+        if (!allergenList) loadAllergens().then(() => { if (currentPatientId === patientId) render(patientId); });
         currentPatientId = patientId;
         const content = document.querySelector('.patient-tab-content[data-tab="conditions"]');
         if (!content) return;
@@ -38,6 +47,7 @@ const Conditions = (function() {
                     <span class="condition-card__name">${UI.escapeHtml(c.name)}</span>
                     <span class="condition-card__severity severity-${c.severity}">${UI.label('severity', c.severity)}</span>
                 </div>
+                ${c.allergens?.length ? `<div class="condition-card__allergens">${c.allergens.map(a => `<span class="allergen-chip">${UI.escapeHtml(allergenLabel(a))}</span>`).join('')}</div>` : ''}
                 ${c.description ? `<p class="condition-card__description">${UI.escapeHtml(c.description)}</p>` : ''}
                 ${c.dietaryNotes ? `<div><strong>Notas dietarias:</strong> ${UI.escapeHtml(c.dietaryNotes)}</div>` : ''}
                 ${c.medications ? `<div><strong>Medicación:</strong> ${UI.escapeHtml(c.medications)}</div>` : ''}
@@ -49,15 +59,32 @@ const Conditions = (function() {
         `).join('')}</div>`;
     }
 
-    function showAddModal() {
+    async function showAddModal() {
         if (!currentPatientId) return;
+        await loadAllergens();
         UI.openModal({ title: 'Agregar condición', content: createForm(), confirmText: 'Agregar', onConfirm: handleSave, size: 'medium' });
     }
 
-    function showEditModal(id) {
+    async function showEditModal(id) {
         const c = State.getPatientConditions(currentPatientId).find(x => x.id === id);
         if (!c) return;
+        await loadAllergens();
         UI.openModal({ title: 'Editar condición', content: createForm(c), confirmText: 'Guardar', onConfirm: () => handleSave(id), size: 'medium' });
+    }
+
+    // Checkboxes of the 14 allergens, visible for allergies and intolerances
+    function allergenPicker(condition) {
+        const chosen = new Set(condition.allergens || []);
+        const hidden = !ALLERGY_TYPES.includes(condition.type || 'condition');
+        return `
+            <div class="form-group" id="condition-allergens-group" ${hidden ? 'hidden' : ''}>
+                <label class="form-label">Alérgenos <small>(los 14 de declaración obligatoria)</small></label>
+                <div class="allergen-picker">
+                    ${(allergenList || []).map(a => `<label class="allergen-picker__item">
+                        <input type="checkbox" value="${UI.escapeHtml(a.id)}" ${chosen.has(a.id) ? 'checked' : ''}> ${UI.escapeHtml(a.label)}</label>`).join('')}
+                </div>
+                <p class="text-muted">Si no marcás ninguno, se deducen del nombre ("Intolerancia a la lactosa" → lácteos). Se cruzan con los alimentos de las recetas y del planificador.</p>
+            </div>`;
     }
 
     function createForm(condition = {}) {
@@ -70,8 +97,9 @@ const Conditions = (function() {
             </div>
             <div class="form-group">
                 <label class="form-label" for="condition-name">Nombre *</label>
-                <input type="text" id="condition-name" class="form-input" value="${UI.escapeHtml(condition.name ? UI.escapeHtml(condition.name) : '')}" placeholder="e.g., Gluten Intolerance" required>
+                <input type="text" id="condition-name" class="form-input" value="${UI.escapeHtml(condition.name || '')}" placeholder="Ej.: Enfermedad celíaca, Alergia al maní" required>
             </div>
+            ${allergenPicker(condition)}
             <div class="form-group">
                 <label class="form-label" for="condition-severity">Severidad</label>
                 <select id="condition-severity" class="form-select">
@@ -102,6 +130,10 @@ const Conditions = (function() {
             dietaryNotes: document.getElementById('condition-dietary')?.value.trim(),
             medications: document.getElementById('condition-medications')?.value.trim()
         };
+        if (ALLERGY_TYPES.includes(data.type)) {
+            const checked = [...document.querySelectorAll('#condition-allergens-group input:checked')].map(i => i.value);
+            if (checked.length || existingId) data.allergens = checked.length ? checked : undefined;
+        } else data.allergens = [];
         if (!data.name) { UI.toastError('El nombre es obligatorio'); return false; }
         try {
             if (existingId) { await State.updatePatientCondition(existingId, data); UI.toastSuccess('Condición actualizada'); }
@@ -109,6 +141,13 @@ const Conditions = (function() {
             render(currentPatientId); return true;
         } catch (e) { UI.toastError(e.message); return false; }
     }
+
+    // Allergen checkboxes only for allergies and intolerances
+    document.addEventListener('change', (e) => {
+        if (e.target.id !== 'condition-type') return;
+        const group = document.getElementById('condition-allergens-group');
+        if (group) group.hidden = !ALLERGY_TYPES.includes(e.target.value);
+    });
 
     document.addEventListener('click', (e) => {
         if (e.target.closest('#btn-add-condition')) showAddModal();

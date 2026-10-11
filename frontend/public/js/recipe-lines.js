@@ -37,7 +37,8 @@ const RecipeLines = (function() {
         return `
             <div class="ingredient-item" data-index="${idx}">
                 <div class="ingredient-item__main">
-                    <span class="ingredient-item__name">${UI.escapeHtml(ing.name)}</span>
+                    <span class="ingredient-item__name">${UI.escapeHtml(ing.name)}${(ing.allergens || []).map(a =>
+                        ` <span class="allergen-chip" title="Alérgeno (${a.source === 'manual' ? 'marcado a mano' : a.source === 'off' ? 'Open Food Facts' : 'reglas'})">${UI.escapeHtml(a.label)}</span>`).join('')}</span>
                     <input type="number" class="ingredient-item__grams" value="${UI.escapeHtml(line.qty)}" min="0" step="any"
                            data-qty-idx="${idx}" aria-label="Cantidad">
                     <select class="ingredient-item__unit" data-unit-idx="${idx}" aria-label="Unidad">${options.join('')}</select>
@@ -52,9 +53,21 @@ const RecipeLines = (function() {
             </div>`;
     }
 
+    // Allergens of the whole recipe (union of its foods)
+    function allergenSummary(lines) {
+        const found = new Map();
+        for (const line of lines) {
+            for (const a of State.getIngredient(line.ingredientId)?.allergens || []) found.set(a.allergen, a.label);
+        }
+        return found.size
+            ? `<p class="recipe-allergens">⚠ Contiene: <strong>${[...found.values()].map(UI.escapeHtml).join(', ')}</strong>
+                <small>(según el nombre de cada alimento; revisá las etiquetas)</small></p>`
+            : '';
+    }
+
     function render(lines) {
         if (!lines.length) return '<p class="empty-message">Todavía no hay alimentos. Buscalos y elegilos abajo.</p>';
-        return lines.map(lineHtml).join('');
+        return allergenSummary(lines) + lines.map(lineHtml).join('');
     }
 
     /**
