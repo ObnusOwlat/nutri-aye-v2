@@ -1,7 +1,8 @@
 /**
  * recipe-ingredient-search.js - Food search of the recipe editor (dropdown,
  * keyboard navigation). Calls onPick(food) with the chosen food. Same filters
- * as the Alimentos tab: group, origin and "⭐ Paraguay" (local foods first).
+ * as the Alimentos tab: group, origin and "Ocultar importados" (FoodPrefs,
+ * shared with Alimentos); ⭐ local foods first.
  */
 
 const RecipeIngredientSearch = (function() {
@@ -23,15 +24,17 @@ const RecipeIngredientSearch = (function() {
         const category = document.getElementById('recipe-food-category');
         category?.addEventListener('change', () => { loadSubgroups(category.value); filterIngredients(input?.value || ''); });
         document.getElementById('recipe-food-subgroup')?.addEventListener('change', () => filterIngredients(input?.value || ''));
-        document.getElementById('recipe-food-py')?.addEventListener('change', () => filterIngredients(input?.value || ''));
+        document.getElementById('recipe-food-py')?.addEventListener('change', (e) => {
+            FoodPrefs.setHideImported(e.target.checked);
+            filterIngredients(input?.value || '');
+        });
         filterIngredients(input?.value || '');
     }
 
     function filters() {
         const category = document.getElementById('recipe-food-category')?.value || '';
         const subgroup = document.getElementById('recipe-food-subgroup')?.value || '';
-        const py = document.getElementById('recipe-food-py')?.checked;
-        return { category, subgroup: subgroup && category ? `${category}.${subgroup}` : '', py: py ? '1' : '' };
+        return { category, subgroup: subgroup && category ? `${category}.${subgroup}` : '', py: FoodPrefs.py() };
     }
     const hasFilters = () => { const f = filters(); return !!(f.category || f.subgroup); };
 
@@ -73,7 +76,7 @@ const RecipeIngredientSearch = (function() {
     function filterIngredients(query) {
         const q = (query || '').trim();
         clearTimeout(searchTimer);
-        if (!q && !hasFilters()) return renderDropdown(sortPy(defaults));
+        if (!q && !hasFilters()) return renderDropdown(sortPy(defaults.filter(FoodPrefs.allows)));
         searchTimer = setTimeout(() => searchIngredients(q), 200);
     }
 
@@ -82,7 +85,7 @@ const RecipeIngredientSearch = (function() {
         const f = filters();
         const local = State.getIngredients().filter(ing => (!q || ing.name.toLowerCase().includes(q.toLowerCase()))
             && (!f.category || ing.category === f.category) && (!f.subgroup || `${ing.category}.${ing.subgroup}` === f.subgroup)
-            && (!f.py || ing.availablePy));
+            && FoodPrefs.allows(ing));
         let remote = [];
         const params = new URLSearchParams({ limit: 30 });
         if (q) params.set('search', q);

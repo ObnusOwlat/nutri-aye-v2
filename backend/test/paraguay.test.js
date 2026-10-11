@@ -31,6 +31,9 @@ test('catalog search: ⭐ first, py filter and count; edited names are kept', as
     assert.equal(only.body.pagination.total, 2);
     const facets = await api().get('/api/ingredients/facets?scope=catalog&search=PYT');
     assert.equal(facets.body.data.py, 2);
+    assert.equal(facets.body.data.total, 3);   // 1 imported, hidden by "Ocultar importados"
+    const hidden = await api().get('/api/ingredients/facets?scope=catalog&search=PYT&py=1');
+    assert.equal(hidden.body.data.total, 3);   // the imported count does not depend on hiding them
     const own = (await api().post('/api/ingredients').send({ name: 'Mi alimento raro', category: 'mixed', kcalPer100g: 10 })).body.data;
     assert.equal(own.availablePy, true);
 });
