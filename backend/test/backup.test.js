@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { api, db, createIngredient, createPatient, createRecipe } = require('./helpers');
 
-test('backup round trip restores deleted data without touching the rest', async () => {
+test('backup round trip brings back deactivated data without touching the rest', async () => {
     const rice = await createIngredient({ name: 'Arroz respaldo' });
     const recipe = await createRecipe(rice.id, { name: 'Receta respaldo' });
     const patient = await createPatient({ firstName: 'Respaldo' });
@@ -13,10 +13,12 @@ test('backup round trip restores deleted data without touching the rest', async 
 
     const backup = (await api().get('/api/backup/export')).body;
     assert.equal(backup.format, 'nutri-aye-backup');
-    assert.equal(backup.version, 4);
+    assert.equal(backup.version, 5);
 
-    // Lose the patient (cascades to metrics, conditions and planner) and the recipe
+    // Deactivate the patient and the recipe: they disappear from the app but stay in the database
     await api().delete(`/api/patients/${patient.id}`);
+    assert.equal((await api().get(`/api/patients/${patient.id}`)).status, 404);
+    assert.ok(db.prepare('SELECT deactivated_at FROM patients WHERE id = ?').get(patient.id).deactivated_at);
     await api().delete(`/api/recipes/${recipe.id}`);
     const other = await createPatient({ firstName: 'Nuevo después del respaldo' });
 
@@ -38,9 +40,9 @@ test('backup round trip restores deleted data without touching the rest', async 
 test('a backup with broken references imports nothing', async () => {
     const before = db.prepare('SELECT COUNT(*) AS n FROM patients').get().n;
     const res = await api().post('/api/backup/import').send({
-        format: 'nutri-aye-backup', version: 4,
+        format: 'nutri-aye-backup', version: 5,
         tables: {
-            patients: [{ id: 'p-huerfano', first_name: 'A', last_name: 'B' }],
+            patients: [{ id: 'p-huerfano', first_name: 'A', last_name: 'B', created_at: '2026-01-01', updated_at: '2026-01-01' }],
             patient_metrics: [{ id: 'm1', patient_id: 'no-existe', date: '2026-01-01' }]
         }
     });
@@ -50,5 +52,5 @@ test('a backup with broken references imports nothing', async () => {
 
 test('migrations are recorded', () => {
     const versions = db.prepare('SELECT version FROM schema_version ORDER BY version').all().map(r => r.version);
-    assert.deepEqual(versions.slice(0, 2), [1, 2]);
+    assert.deepEqual(versions, [1, 2, 3, 4]);
 });

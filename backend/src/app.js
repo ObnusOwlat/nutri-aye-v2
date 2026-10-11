@@ -11,6 +11,7 @@ const { migrate } = require('./db/migrations');
 
 // The schema must exist before the repos prepare their statements
 migrate();
+const { authenticate, sameOrigin } = require('./middleware/auth');
 
 const app = express();
 app.disable('x-powered-by');
@@ -60,8 +61,13 @@ app.use(express.static(PUBLIC_DIR, {
     setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
 }));
 
+// Writes from other websites are rejected; every API route needs a session
+// and a role allowed by lib/permissions.js (except login/health)
+app.use(sameOrigin);
+app.use(authenticate);
+
 const ROUTES = [
-    'stats', 'ingredients', 'nutrients', 'recipes',
+    'auth', 'users', 'stats', 'ingredients', 'nutrients', 'recipes',
     'patients/index', 'patients/records', 'patients/billing-link',
     'sync', 'backup', 'planner',
     'billing/company', 'billing/clients', 'billing/documents', 'billing/payment-methods'

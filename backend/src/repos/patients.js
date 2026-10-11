@@ -1,4 +1,5 @@
-// Patients with their metrics and conditions
+// Patients of a consultorio with their metrics and conditions. ctx = { orgId, userId }.
+// Nothing is deleted: "delete" deactivates the patient (or the metric/condition).
 const { db } = require('../db/connection');
 const { transformPatient, transformMetric, transformCondition } = require('../transforms');
 const { newId, nowIso } = require('../lib/http');
@@ -15,14 +16,18 @@ const COLUMNS = FIELDS.map(([, column]) => column);
 const pick = (data, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), data);
 
 const stmts = {
-    byId: db.prepare('SELECT * FROM patients WHERE id = ?'),
+    byId: db.prepare('SELECT * FROM patients WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
     insert: db.prepare(`
-        INSERT INTO patients (id, ${COLUMNS.join(', ')}, created_at, updated_at)
-        VALUES (@id, ${COLUMNS.map(c => `@${c}`).join(', ')}, @now, @now)
+        INSERT INTO patients (id, org_id, ${COLUMNS.join(', ')}, created_at, updated_at)
+        VALUES (@id, @orgId, ${COLUMNS.map(c => `@${c}`).join(', ')}, @now, @now)
     `),
-    remove: db.prepare('DELETE FROM patients WHERE id = ?'),
-    recentMetrics: db.prepare('SELECT * FROM patient_metrics WHERE patient_id = ? ORDER BY date DESC LIMIT 10'),
-    conditions: db.prepare('SELECT * FROM patient_conditions WHERE patient_id = ? ORDER BY created_at'),
+    deactivate: db.prepare(`
+        UPDATE patients SET deactivated_at = @now, deactivated_by = @userId
+        WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL
+    `),
+    reactivate: db.prepare('UPDATE patients SET deactivated_at = NULL, deactivated_by = NULL WHERE id = @id AND org_id = @orgId'),
+    recentMetrics: db.prepare('SELECT * FROM patient_metrics WHERE patient_id = ? AND deactivated_at IS NULL ORDER BY date DESC LIMIT 10'),
+    conditions: db.prepare('SELECT * FROM patient_conditions WHERE patient_id = ? AND deactivated_at IS NULL ORDER BY created_at'),
     insertMetric: db.prepare(`
         INSERT INTO patient_metrics (id, patient_id, date, weight, height, bmi, bmi_category,
             body_fat, muscle_mass, waist, chest, hips, activity_level, notes)
@@ -30,20 +35,26 @@ const stmts = {
             @bodyFat, @muscleMass, @waist, @chest, @hips, @activityLevel, @notes)
     `),
     metricById: db.prepare('SELECT * FROM patient_metrics WHERE id = ?'),
-    removeMetric: db.prepare('DELETE FROM patient_metrics WHERE id = ? AND patient_id = ?'),
+    deactivateMetric: db.prepare(`
+        UPDATE patient_metrics SET deactivated_at = @now, deactivated_by = @userId
+        WHERE id = @id AND patient_id = @patientId AND deactivated_at IS NULL
+    `),
     insertCondition: db.prepare(`
         INSERT INTO patient_conditions (id, patient_id, type, name, severity, description, dietary_notes, medications)
         VALUES (@id, @patientId, @type, @name, @severity, @description, @dietaryNotes, @medications)
     `),
     conditionById: db.prepare('SELECT * FROM patient_conditions WHERE id = ?'),
-    removeCondition: db.prepare('DELETE FROM patient_conditions WHERE id = ? AND patient_id = ?')
+    deactivateCondition: db.prepare(`
+        UPDATE patient_conditions SET deactivated_at = @now, deactivated_by = @userId
+        WHERE id = @id AND patient_id = @patientId AND deactivated_at IS NULL
+    `)
 };
 
-function list({ search = '', limit, offset }) {
-    let where = '1=1';
-    const params = [];
+function list(ctx, { search = '', limit, offset }) {
+    let where = 'org_id = ? AND deactivated_at IS NULL';
+    const params = [ctx.orgId];
     if (search) {
-        where = '(unaccent(first_name) LIKE unaccent(?) OR unaccent(last_name) LIKE unaccent(?) OR LOWER(email) LIKE LOWER(?) OR phone LIKE ?)';
+        where += ' AND (unaccent(first_name) LIKE unaccent(?) OR unaccent(last_name) LIKE unaccent(?) OR LOWER(email) LIKE LOWER(?) OR phone LIKE ?)';
         const s = `%${search}%`;
         params.push(s, s, s, s);
     }
@@ -52,11 +63,11 @@ function list({ search = '', limit, offset }) {
     return { rows: rows.map(transformPatient), total };
 }
 
-const getById = (id) => transformPatient(stmts.byId.get(id));
-const exists = (id) => !!stmts.byId.get(id);
+const getById = (ctx, id) => transformPatient(stmts.byId.get({ id, orgId: ctx.orgId }));
+const exists = (ctx, id) => !!stmts.byId.get({ id, orgId: ctx.orgId });
 
-function getDetail(id) {
-    const patient = getById(id);
+function getDetail(ctx, id) {
+    const patient = getById(ctx, id);
     if (!patient) return null;
     const conditions = stmts.conditions.all(id).map(transformCondition);
     return {
@@ -67,26 +78,27 @@ function getDetail(id) {
     };
 }
 
-function create(data) {
+function create(ctx, data) {
     const id = newId();
     const params = Object.fromEntries(FIELDS.map(([path, column]) => [column, pick(data, path) ?? null]));
-    stmts.insert.run({ ...params, status: params.status || 'active', id, now: nowIso() });
-    return getById(id);
+    stmts.insert.run({ ...params, status: params.status || 'active', id, orgId: ctx.orgId, now: nowIso() });
+    return getById(ctx, id);
 }
 
 // Only the fields present in the request change
-function update(id, data) {
-    if (!exists(id)) return null;
+function update(ctx, id, data) {
+    if (!exists(ctx, id)) return null;
     const changes = FIELDS.filter(([path]) => pick(data, path) !== undefined);
     if (changes.length) {
         const sets = changes.map(([, column]) => `${column} = @${column}`).join(', ');
         const params = Object.fromEntries(changes.map(([path, column]) => [column, pick(data, path)]));
         db.prepare(`UPDATE patients SET ${sets}, updated_at = @now WHERE id = @id`).run({ ...params, id, now: nowIso() });
     }
-    return getById(id);
+    return getById(ctx, id);
 }
 
-const remove = (id) => stmts.remove.run(id).changes > 0;
+const deactivate = (ctx, id) => stmts.deactivate.run({ id, orgId: ctx.orgId, userId: ctx.userId, now: nowIso() }).changes > 0;
+const reactivate = (ctx, id) => stmts.reactivate.run({ id, orgId: ctx.orgId }).changes > 0;
 
 function addMetric(patientId, data) {
     const id = newId();
@@ -100,7 +112,8 @@ function addMetric(patientId, data) {
     return transformMetric(stmts.metricById.get(id));
 }
 
-const removeMetric = (patientId, metricId) => stmts.removeMetric.run(metricId, patientId).changes > 0;
+const deactivateMetric = (ctx, patientId, id) =>
+    stmts.deactivateMetric.run({ id, patientId, userId: ctx.userId, now: nowIso() }).changes > 0;
 
 function addCondition(patientId, data) {
     const id = newId();
@@ -111,17 +124,23 @@ function addCondition(patientId, data) {
     return transformCondition(stmts.conditionById.get(id));
 }
 
-const removeCondition = (patientId, conditionId) => stmts.removeCondition.run(conditionId, patientId).changes > 0;
+const deactivateCondition = (ctx, patientId, id) =>
+    stmts.deactivateCondition.run({ id, patientId, userId: ctx.userId, now: nowIso() }).changes > 0;
 
 const allergiesOf = (conditions) => conditions.filter(c => c.type === 'allergy' || c.type === 'intolerance').map(c => c.name);
 const allergies = (patientId) => allergiesOf(stmts.conditions.all(patientId).map(transformCondition));
 
-const listAll = () => db.prepare('SELECT * FROM patients ORDER BY last_name, first_name').all().map(transformPatient);
-const listAllMetrics = () => db.prepare('SELECT * FROM patient_metrics ORDER BY date').all().map(transformMetric);
-const listAllConditions = () => db.prepare('SELECT * FROM patient_conditions ORDER BY created_at').all().map(transformCondition);
+// Everything active of the consultorio (browser sync)
+const ACTIVE_PATIENTS = 'SELECT id FROM patients WHERE org_id = ? AND deactivated_at IS NULL';
+const listAll = (ctx) => db.prepare('SELECT * FROM patients WHERE org_id = ? AND deactivated_at IS NULL ORDER BY last_name, first_name')
+    .all(ctx.orgId).map(transformPatient);
+const listAllMetrics = (ctx) => db.prepare(`SELECT * FROM patient_metrics WHERE deactivated_at IS NULL AND patient_id IN (${ACTIVE_PATIENTS}) ORDER BY date`)
+    .all(ctx.orgId).map(transformMetric);
+const listAllConditions = (ctx) => db.prepare(`SELECT * FROM patient_conditions WHERE deactivated_at IS NULL AND patient_id IN (${ACTIVE_PATIENTS}) ORDER BY created_at`)
+    .all(ctx.orgId).map(transformCondition);
 
 module.exports = {
-    list, getById, exists, getDetail, create, update, remove,
-    addMetric, removeMetric, addCondition, removeCondition, allergies,
+    list, getById, exists, getDetail, create, update, deactivate, reactivate,
+    addMetric, deactivateMetric, addCondition, deactivateCondition, allergies,
     listAll, listAllMetrics, listAllConditions
 };

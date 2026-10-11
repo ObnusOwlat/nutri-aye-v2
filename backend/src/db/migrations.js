@@ -10,6 +10,8 @@ const { createNutrientTables } = require('./schema/nutrients');
 const { createPlannerTables } = require('./schema/planner');
 const { createBillingTables } = require('./schema/billing');
 const { createViews } = require('./schema/views');
+const { createOrganizationTables } = require('./schema/organizations');
+const { rebuildDocumentTables } = require('./schema/billing-numbering');
 
 const MIGRATIONS = [
     {
@@ -36,6 +38,18 @@ const MIGRATIONS = [
                 UPDATE billing_clients SET country = 'Paraguay' WHERE country = 'USA';
             `);
         }
+    },
+    {
+        version: 3,
+        name: 'consultorios, usuarios, sesiones y desactivación en lugar de borrado',
+        up: createOrganizationTables
+    },
+    {
+        version: 4,
+        name: 'numeración de facturas y presupuestos por consultorio',
+        foreignKeysOff: true,
+        checkTables: ['billing_invoices', 'billing_quotes', 'billing_invoice_items', 'billing_quote_items'],
+        up: rebuildDocumentTables
     }
 ];
 
@@ -45,10 +59,18 @@ function migrate() {
     )`);
     const current = db.prepare('SELECT COALESCE(MAX(version), 0) AS v FROM schema_version').get().v;
     for (const m of MIGRATIONS.filter(x => x.version > current)) {
-        db.transaction(() => {
-            m.up(db);
-            db.prepare('INSERT INTO schema_version (version, name) VALUES (?, ?)').run(m.version, m.name);
-        })();
+        // Table rebuilds need foreign keys off (cannot change inside a transaction)
+        if (m.foreignKeysOff) db.pragma('foreign_keys = OFF');
+        try {
+            db.transaction(() => {
+                m.up(db);
+                const broken = (m.checkTables || []).flatMap(t => db.pragma(`foreign_key_check(${t})`));
+                if (broken.length) throw new Error(`La migración ${m.version} dejaría referencias rotas`);
+                db.prepare('INSERT INTO schema_version (version, name) VALUES (?, ?)').run(m.version, m.name);
+            })();
+        } finally {
+            if (m.foreignKeysOff) db.pragma('foreign_keys = ON');
+        }
         logger.info({ version: m.version }, `Migración aplicada: ${m.name}`);
     }
 }

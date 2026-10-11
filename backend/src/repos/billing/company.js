@@ -1,13 +1,13 @@
-// The consultorio's billing profile and PDF settings (one row each for now)
+// The consultorio's billing profile and PDF settings (one row per consultorio)
 const { db } = require('../../db/connection');
 const { camelizeRow } = require('../../transforms');
 const { newId, nowIso } = require('../../lib/http');
 
 const stmts = {
-    get: db.prepare('SELECT * FROM billing_company LIMIT 1'),
+    get: db.prepare('SELECT * FROM billing_company WHERE org_id = ? LIMIT 1'),
     insert: db.prepare(`
-        INSERT INTO billing_company (id, name, email, phone, address, city, country, currency, vat_id, website, created_at, updated_at)
-        VALUES (@id, @name, @email, @phone, @address, @city, @country, @currency, @vatId, @website, @now, @now)
+        INSERT INTO billing_company (id, org_id, name, email, phone, address, city, country, currency, vat_id, website, created_at, updated_at)
+        VALUES (@id, @orgId, @name, @email, @phone, @address, @city, @country, @currency, @vatId, @website, @now, @now)
     `),
     update: db.prepare(`
         UPDATE billing_company SET name = @name, email = @email, phone = @phone, address = @address, city = @city,
@@ -26,45 +26,46 @@ const stmts = {
     `)
 };
 
-const getRow = () => stmts.get.get();
-const get = () => camelizeRow(getRow()) || null;
+const getRow = (ctx) => stmts.get.get(ctx.orgId);
+const get = (ctx) => camelizeRow(getRow(ctx)) || null;
 
-function save(data) {
-    const existing = getRow();
+function save(ctx, data) {
+    const existing = getRow(ctx);
     const params = {
         name: data.name, email: data.email ?? null, phone: data.phone ?? null, address: data.address ?? null,
         city: data.city ?? null, country: data.country, currency: data.currency, vatId: data.vatId ?? null,
         website: data.website ?? null, now: nowIso()
     };
     if (existing) stmts.update.run({ ...params, id: existing.id });
-    else stmts.insert.run({ ...params, id: newId() });
-    return get();
+    else stmts.insert.run({ ...params, id: newId(), orgId: ctx.orgId });
+    return get(ctx);
 }
 
-function getPdfConfig() {
-    const company = getRow();
+function getPdfConfig(ctx) {
+    const company = getRow(ctx);
     return company ? camelizeRow(stmts.pdfConfig.get(company.id)) || null : null;
 }
 
 // null when the company is not configured yet
-function savePdfConfig(data) {
-    const company = getRow();
+function savePdfConfig(ctx, data) {
+    const company = getRow(ctx);
     if (!company) return null;
     const params = { ...data, includeLogo: data.includeLogo ? 1 : 0, logoB64: data.logoB64 ?? null, companyId: company.id };
     if (stmts.pdfConfig.get(company.id)) stmts.updatePdf.run(params);
     else stmts.insertPdf.run({ ...params, id: newId() });
-    return getPdfConfig();
+    return getPdfConfig(ctx);
 }
 
-function dashboard() {
-    const count = (sql) => db.prepare(sql).get().n;
+function dashboard(ctx) {
+    const active = 'org_id = @orgId AND deactivated_at IS NULL';
+    const count = (sql) => db.prepare(sql).get({ orgId: ctx.orgId }).n;
     return {
-        totalClients: count('SELECT COUNT(*) AS n FROM billing_clients'),
-        totalInvoices: count('SELECT COUNT(*) AS n FROM billing_invoices'),
-        totalQuotes: count('SELECT COUNT(*) AS n FROM billing_quotes'),
-        paidInvoices: count("SELECT COUNT(*) AS n FROM billing_invoices WHERE status = 'PAID'"),
-        totalRevenue: count("SELECT COALESCE(SUM(total), 0) AS n FROM billing_invoices WHERE status = 'PAID'"),
-        pendingRevenue: count("SELECT COALESCE(SUM(total), 0) AS n FROM billing_invoices WHERE status IN ('UNPAID', 'OVERDUE')")
+        totalClients: count(`SELECT COUNT(*) AS n FROM billing_clients WHERE ${active}`),
+        totalInvoices: count(`SELECT COUNT(*) AS n FROM billing_invoices WHERE ${active}`),
+        totalQuotes: count(`SELECT COUNT(*) AS n FROM billing_quotes WHERE ${active}`),
+        paidInvoices: count(`SELECT COUNT(*) AS n FROM billing_invoices WHERE ${active} AND status = 'PAID'`),
+        totalRevenue: count(`SELECT COALESCE(SUM(total), 0) AS n FROM billing_invoices WHERE ${active} AND status = 'PAID'`),
+        pendingRevenue: count(`SELECT COALESCE(SUM(total), 0) AS n FROM billing_invoices WHERE ${active} AND status IN ('UNPAID', 'OVERDUE')`)
     };
 }
 

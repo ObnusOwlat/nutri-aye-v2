@@ -38,8 +38,6 @@ test('company, pdf config, clients, invoices, quotes, payment methods, dashboard
     assert.equal(stats.totalRevenue, 140000);
     assert.equal(stats.paidInvoices, 1);
 
-    // A client with documents cannot be deleted
-    assert.equal((await api().delete(`/billing-api/clients/${client.id}`)).status, 409);
     assert.equal((await api().delete(`/billing-api/quotes/${quote.id}`)).status, 200);
     assert.equal((await api().delete(`/billing-api/invoices/${invoice.id}`)).status, 200);
     assert.equal((await api().delete(`/billing-api/payment-methods/${method.id}`)).status, 200);

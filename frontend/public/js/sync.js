@@ -28,7 +28,7 @@ const Sync = (function() {
 
         // First visit (nothing stored in this browser): bring the server data
         if (isOnline && !State.getPatients().length && !State.getRecipes().length) {
-            pullFromBackend()
+            Auth.ready.then(pullFromBackend)
                 .catch(e => console.warn('[Sync] Initial load failed:', e.message));
         }
     }

@@ -75,14 +75,19 @@ test('nutrient catalog and richest-in-nutrient ranking', async () => {
     assert.equal(detail.body.data.nutrients[0].name, 'Hierro');
 });
 
-test('missing ingredients return 404; ingredients used in recipes cannot be deleted', async () => {
+test('missing ingredients return 404; deactivating a food keeps the recipes that use it', async () => {
     assert.equal((await api().put('/api/ingredients/nope').send({ kcalPer100g: 1 })).status, 404);
     assert.equal((await api().delete('/api/ingredients/nope')).status, 404);
     const ing = await createIngredient({ name: 'En uso' });
     await api().post('/api/recipes').send({ name: 'R', category: 'lunch', ingredients: [{ ingredientId: ing.id, grams: 10 }] });
-    const del = await api().delete(`/api/ingredients/${ing.id}`);
-    assert.equal(del.status, 409);
-    assert.equal(del.body.code, 'CONFLICT');
+    const recipe = (await api().get('/api/recipes?search=R')).body.data.find(r => r.name === 'R');
+    assert.equal((await api().delete(`/api/ingredients/${ing.id}`)).status, 200);
+    assert.equal((await api().get(`/api/ingredients/${ing.id}`)).status, 404);
+    assert.ok(!(await api().get('/api/ingredients?search=en%20uso')).body.data.length);
+    // The recipe still sums it, and the row is still in the database
+    assert.ok((await api().get(`/api/recipes/${recipe.id}`)).body.data.nutrition.calories > 0);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM ingredients WHERE id = ?').get(ing.id).n, 1);
+    assert.equal((await api().post(`/api/ingredients/${ing.id}/reactivate`)).status, 200);
 });
 
 test('updating one vitamin keeps the rest (every nutrient column is writable)', async () => {

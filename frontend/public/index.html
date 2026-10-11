@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,11 +15,15 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/patients.css">
+    <link rel="stylesheet" href="css/auth.css">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2322c55e'/><text x='50' y='68' text-anchor='middle' font-size='55' font-family='system-ui' font-weight='bold' fill='white'>N</text></svg>">
 </head>
-<body>
+<body class="auth-pending">
+    <!-- Login / first admin (auth.js) -->
+    <div id="auth-screen" class="auth-screen"></div>
+
     <!-- Header -->
     <header class="header">
         <div class="header__container">
@@ -33,6 +37,7 @@
                     <span class="btn__icon">&#9632;</span>
                     <span class="btn__text">Print</span>
                 </button>
+                <div class="user-menu" id="user-menu"></div>
             </div>
         </div>
     </header>
@@ -243,8 +248,10 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- Scripts -->
+    <script src="js/auth.js"></script>
     <script src="js/state.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/users-admin.js"></script>
     <script src="js/ingredients.js"></script>
     <script src="js/recipes.js"></script>
     <script src="js/planner.js"></script>
