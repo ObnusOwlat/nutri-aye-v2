@@ -28,7 +28,7 @@ const datasetOrder = f => (/foundation/i.test(f) ? 0 : 1);
 files.sort((a, b) => datasetOrder(a) - datasetOrder(b));
 
 if (files.length === 0) {
-    console.error(`No FoodData_Central_*.json files found in ${usdaDir}`);
+    console.error(`No se encontraron archivos FoodData_Central_*.json en ${usdaDir}`);
     process.exit(1);
 }
 
@@ -231,13 +231,13 @@ const importFoods = db.transaction((foods, source) => {
 });
 
 for (const file of files) {
-    console.log(`Reading ${path.basename(file)}...`);
+    console.log(`Leyendo ${path.basename(file)}...`);
     const data = JSON.parse(fs.readFileSync(file, 'utf8'));
     const [key] = Object.keys(data);
     const source = /foundation/i.test(key) ? 'usda_foundation' : 'usda_sr_legacy';
     const before = totals.foods;
     importFoods(data[key], source);
-    console.log(`  ${source}: ${totals.foods - before} foods`);
+    console.log(`  ${source}: ${totals.foods - before} alimentos`);
 }
 
 // Nutrients only present in skipped foods were created by earlier runs: name them too
@@ -248,10 +248,10 @@ db.transaction(() => {
 
 const count = (sql) => db.prepare(sql).get().c;
 console.log(`
-Imported/updated: ${totals.foods} foods
-Skipped:          ${totals.skippedDuplicate} with an NDB number already imported, ${totals.skippedNoEnergy} without energy data (partial analyses)
-Nutrient values:  ${totals.nutrientValues}
-Portions:         ${totals.portions}
-Nutrients in catalog: ${count('SELECT COUNT(*) AS c FROM nutrients')}
-Total ingredients:    ${count('SELECT COUNT(*) AS c FROM ingredients')}`);
+Importados/actualizados: ${totals.foods} alimentos
+Omitidos:                ${totals.skippedDuplicate} con número NDB ya importado, ${totals.skippedNoEnergy} sin datos de energía (análisis parciales)
+Valores de nutrientes:   ${totals.nutrientValues}
+Porciones:               ${totals.portions}
+Nutrientes en catálogo:  ${count('SELECT COUNT(*) AS c FROM nutrients')}
+Alimentos en total:      ${count('SELECT COUNT(*) AS c FROM ingredients')}`);
 db.close();

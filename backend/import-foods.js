@@ -57,5 +57,5 @@ const run = db.transaction(() => {
 run();
 
 const total = db.prepare('SELECT COUNT(*) AS c FROM ingredients').get().c;
-console.log(`Imported: ${imported}, skipped (duplicate name): ${skipped}, total ingredients: ${total}`);
+console.log(`Importados: ${imported}, omitidos (nombre repetido): ${skipped}, alimentos en total: ${total}`);
 db.close();

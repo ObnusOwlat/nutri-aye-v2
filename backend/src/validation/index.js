@@ -1,8 +1,9 @@
 // Request validation with zod; error messages in Spanish
 const { z } = require('zod');
 const { badRequest } = require('../lib/http');
+const { fieldLabel } = require('../labels');
 
-z.setErrorMap((issue, ctx) => {
+z.setErrorMap((issue) => {
     switch (issue.code) {
         case 'invalid_type':
             return { message: issue.received === 'undefined' ? 'Es obligatorio' : 'Tipo de dato inválido' };
@@ -17,8 +18,16 @@ z.setErrorMap((issue, ctx) => {
             return { message: `Valor inválido. Opciones: ${issue.options.join(', ')}` };
         case 'invalid_string':
             return { message: issue.validation === 'email' ? 'Email inválido' : 'Formato inválido' };
+        case 'invalid_date':
+            return { message: 'Fecha inválida' };
+        case 'invalid_literal':
+        case 'invalid_union':
+        case 'invalid_union_discriminator':
+            return { message: 'Valor no permitido' };
+        case 'not_multiple_of':
+            return { message: `Debe ser múltiplo de ${issue.multipleOf}` };
         default:
-            return { message: ctx.defaultError };
+            return { message: 'Valor inválido' };
     }
 });
 
@@ -35,7 +44,7 @@ function validate(schema, source = 'body') {
         const result = schema.safeParse(req[source] ?? {});
         if (!result.success) {
             const details = result.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }));
-            return next(badRequest(`Datos inválidos: ${details.map(d => `${d.field || 'cuerpo'} — ${d.message}`).join('; ')}`, details));
+            return next(badRequest(`Revisá los datos: ${details.map(d => `${fieldLabel(d.field)}: ${d.message.toLowerCase()}`).join('; ')}`, details));
         }
         req[source] = result.data;
         next();

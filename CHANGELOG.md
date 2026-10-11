@@ -13,6 +13,18 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 - El panel del Planner en pantalla llega después de la Fase 4.
 - **Tests:** de 57 a 60.
 
+## Fase 5 (backend): textos en español
+
+- **`src/labels.js`:** reúne los nombres en español de todos los valores guardados: tipos de comida, días, categorías, unidades, sexo, estados, nivel de actividad, condiciones, severidad, objetivos, roles, estados de factura y presupuesto, medios de pago, nutrientes y origen de los alimentos. Se sirven en `GET /api/labels`. Un test verifica que todo valor permitido tenga su nombre.
+- **Errores de validación:** nombran los campos en español. Por ejemplo: "Revisá los datos: nombre: no puede estar vacío; calorías por 100 g: tipo de dato inválido". En listas indican la fila. Los mensajes de zod que quedaban en inglés tienen su versión en español.
+- **"No encontrado":** concuerda con el sustantivo ("Receta no encontrada", "Paciente no encontrado").
+- **Migración 7:** nombres de categorías en español (Desayuno, Proteínas…) y abreviaturas de unidades (taza, cda, cdta).
+- **`seed-demo.js`:**
+  - Carga los datos de prueba en el primer consultorio. Desde la Fase 2 quedaban sin consultorio y no aparecían.
+  - `--remove` los desactiva en vez de borrarlos, y volver a correrlo los reactiva.
+- **Scripts de importación:** muestran sus mensajes en español.
+- **Tests:** un test revisa que no queden mensajes de error en inglés en el backend. De 66 a 71 tests.
+
 ## Fase 4: todo guardado en el server
 
 ### Backend

@@ -14,6 +14,7 @@ const { createOrganizationTables } = require('./schema/organizations');
 const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
+const { translateCatalogNames } = require('./schema/spanish-names');
 
 const MIGRATIONS = [
     {
@@ -62,6 +63,11 @@ const MIGRATIONS = [
         version: 6,
         name: 'todo en el servidor: actividad física, medidas, planes y plantillas',
         up: createServerFirstTables
+    },
+    {
+        version: 7,
+        name: 'nombres de categorías y unidades en español',
+        up: translateCatalogNames
     }
 ];
 
