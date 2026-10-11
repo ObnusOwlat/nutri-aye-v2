@@ -2,6 +2,17 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Planner: nutrientes de lo planificado (parte backend)
+
+- **`POST /api/nutrition/analyze` `{ recipeIds }`:** devuelve la lista de nutrientes y la cantidad de cada uno por receta. El navegador suma por día o semana, así que cambiar de día no hace otra consulta. Las recetas de otro consultorio o desactivadas se ignoran y vuelven en `skipped`. Es solo lectura: no queda en el registro de cambios.
+- **Nutrientes principales (`src/lib/key-nutrients.js`):**
+  - 26 nutrientes: energía, macros, fibra, azúcares, sodio, colesterol, 11 vitaminas y 6 minerales. Van marcados con `key: true`.
+  - Por cada ingrediente, el valor sale del dato USDA; si falta, del id USDA duplicado (Energía Atwater, Azúcares NLEA); si también falta, de la columna propia del alimento. Así los alimentos propios y los de calories-in también suman.
+  - El resto de los nutrientes USDA vienen con `key: false`, para la sección "Ver todos".
+- **Diferencia de fuente:** en algunas recetas las kcal pueden diferir un poco de las de la tarjeta (Omelette: 328 contra 324), porque la tarjeta usa la columna propia y el panel el dato USDA.
+- El panel del Planner en pantalla llega después de la Fase 4.
+- **Tests:** de 57 a 60.
+
 ## Fase 3: registro de cambios
 
 - **Tabla `audit_log` (migración 5):** guarda consultorio, usuario, acción, tipo de dato, id, paciente relacionado, cambios (antes → después de los campos que cambiaron), IP y fecha.
