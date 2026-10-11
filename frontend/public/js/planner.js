@@ -100,6 +100,7 @@ const Planner = (function() {
         State.subscribe('template:changed', renderWeekPlan);
         State.subscribe('dietProfile:updated', () => { updateDietDisplay(); });
         State.subscribe('recipes:updated', renderWeekPlan);
+        State.subscribe('plannerSuggestions:updated', renderWeekPlan);
     }
 
     /**
@@ -178,15 +179,10 @@ const Planner = (function() {
         const recipe = recipeId ? State.getRecipe(recipeId) : null;
 
         if (recipe) {
-            // Check for allergens if patient is selected
-            let allergenWarning = '';
-            const patientId = PlannerPatient.getSelectedId();
-            if (patientId) {
-                const check = State.checkRecipeAllergens(recipeId, patientId);
-                if (check.hasAllergens) {
-                    allergenWarning = `<span class="allergen-warning" title="Contains: ${UI.escapeHtml(check.allergens.join(', '))}">⚠</span>`;
-                }
-            }
+            // Warnings for the selected patient (allergens, conditions), from the sidebar's suggestions
+            const warnings = PlannerSidebar.warningsFor(recipeId);
+            const allergenWarning = warnings.length
+                ? `<span class="allergen-warning" title="${UI.escapeHtml(warnings.join(' · '))}">⚠</span>` : '';
 
             const nutrition = recipe.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
 

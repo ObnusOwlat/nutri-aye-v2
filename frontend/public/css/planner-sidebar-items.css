@@ -1,0 +1,118 @@
+/* planner-sidebar-items.css - Recetas arrastrables y actividad de la columna izquierda del planificador */
+
+/* ===========================================
+   RECIPES (draggable)
+   =========================================== */
+
+.sidebar-recipe {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--space-sm);
+    cursor: grab;
+    background: var(--color-bg-alt);
+    font-size: var(--font-size-sm);
+}
+
+.sidebar-recipe:hover {
+    border-color: var(--color-primary);
+}
+
+.sidebar-recipe:active {
+    cursor: grabbing;
+}
+
+.sidebar-recipe--excluded {
+    opacity: 0.6;
+    border-style: dashed;
+}
+
+.sidebar-recipe__top {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.sidebar-recipe__top span {
+    white-space: nowrap;
+    color: var(--color-primary-dark);
+    font-weight: 600;
+}
+
+.sidebar-recipe__meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+}
+
+.sidebar-recipe__why {
+    list-style: none;
+    margin: var(--space-xs) 0 0;
+    padding: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-primary-dark);
+}
+
+.sidebar-recipe__why .warn {
+    color: var(--color-danger-dark);
+}
+
+.meal-slot--drop {
+    outline: 2px dashed var(--color-primary);
+    outline-offset: -2px;
+    background: var(--color-primary-light);
+}
+
+/* ===========================================
+   ACTIVITY
+   =========================================== */
+
+.sidebar-field {
+    display: flex;
+    flex-direction: column;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    gap: 2px;
+}
+
+.sidebar-activity__calc {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.sidebar-activity__kcal {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-primary-dark);
+}
+
+.sidebar-activity__kcal small {
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    color: var(--color-text-light);
+}
+
+.sidebar-exercise {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-sm);
+}
+
+.sidebar-exercise img,
+.sidebar-exercise__noimg {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.sidebar-exercise .btn {
+    margin-top: var(--space-xs);
+}

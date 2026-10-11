@@ -1,15 +1,14 @@
 /**
- * planner-patient.js - Patient of the planner: selector, info bar, loading and
- * saving the patient's week on the server
+ * planner-patient.js - Patient of the planner: selector, loading and saving the
+ * patient's week on the server. The patient sheet is in planner-sidebar.js.
  */
 
 const PlannerPatient = (function() {
-    let patientSelect, patientInfo, dailyTarget, dietGoal;
+    let patientSelect, dailyTarget, dietGoal;
     let selectedId = null;
 
     function init() {
         patientSelect = document.getElementById('planner-patient-select');
-        patientInfo = document.getElementById('planner-patient-info');
         dailyTarget = document.getElementById('daily-target');
         dietGoal = document.getElementById('planner-diet-goal');
 
@@ -43,11 +42,11 @@ const PlannerPatient = (function() {
      */
     function handlePatientChange() {
         selectedId = patientSelect?.value || null;
+        State.emit('plannerPatient:changed', selectedId);
         if (selectedId) {
             updatePatientInfo();
             loadPatientWeek(selectedId);
         } else {
-            hidePatientInfo();
             State.setCurrentTemplate(State.getCurrentTemplateId());
         }
     }
@@ -64,57 +63,13 @@ const PlannerPatient = (function() {
     }
 
     /**
-     * Update patient info bar
+     * The patient's daily target and goal go to the planner header
      */
     function updatePatientInfo() {
-        if (!patientInfo || !selectedId) return;
-
-        const context = State.getPatientContext(selectedId);
+        const context = selectedId ? State.getPatientContext(selectedId) : null;
         if (!context) return;
-
-        // Update info bar
-        patientInfo.style.display = 'flex';
-
-        // Goal
-        const goalEl = document.getElementById('planner-patient-goal');
-        if (goalEl) goalEl.textContent = `Objetivo: ${UI.label('dietGoal', context.goal)}`;
-
-        // Target calories
-        const targetEl = document.getElementById('planner-patient-target');
-        if (targetEl) {
-            targetEl.textContent = `Meta: ${UI.formatNumber(context.targetCalories)} kcal`;
-            if (dailyTarget) dailyTarget.value = context.targetCalories;
-        }
-
-        // Restrictions
-        const restrictionEl = document.getElementById('planner-patient-restrictions');
-        if (restrictionEl) {
-            if (context.allergies.length > 0) {
-                restrictionEl.textContent = `⚠ Alérgenos: ${context.allergies.join(', ')}`;
-                restrictionEl.className = 'planner__patient-restrictions warning';
-            } else {
-                restrictionEl.textContent = 'Sin alérgenos conocidos';
-                restrictionEl.className = 'planner__patient-restrictions';
-            }
-        }
-
-        // Metrics
-        const metricsEl = document.getElementById('planner-patient-metrics');
-        if (metricsEl && context.latestMetrics) {
-            metricsEl.textContent = `Peso: ${UI.formatDecimal(context.latestMetrics.weight)} kg | IMC: ${UI.formatDecimal(context.latestMetrics.bmi) || '-'}`;
-        } else if (metricsEl) {
-            metricsEl.textContent = 'Sin mediciones registradas';
-        }
-
-        // Update diet goal selector
+        if (dailyTarget) dailyTarget.value = context.targetCalories;
         if (dietGoal) dietGoal.value = context.goal;
-    }
-
-    /**
-     * Hide patient info bar
-     */
-    function hidePatientInfo() {
-        if (patientInfo) patientInfo.style.display = 'none';
     }
 
     /**

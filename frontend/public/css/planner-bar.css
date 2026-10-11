@@ -64,42 +64,6 @@
     min-width: 200px;
 }
 
-.planner__patient-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-}
-
-.planner__patient-info span {
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--color-bg-alt);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-}
-
-.planner__patient-goal {
-    font-weight: 600;
-    color: var(--color-primary);
-}
-
-.planner__patient-target {
-    font-weight: 600;
-}
-
-.planner__patient-restrictions {
-    color: var(--color-warning);
-}
-
-.planner__patient-restrictions.warning {
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid var(--color-warning);
-}
-
-.planner__patient-metrics {
-    color: var(--color-text-light);
-}
-
 .planner__actions {
     display: flex;
     gap: var(--space-sm);
