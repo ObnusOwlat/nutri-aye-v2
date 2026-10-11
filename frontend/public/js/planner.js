@@ -24,7 +24,8 @@ const Planner = (function() {
         PlannerTemplates.init();
         PlannerPatient.init();
         PlannerActivityGrid.bind(weekGrid);
-        PlannerEnergy.load().catch(() => UI.toastError('No se pudieron cargar las actividades'));
+        // After login: the list needs a session
+        Auth.ready.then(() => PlannerEnergy.load()).catch(() => UI.toastError('No se pudieron cargar las actividades'));
         bindEvents();
         subscribeToState();
         renderWeekPlan();
