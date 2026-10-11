@@ -28,7 +28,7 @@ const PlannerPatient = (function() {
         const patients = State.getPatients();
         const currentValue = patientSelect.value;
 
-        patientSelect.innerHTML = '<option value="">-- No patient selected --</option>' +
+        patientSelect.innerHTML = '<option value="">-- Sin paciente --</option>' +
             patients.map(p => `<option value="${UI.escapeHtml(p.id)}">${UI.escapeHtml(p.firstName)} ${UI.escapeHtml(p.lastName)}</option>`).join('');
 
         // Restore selection (the patient's week is not reloaded: unsaved changes stay)
@@ -57,7 +57,7 @@ const PlannerPatient = (function() {
             const week = await State.loadPatientWeek(patientId);
             if (patientId !== selectedId) return; // another patient was chosen meanwhile
             State.setWeekPlan(week || {}, patientId);
-            if (week) UI.toastInfo(`Loaded ${State.getPatient(patientId)?.firstName}'s week`);
+            if (week) UI.toastInfo(`Semana de ${State.getPatient(patientId)?.firstName} cargada`);
         } catch (e) {
             UI.toastError('No se pudo cargar la semana del paciente: ' + e.message);
         }
@@ -77,12 +77,12 @@ const PlannerPatient = (function() {
 
         // Goal
         const goalEl = document.getElementById('planner-patient-goal');
-        if (goalEl) goalEl.textContent = `Goal: ${UI.capitalize(context.goal)}`;
+        if (goalEl) goalEl.textContent = `Objetivo: ${UI.label('dietGoal', context.goal)}`;
 
         // Target calories
         const targetEl = document.getElementById('planner-patient-target');
         if (targetEl) {
-            targetEl.textContent = `Target: ${context.targetCalories} kcal`;
+            targetEl.textContent = `Meta: ${UI.formatNumber(context.targetCalories)} kcal`;
             if (dailyTarget) dailyTarget.value = context.targetCalories;
         }
 
@@ -90,10 +90,10 @@ const PlannerPatient = (function() {
         const restrictionEl = document.getElementById('planner-patient-restrictions');
         if (restrictionEl) {
             if (context.allergies.length > 0) {
-                restrictionEl.textContent = `⚠ Allergens: ${context.allergies.join(', ')}`;
+                restrictionEl.textContent = `⚠ Alérgenos: ${context.allergies.join(', ')}`;
                 restrictionEl.className = 'planner__patient-restrictions warning';
             } else {
-                restrictionEl.textContent = 'No known allergens';
+                restrictionEl.textContent = 'Sin alérgenos conocidos';
                 restrictionEl.className = 'planner__patient-restrictions';
             }
         }
@@ -101,9 +101,9 @@ const PlannerPatient = (function() {
         // Metrics
         const metricsEl = document.getElementById('planner-patient-metrics');
         if (metricsEl && context.latestMetrics) {
-            metricsEl.textContent = `Weight: ${context.latestMetrics.weight?.toFixed(1) || '-'} kg | BMI: ${context.latestMetrics.bmi?.toFixed(1) || '-'}`;
+            metricsEl.textContent = `Peso: ${UI.formatDecimal(context.latestMetrics.weight)} kg | IMC: ${UI.formatDecimal(context.latestMetrics.bmi) || '-'}`;
         } else if (metricsEl) {
-            metricsEl.textContent = 'No metrics recorded';
+            metricsEl.textContent = 'Sin mediciones registradas';
         }
 
         // Update diet goal selector
@@ -122,7 +122,7 @@ const PlannerPatient = (function() {
      */
     async function saveToPatient() {
         if (!selectedId) {
-            UI.toastError('Please select a patient first');
+            UI.toastError('Primero elegí un paciente');
             return;
         }
 
@@ -132,14 +132,14 @@ const PlannerPatient = (function() {
         );
 
         if (!hasMeals) {
-            UI.toastWarning('No meals to save');
+            UI.toastWarning('No hay comidas para guardar');
             return;
         }
 
         try {
             const target = parseInt(dailyTarget?.value) || 2000;
             await State.savePlannerToPatient(selectedId, weekPlan, target);
-            UI.toastSuccess(`Plan saved for ${State.getPatient(selectedId)?.firstName}`);
+            UI.toastSuccess(`Plan guardado para ${State.getPatient(selectedId)?.firstName}`);
         } catch (error) {
             UI.toastError(error.message);
         }

@@ -49,10 +49,10 @@ const Planner = (function() {
             const template = State.getDietTemplate(PlannerTemplates.getSelectedId());
             const templateName = template ? template.name : 'current';
             UI.confirmDanger(
-                `Clear the "${templateName}" week plan? This cannot be undone.`,
+                `¿Vaciar la semana de "${templateName}"?`,
                 () => {
                     State.clearWeekPlan();
-                    UI.toastSuccess('Week plan cleared for ' + templateName);
+                    UI.toastSuccess('Semana vaciada: ' + templateName);
                 },
                 'Vaciar semana'
             );
@@ -195,11 +195,11 @@ const Planner = (function() {
                     <div class="meal-slot__label">${MEAL_LABELS[mealType]}</div>
                     <div class="meal-slot__content">
                         ${UI.escapeHtml(recipe.name)} ${allergenWarning}
-                        <button class="meal-slot__remove" data-day="${day}" data-meal="${mealType}" title="Remove">×</button>
+                        <button class="meal-slot__remove" data-day="${day}" data-meal="${mealType}" title="Quitar">×</button>
                     </div>
                     <div class="meal-slot__nutrition">
                         <span class="meal-slot__kcal">${Math.round(nutrition.calories)} kcal</span>
-                        <span class="meal-slot__macros">P:${Math.round(nutrition.protein)}g C:${Math.round(nutrition.carbs)}g F:${Math.round(nutrition.fat)}g</span>
+                        <span class="meal-slot__macros">P:${Math.round(nutrition.protein)}g C:${Math.round(nutrition.carbs)}g G:${Math.round(nutrition.fat)}g</span>
                     </div>
                 </div>
             `;
@@ -208,7 +208,7 @@ const Planner = (function() {
         return `
             <div class="meal-slot" data-day="${day}" data-meal="${mealType}">
                 <div class="meal-slot__label">${MEAL_LABELS[mealType]}</div>
-                <div class="meal-slot__empty">+ Add meal</div>
+                <div class="meal-slot__empty">+ Agregar comida</div>
             </div>
         `;
     }

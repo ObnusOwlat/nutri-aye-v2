@@ -43,9 +43,9 @@
         <div class="header__container">
             <h1 class="header__title">Nutri Aye</h1>
             <div class="header__actions">
-                <button class="btn btn--secondary btn--sm" id="btn-print" title="Print view">
+                <button class="btn btn--secondary btn--sm" id="btn-print" title="Imprimir">
                     <span class="btn__icon">&#9632;</span>
-                    <span class="btn__text">Print</span>
+                    <span class="btn__text">Imprimir</span>
                 </button>
                 <div class="user-menu" id="user-menu"></div>
             </div>
@@ -57,19 +57,19 @@
         <div class="tabs__container">
             <button class="tabs__tab active" data-tab="patients">
                 <span class="tabs__icon">&#128100;</span>
-                <span class="tabs__label">Patients</span>
+                <span class="tabs__label">Pacientes</span>
             </button>
             <button class="tabs__tab" data-tab="planner">
                 <span class="tabs__icon">&#128197;</span>
-                <span class="tabs__label">Planner</span>
+                <span class="tabs__label">Planificador</span>
             </button>
             <button class="tabs__tab" data-tab="ingredients">
                 <span class="tabs__icon">&#127813;</span>
-                <span class="tabs__label">Ingredients</span>
+                <span class="tabs__label">Alimentos</span>
             </button>
             <button class="tabs__tab" data-tab="recipes">
                 <span class="tabs__icon">&#128214;</span>
-                <span class="tabs__label">Recipes</span>
+                <span class="tabs__label">Recetas</span>
             </button>
             <button class="tabs__tab" data-tab="activity">
                 <span class="tabs__icon">&#128221;</span>
@@ -86,9 +86,9 @@
                 <!-- Patient Context Bar -->
                 <div class="planner__patient-bar" id="planner-patient-bar">
                     <div class="planner__patient-selector">
-                        <label>Patient:</label>
+                        <label>Paciente:</label>
                         <select id="planner-patient-select" class="form-select">
-                            <option value="">-- No patient selected --</option>
+                            <option value="">-- Sin paciente --</option>
                         </select>
                     </div>
                     <div class="planner__patient-info" id="planner-patient-info" style="display:none;">
@@ -102,32 +102,32 @@
                 <div class="planner__header">
                     <div class="planner__template-section">
                         <div class="planner__template-selector">
-                            <label class="planner__template-label">Diet Template:</label>
+                            <label class="planner__template-label">Plantilla de dieta:</label>
                             <select id="planner-template-select" class="form-select">
-                                <option value="">-- Custom --</option>
+                                <option value="">-- Personalizado --</option>
                             </select>
-                            <button class="btn btn--secondary btn--sm" id="btn-manage-templates" title="Manage Templates">Templates</button>
+                            <button class="btn btn--secondary btn--sm" id="btn-manage-templates" title="Administrar plantillas">Plantillas</button>
                         </div>
                         <div class="planner__diet-info">
-                            <span class="planner__diet-goal" id="planner-diet-goal">Maintenance</span>
-                            <span class="planner__diet-target" id="planner-diet-target">2000 kcal/day</span>
+                            <span class="planner__diet-goal" id="planner-diet-goal">Mantenimiento</span>
+                            <span class="planner__diet-target" id="planner-diet-target">2.000 kcal/día</span>
                         </div>
                     </div>
                     <div class="calorie-summary">
                         <div class="calorie-summary__item">
-                            <span class="calorie-summary__label">Daily Target:</span>
+                            <span class="calorie-summary__label">Objetivo diario:</span>
                             <input type="number" class="calorie-summary__input" id="daily-target" value="2000" min="800" max="10000">
                             <span class="calorie-summary__unit">kcal</span>
                         </div>
                         <div class="calorie-summary__item">
-                            <span class="calorie-summary__label">Weekly Avg:</span>
+                            <span class="calorie-summary__label">Promedio semanal:</span>
                             <span class="calorie-summary__value" id="weekly-avg">0</span>
                             <span class="calorie-summary__unit">kcal</span>
                         </div>
                     </div>
                     <div class="planner__actions">
-                        <button class="btn btn--primary" id="btn-save-patient-plan">Save to Patient</button>
-                        <button class="btn btn--danger" id="btn-clear-week">Clear Week</button>
+                        <button class="btn btn--primary" id="btn-save-patient-plan">Guardar en paciente</button>
+                        <button class="btn btn--danger" id="btn-clear-week">Vaciar semana</button>
                     </div>
                 </div>
                 <div class="planner__body">
@@ -147,34 +147,34 @@
         <section class="tab-content" id="tab-ingredients">
             <div class="ingredients">
                 <div class="ingredients__header">
-                    <h2 class="section-title">Manage Ingredients</h2>
+                    <h2 class="section-title">Alimentos</h2>
                     <div class="ingredients__actions">
                         <button class="btn btn--secondary" id="btn-import-json">
-                            <span class="btn__icon">⬆</span> Import JSON
+                            <span class="btn__icon">⬆</span> Importar JSON
                         </button>
                         <button class="btn btn--secondary" id="btn-import-csv">
-                            <span class="btn__icon">⬆</span> Import CSV
+                            <span class="btn__icon">⬆</span> Importar CSV
                         </button>
                         <button class="btn btn--secondary" id="btn-export-csv">
-                            <span class="btn__icon">⬇</span> Export CSV
+                            <span class="btn__icon">⬇</span> Exportar CSV
                         </button>
                         <button class="btn btn--primary" id="btn-add-ingredient">
-                            <span class="btn__icon">+</span> Add Ingredient
+                            <span class="btn__icon">+</span> Agregar alimento
                         </button>
                     </div>
                 </div>
                 <div class="search-bar" style="margin: 12px 0;">
-                    <input type="text" id="ingredient-search" class="form-input" placeholder="Search ingredients..." style="width: 100%;">
+                    <input type="text" id="ingredient-search" class="form-input" placeholder="Buscar alimentos..." style="width: 100%;">
                 </div>
                 <div class="category-filter">
-                    <button class="category-filter__btn active" data-category="all">All</button>
-                    <button class="category-filter__btn" data-category="protein">Protein</button>
-                    <button class="category-filter__btn" data-category="carbs">Carbs</button>
-                    <button class="category-filter__btn" data-category="fats">Fats</button>
-                    <button class="category-filter__btn" data-category="vegetables">Vegetables</button>
-                    <button class="category-filter__btn" data-category="fruits">Fruits</button>
-                    <button class="category-filter__btn" data-category="dairy">Dairy</button>
-                    <button class="category-filter__btn" data-category="mixed">Mixed</button>
+                    <button class="category-filter__btn active" data-category="all">Todas</button>
+                    <button class="category-filter__btn" data-category="protein">Proteínas</button>
+                    <button class="category-filter__btn" data-category="carbs">Carbohidratos</button>
+                    <button class="category-filter__btn" data-category="fats">Grasas</button>
+                    <button class="category-filter__btn" data-category="vegetables">Verduras</button>
+                    <button class="category-filter__btn" data-category="fruits">Frutas</button>
+                    <button class="category-filter__btn" data-category="dairy">Lácteos</button>
+                    <button class="category-filter__btn" data-category="mixed">Mixtos</button>
                 </div>
                 <div class="ingredients__list" id="ingredients-list"></div>
             </div>
@@ -184,18 +184,18 @@
         <section class="tab-content" id="tab-recipes">
             <div class="recipes">
                 <div class="recipes__header">
-                    <h2 class="section-title">Recipe Book</h2>
+                    <h2 class="section-title">Recetario</h2>
                     <button class="btn btn--primary" id="btn-add-recipe">
-                        <span class="btn__icon">+</span> Create Recipe
+                        <span class="btn__icon">+</span> Crear receta
                     </button>
                 </div>
                 <div class="category-filter">
-                    <button class="category-filter__btn active" data-category="all">All</button>
-                    <button class="category-filter__btn" data-category="breakfast">Breakfast</button>
-                    <button class="category-filter__btn" data-category="lunch">Lunch</button>
-                    <button class="category-filter__btn" data-category="dinner">Dinner</button>
-                    <button class="category-filter__btn" data-category="afternoon_snack">Afternoon Snack</button>
-                    <button class="category-filter__btn" data-category="snack">Snack</button>
+                    <button class="category-filter__btn active" data-category="all">Todas</button>
+                    <button class="category-filter__btn" data-category="breakfast">Desayuno</button>
+                    <button class="category-filter__btn" data-category="lunch">Almuerzo</button>
+                    <button class="category-filter__btn" data-category="dinner">Cena</button>
+                    <button class="category-filter__btn" data-category="afternoon_snack">Merienda</button>
+                    <button class="category-filter__btn" data-category="snack">Colación</button>
                 </div>
                 <div class="recipes__grid" id="recipes-grid"></div>
             </div>
@@ -212,14 +212,14 @@
             <!-- Patient List View -->
             <div class="patients" id="patients-list-container">
                 <div class="patients__header">
-                    <h2 class="section-title">Patients</h2>
+                    <h2 class="section-title">Pacientes</h2>
                     <button class="btn btn--primary" id="btn-add-patient">
-                        <span class="btn__icon">+</span> Add Patient
+                        <span class="btn__icon">+</span> Agregar paciente
                     </button>
                 </div>
                 <div class="patients__search">
                     <input type="text" id="patient-search" class="form-input" 
-                           placeholder="Search patients by name, email, or phone...">
+                           placeholder="Buscar pacientes por nombre, email o teléfono...">
                 </div>
                 <div class="patients__list" id="patients-list"></div>
             </div>
@@ -227,7 +227,7 @@
             <!-- Patient Profile View -->
             <div class="patient-profile hidden" id="patient-profile">
                 <button class="btn btn--secondary btn-back" id="btn-back-to-list">
-                    ← Back to List
+                    ← Volver a la lista
                 </button>
                 
                 <div class="patient-profile__header">
@@ -236,12 +236,12 @@
 
                 <!-- Patient Tabs -->
                 <nav class="patient-tabs">
-                    <button class="patient-tabs__tab active" data-tab="overview">Overview</button>
-                    <button class="patient-tabs__tab" data-tab="metrics">Metrics</button>
-                    <button class="patient-tabs__tab" data-tab="conditions">Conditions</button>
-                    <button class="patient-tabs__tab" data-tab="plans">Meal Plans</button>
-                    <button class="patient-tabs__tab" data-tab="progress">Progress</button>
-                    <button class="patient-tabs__tab" data-tab="billing">Billing</button>
+                    <button class="patient-tabs__tab active" data-tab="overview">Resumen</button>
+                    <button class="patient-tabs__tab" data-tab="metrics">Mediciones</button>
+                    <button class="patient-tabs__tab" data-tab="conditions">Condiciones</button>
+                    <button class="patient-tabs__tab" data-tab="plans">Planes</button>
+                    <button class="patient-tabs__tab" data-tab="progress">Seguimiento</button>
+                    <button class="patient-tabs__tab" data-tab="billing">Facturación</button>
                     <button class="patient-tabs__tab" data-tab="history">Historial</button>
                 </nav>
 
@@ -266,8 +266,8 @@
             </div>
             <div class="modal__body" id="modal-body"></div>
             <div class="modal__footer" id="modal-footer">
-                <button class="btn btn--secondary" id="modal-cancel">Cancel</button>
-                <button class="btn btn--primary" id="modal-confirm">Confirm</button>
+                <button class="btn btn--secondary" id="modal-cancel">Cancelar</button>
+                <button class="btn btn--primary" id="modal-confirm">Confirmar</button>
             </div>
         </div>
     </div>

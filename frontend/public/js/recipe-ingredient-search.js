@@ -68,7 +68,7 @@ const RecipeIngredientSearch = (function() {
         for (const ing of list) searchResults.set(ing.id, ing);
 
         if (list.length === 0) {
-            dropdown.innerHTML = '<div class="ingredient-dropdown__empty">No ingredients found</div>';
+            dropdown.innerHTML = '<div class="ingredient-dropdown__empty">No se encontraron alimentos</div>';
         } else {
             dropdown.innerHTML = list.map(ing => `
                 <div class="ingredient-dropdown__item" data-id="${UI.escapeHtml(ing.id)}">

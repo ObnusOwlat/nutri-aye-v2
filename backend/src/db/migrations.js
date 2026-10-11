@@ -14,7 +14,7 @@ const { createOrganizationTables } = require('./schema/organizations');
 const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
-const { translateCatalogNames } = require('./schema/spanish-names');
+const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 
 const MIGRATIONS = [
     {
@@ -68,6 +68,11 @@ const MIGRATIONS = [
         version: 7,
         name: 'nombres de categorías y unidades en español',
         up: translateCatalogNames
+    },
+    {
+        version: 8,
+        name: 'nombres del catálogo básico de alimentos en español',
+        up: translateBasicFoods
     }
 ];
 

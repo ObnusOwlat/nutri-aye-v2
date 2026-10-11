@@ -12,9 +12,23 @@ const UI = (function() {
 
     const printPage = () => window.print();
 
-    const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const formatCalories = (kcal) => `${formatNumber(Math.round(kcal))} kcal`;
+    // Paraguayan format: 1.234,5 · 31/12/2026 · ₲ 150.000
+    const formatNumber = (num, decimals = 0) => (num == null || Number.isNaN(Number(num)) ? '-'
+        : Number(num).toLocaleString('es-PY', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
+    const formatDecimal = (num, decimals = 1) => formatNumber(num, decimals);
+    const formatCalories = (kcal) => `${formatNumber(Math.round(kcal || 0))} kcal`;
+    const formatMoney = (amount) => `₲ ${formatNumber(Math.round(amount || 0))}`;
+    // "2026-03-05" (or an ISO date-time) -> "05/03/2026"; dates without time are not shifted by the time zone
+    const formatDate = (value) => {
+        if (!value) return '-';
+        const [y, m, d] = String(value).slice(0, 10).split('-');
+        return d ? `${d}/${m}/${y}` : String(value);
+    };
+    const formatDateTime = (iso) => (iso ? new Date(iso).toLocaleString('es-PY', { dateStyle: 'short', timeStyle: 'short' }) : '-');
+    const plural = (n, singular, pluralForm = `${singular}s`) => `${formatNumber(n)} ${n === 1 ? singular : pluralForm}`;
     const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    // Spanish name of a stored value (labels from GET /api/labels, loaded with the data)
+    const label = (group, value) => (value == null || value === '' ? '' : State.labels?.[group]?.[value] || capitalize(String(value).replace(/_/g, ' ')));
 
     // Safe for element content AND attribute values (escapes quotes too)
     const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -41,8 +55,14 @@ const UI = (function() {
         // Utilities
         printPage,
         formatNumber,
+        formatDecimal,
         formatCalories,
+        formatMoney,
+        formatDate,
+        formatDateTime,
+        plural,
         capitalize,
+        label,
         escapeHtml,
         emit,
         on

@@ -81,7 +81,7 @@ Object.assign(State, (function() {
         return true;
     }
 
-    // Everything of one patient, for the "Export" button
+    // Everything of one patient, for the "Exportar" button
     const exportPatientData = (patientId) => {
         const patient = S.getPatient(patientId);
         if (!patient) return null;

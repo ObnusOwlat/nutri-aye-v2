@@ -18,11 +18,11 @@ const RecipeEditor = (function() {
 
     // Category options
     const CATEGORIES = [
-        { id: 'breakfast', name: 'Breakfast' },
-        { id: 'lunch', name: 'Lunch' },
-        { id: 'dinner', name: 'Dinner' },
-        { id: 'afternoon_snack', name: 'Afternoon Snack' },
-        { id: 'snack', name: 'Snack' }
+        { id: 'breakfast', name: 'Desayuno' },
+        { id: 'lunch', name: 'Almuerzo' },
+        { id: 'dinner', name: 'Cena' },
+        { id: 'afternoon_snack', name: 'Merienda' },
+        { id: 'snack', name: 'Colación' }
     ];
 
     async function open(recipeId) {
@@ -34,12 +34,12 @@ const RecipeEditor = (function() {
             ingredientsCache = (await response.json()).data || [];
         } catch (e) {
             console.error('[Recipes] Failed to load ingredients:', e);
-            UI.toastWarning('Failed to load ingredients: ' + e.message);
+            UI.toastWarning('No se pudieron cargar los alimentos: ' + e.message);
             return;
         }
 
         if (ingredientsCache.length === 0) {
-            UI.toastWarning('Add ingredients first in the Ingredients tab');
+            UI.toastWarning('Primero agregá alimentos en la pestaña Alimentos');
             return;
         }
 
@@ -55,9 +55,9 @@ const RecipeEditor = (function() {
         };
 
         UI.openModal({
-            title: formState.isEdit ? 'Edit Recipe' : 'Create Recipe',
+            title: formState.isEdit ? 'Editar receta' : 'Crear receta',
             content: buildFormContent(),
-            confirmText: formState.isEdit ? 'Save Changes' : 'Create Recipe',
+            confirmText: formState.isEdit ? 'Guardar cambios' : 'Crear receta',
             size: 'large',
             onConfirm: handleSave,
             onOpen: bindFormEvents
@@ -77,7 +77,7 @@ const RecipeEditor = (function() {
             <div class="recipe-form">
                 <!-- Recipe Name -->
                 <div class="form-group">
-                    <label class="form-label">Recipe Name *</label>
+                    <label class="form-label">Nombre de la receta *</label>
                     <input type="text" id="recipe-name" class="form-input" 
                            value="${UI.escapeHtml(formState.name)}" 
                            placeholder="e.g., Chicken Salad">
@@ -85,7 +85,7 @@ const RecipeEditor = (function() {
 
                 <!-- Category -->
                 <div class="form-group">
-                    <label class="form-label">Category</label>
+                    <label class="form-label">Categoría</label>
                     <select id="recipe-category" class="form-select">
                         ${categoryOptionsHtml}
                     </select>
@@ -93,7 +93,7 @@ const RecipeEditor = (function() {
 
                 <!-- Ingredients Section -->
                 <div class="form-group">
-                    <label class="form-label">Ingredients (${formState.ingredients.length})</label>
+                    <label class="form-label">Alimentos (${formState.ingredients.length})</label>
 
                     <!-- Current ingredients list -->
                     <div id="recipe-ingredient-list" class="recipe-ingredient-list">
@@ -102,10 +102,10 @@ const RecipeEditor = (function() {
 
                     <!-- Search input -->
                     <div class="ingredient-search-section">
-                        <label class="ingredient-search-label">🔍 Search and add ingredients:</label>
+                        <label class="ingredient-search-label">🔍 Buscá y agregá alimentos:</label>
                         <div class="ingredient-combobox">
                             <input type="text" id="recipe-ingredient-search" class="form-input" 
-                                   placeholder="Type to search..."
+                                   placeholder="Escribí para buscar..."
                                    autocomplete="off">
                             <div id="ingredient-dropdown" class="ingredient-dropdown"></div>
                         </div>
@@ -114,7 +114,7 @@ const RecipeEditor = (function() {
 
                 <!-- Nutrition Summary -->
                 <div class="nutrition-summary">
-                    <div class="nutrition-summary__title">Nutrition Facts (Total)</div>
+                    <div class="nutrition-summary__title">Información nutricional (total)</div>
                     <div class="nutrition-summary__values">
                         ${nutritionValuesHtml()}
                     </div>
@@ -125,20 +125,20 @@ const RecipeEditor = (function() {
 
     function renderIngredientList() {
         if (formState.ingredients.length === 0) {
-            return '<p class="empty-message">No ingredients added yet. Search and select below.</p>';
+            return '<p class="empty-message">Todavía no hay alimentos. Buscalos y elegilos abajo.</p>';
         }
 
         return formState.ingredients.map((ri, idx) => {
             const ing = State.getIngredient(ri.ingredientId);
             if (!ing) {
-                return `<div class="ingredient-item ingredient-item--error">Unknown ingredient</div>`;
+                return `<div class="ingredient-item ingredient-item--error">Alimento desconocido</div>`;
             }
 
             const factor = ri.grams / 100;
             const kcal = Math.round(ing.kcalPer100g * factor);
-            const protein = ((ing.proteinPer100g || 0) * factor).toFixed(1);
-            const carbs = ((ing.carbsPer100g || 0) * factor).toFixed(1);
-            const fat = ((ing.fatPer100g || 0) * factor).toFixed(1);
+            const protein = UI.formatDecimal((ing.proteinPer100g || 0) * factor, 1);
+            const carbs = UI.formatDecimal((ing.carbsPer100g || 0) * factor, 1);
+            const fat = UI.formatDecimal((ing.fatPer100g || 0) * factor, 1);
 
             return `
                 <div class="ingredient-item" data-index="${idx}">
@@ -153,7 +153,7 @@ const RecipeEditor = (function() {
                     <div class="ingredient-item__macros">
                         <span>P: ${protein}g</span>
                         <span>C: ${carbs}g</span>
-                        <span>F: ${fat}g</span>
+                        <span>G: ${fat}g</span>
                     </div>
                 </div>
             `;
@@ -217,14 +217,14 @@ const RecipeEditor = (function() {
      */
     function addIngredient(food) {
         if (!food) {
-            UI.toastWarning('Select an ingredient');
+            UI.toastWarning('Elegí un alimento');
             return;
         }
         const ingredientId = food.id;
 
         // Check duplicate
         if (formState.ingredients.some(ri => ri.ingredientId === ingredientId)) {
-            UI.toastWarning('Ingredient already added');
+            UI.toastWarning('Ese alimento ya está en la receta');
             return;
         }
 
@@ -232,7 +232,7 @@ const RecipeEditor = (function() {
         formState.ingredients.push({ ingredientId, grams: 100 });
 
         refreshForm();
-        UI.toastSuccess('Ingredient added');
+        UI.toastSuccess('Alimento agregado');
     }
 
     function refreshForm() {
@@ -259,7 +259,7 @@ const RecipeEditor = (function() {
         return `<span><strong>${Math.round(n.calories)}</strong> kcal</span>
             <span>P: <strong>${Math.round(n.protein)}g</strong></span>
             <span>C: <strong>${Math.round(n.carbs)}g</strong></span>
-            <span>F: <strong>${Math.round(n.fat)}g</strong></span>`;
+            <span>G: <strong>${Math.round(n.fat)}g</strong></span>`;
     };
 
     function refreshNutrition() {
@@ -272,12 +272,12 @@ const RecipeEditor = (function() {
         const name = formState.name.trim();
 
         if (!name) {
-            UI.toastError('Recipe name is required');
+            UI.toastError('El nombre de la receta es obligatorio');
             return false; // Keep modal open
         }
 
         if (formState.ingredients.length === 0) {
-            UI.toastError('Add at least one ingredient');
+            UI.toastError('Agregá al menos un alimento');
             return false;
         }
 
@@ -295,10 +295,10 @@ const RecipeEditor = (function() {
         try {
             if (formState.recipeId) {
                 await State.updateRecipe(formState.recipeId, data);
-                UI.toastSuccess('Recipe updated');
+                UI.toastSuccess('Receta actualizada');
             } else {
                 await State.addRecipe(data);
-                UI.toastSuccess('Recipe created');
+                UI.toastSuccess('Receta creada');
             }
             return true; // Close modal
         } catch (e) {

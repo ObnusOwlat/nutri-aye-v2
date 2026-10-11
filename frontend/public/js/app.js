@@ -10,7 +10,7 @@ const App = (function() {
     let tabs, tabContents;
 
     // Current tab
-    let currentTab = 'patients';
+    let currentTab = null; // set by the first switchTab
 
     /**
      * Initialize application
@@ -21,18 +21,12 @@ const App = (function() {
         tabs = document.querySelectorAll('.tabs__tab');
         tabContents = document.querySelectorAll('.tab-content');
 
-        // Check URL for ?tab= parameter (for /billing redirects)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        if (tabParam && ['patients', 'planner', 'ingredients', 'recipes', 'billing', 'reports'].includes(tabParam)) {
-            currentTab = tabParam;
-        }
+        // ?tab=planner opens that tab (only existing tabs)
+        const tabParam = new URLSearchParams(window.location.search).get('tab');
+        const initialTab = [...tabs].some(t => t.dataset.tab === tabParam) ? tabParam : 'patients';
 
-        // Bind events
         bindEvents();
-
-        // Switch to initial tab (from URL or default)
-        switchTab(currentTab);
+        switchTab(initialTab);
 
         // Mark current day in planner
         updateTodayMarker();
@@ -67,12 +61,6 @@ const App = (function() {
         // Handle visibility change (pause/resume)
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        // Subscribe to tab changes
-        UI.on('app:tabChanged', (data) => {
-            if (data.tab === 'reports') {
-                Reports.render();
-            }
-        });
     }
 
     /**

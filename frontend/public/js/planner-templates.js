@@ -59,8 +59,8 @@ const PlannerTemplates = (function() {
      */
     function updateDietInfo() {
         const profile = State.getDietProfile();
-        if (dietGoal) dietGoal.textContent = UI.capitalize(profile.goal);
-        if (dietTarget) dietTarget.textContent = `${profile.dailyTarget} kcal/day`;
+        if (dietGoal) dietGoal.textContent = UI.label('dietGoal', profile.goal);
+        if (dietTarget) dietTarget.textContent = `${UI.formatNumber(profile.dailyTarget)} kcal/día`;
         if (dailyTarget) dailyTarget.value = profile.dailyTarget;
     }
 
@@ -86,34 +86,34 @@ const PlannerTemplates = (function() {
         
         const content = `
             <div class="template-manager">
-                <p style="margin-bottom: 16px; color: var(--color-text-light);">Create and manage diet plan templates that can be applied to patients.</p>
+                <p style="margin-bottom: 16px; color: var(--color-text-light);">Creá y administrá plantillas de dieta para usar con tus pacientes.</p>
                 <div class="template-list">
                     ${templates.map(t => `
                         <div class="template-item ${t.isDefault ? 'template-item--default' : ''}" data-id="${t.id}">
                             <div class="template-item__info">
                                 <h4>${UI.escapeHtml(t.name)}</h4>
-                                <p>${UI.escapeHtml(t.description || 'No description')}</p>
+                                <p>${UI.escapeHtml(t.description || 'Sin descripción')}</p>
                                 <div class="template-item__meta">
-                                    <span class="template-badge template-badge--${t.goal}">${UI.capitalize(t.goal)}</span>
-                                    <span>${t.dailyTarget} kcal/day</span>
+                                    <span class="template-badge template-badge--${t.goal}">${UI.label('dietGoal', t.goal)}</span>
+                                    <span>${UI.formatNumber(t.dailyTarget)} kcal/día</span>
                                     ${t.isDefault ? '<span class="template-badge template-badge--default">Default</span>' : ''}
                                 </div>
                             </div>
                             <div class="template-item__actions">
-                                <button class="btn btn--secondary btn--sm btn-edit-template" data-id="${t.id}">Edit</button>
-                                ${!t.isDefault ? `<button class="btn btn--danger btn--sm btn-delete-template" data-id="${t.id}">Delete</button>` : ''}
+                                <button class="btn btn--secondary btn--sm btn-edit-template" data-id="${t.id}">Editar</button>
+                                ${!t.isDefault ? `<button class="btn btn--danger btn--sm btn-delete-template" data-id="${t.id}">Desactivar</button>` : ''}
                             </div>
                         </div>
                     `).join('')}
                 </div>
                 <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn btn--primary" data-action="add-template">+ Add Template</button>
+                    <button class="btn btn--primary" data-action="add-template">+ Agregar plantilla</button>
                 </div>
             </div>
         `;
 
         UI.openModal({
-            title: 'Manage Diet Templates',
+            title: 'Plantillas de dieta',
             content,
             size: 'large',
             hideFooter: true
@@ -126,31 +126,31 @@ const PlannerTemplates = (function() {
     function showAddTemplateModal() {
         const content = `
             <div class="form-group">
-                <label class="form-label">Template Name *</label>
-                <input type="text" id="tpl-name" class="form-input" placeholder="e.g., Weight Loss 1500">
+                <label class="form-label">Nombre de la plantilla *</label>
+                <input type="text" id="tpl-name" class="form-input" placeholder="ej.: Descenso 1500">
             </div>
             <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" id="tpl-description" class="form-input" placeholder="Brief description...">
+                <label class="form-label">Descripción</label>
+                <input type="text" id="tpl-description" class="form-input" placeholder="Descripción breve...">
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">Goal</label>
+                    <label class="form-label">Objetivo</label>
                     <select id="tpl-goal" class="form-select">
-                        ${State.DIET_GOALS.map(g => `<option value="${g}">${UI.capitalize(g)}</option>`).join('')}
+                        ${State.DIET_GOALS.map(g => `<option value="${g}">${UI.label('dietGoal', g)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Daily Calories</label>
+                    <label class="form-label">Calorías diarias</label>
                     <input type="number" id="tpl-calories" class="form-input" value="2000" min="800" max="10000">
                 </div>
             </div>
         `;
 
         UI.openModal({
-            title: 'Add Diet Template',
+            title: 'Agregar plantilla de dieta',
             content,
-            confirmText: 'Add Template',
+            confirmText: 'Agregar plantilla',
             onConfirm: async () => {
                 const name = document.getElementById('tpl-name')?.value.trim();
                 const description = document.getElementById('tpl-description')?.value.trim();
@@ -158,12 +158,12 @@ const PlannerTemplates = (function() {
                 const calories = parseInt(document.getElementById('tpl-calories')?.value) || 2000;
 
                 if (!name) {
-                    UI.toastError('Template name is required');
+                    UI.toastError('El nombre de la plantilla es obligatorio');
                     return false;
                 }
 
                 await State.addDietTemplate({ name, description, goal, dailyTarget: calories });
-                UI.toastSuccess('Template added');
+                UI.toastSuccess('Plantilla agregada');
                 showTemplateModal(); // Refresh the modal
                 populateTemplateSelector(); // Refresh the selector
                 return true;
@@ -180,31 +180,31 @@ const PlannerTemplates = (function() {
 
         const content = `
             <div class="form-group">
-                <label class="form-label">Template Name *</label>
-                <input type="text" id="tpl-name" class="form-input" value="${UI.escapeHtml(template.name)}" placeholder="e.g., Weight Loss 1500">
+                <label class="form-label">Nombre de la plantilla *</label>
+                <input type="text" id="tpl-name" class="form-input" value="${UI.escapeHtml(template.name)}" placeholder="ej.: Descenso 1500">
             </div>
             <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" id="tpl-description" class="form-input" value="${UI.escapeHtml(template.description || '')}" placeholder="Brief description...">
+                <label class="form-label">Descripción</label>
+                <input type="text" id="tpl-description" class="form-input" value="${UI.escapeHtml(template.description || '')}" placeholder="Descripción breve...">
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">Goal</label>
+                    <label class="form-label">Objetivo</label>
                     <select id="tpl-goal" class="form-select">
-                        ${State.DIET_GOALS.map(g => `<option value="${g}" ${template.goal === g ? 'selected' : ''}>${UI.capitalize(g)}</option>`).join('')}
+                        ${State.DIET_GOALS.map(g => `<option value="${g}" ${template.goal === g ? 'selected' : ''}>${UI.label('dietGoal', g)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Daily Calories</label>
+                    <label class="form-label">Calorías diarias</label>
                     <input type="number" id="tpl-calories" class="form-input" value="${UI.escapeHtml(template.dailyTarget)}" min="800" max="10000">
                 </div>
             </div>
         `;
 
         UI.openModal({
-            title: 'Edit Diet Template',
+            title: 'Editar plantilla de dieta',
             content,
-            confirmText: 'Save Changes',
+            confirmText: 'Guardar cambios',
             onConfirm: async () => {
                 const name = document.getElementById('tpl-name')?.value.trim();
                 const description = document.getElementById('tpl-description')?.value.trim();
@@ -212,12 +212,12 @@ const PlannerTemplates = (function() {
                 const calories = parseInt(document.getElementById('tpl-calories')?.value) || 2000;
 
                 if (!name) {
-                    UI.toastError('Template name is required');
+                    UI.toastError('El nombre de la plantilla es obligatorio');
                     return false;
                 }
 
                 await State.updateDietTemplate(templateId, { name, description, goal, dailyTarget: calories });
-                UI.toastSuccess('Template updated');
+                UI.toastSuccess('Plantilla actualizada');
                 showTemplateModal(); // Refresh the modal
                 populateTemplateSelector(); // Refresh the selector
                 return true;
@@ -240,7 +240,7 @@ const PlannerTemplates = (function() {
             const id = e.target.closest('.btn-delete-template').dataset.id;
             UI.confirmDanger('¿Desactivar esta plantilla?', async () => {
                 await State.deleteDietTemplate(id);
-                UI.toastSuccess('Template deleted');
+                UI.toastSuccess('Plantilla desactivada');
                 showTemplateModal(); // Refresh the modal
                 populateTemplateSelector(); // Refresh the selector
             });

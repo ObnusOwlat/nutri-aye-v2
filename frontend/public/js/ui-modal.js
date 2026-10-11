@@ -73,8 +73,8 @@ const Modal = (function() {
         }
 
         // Set button text
-        modalConfirmBtn.textContent = config.confirmText || 'Confirm';
-        modalCancelBtn.textContent = config.cancelText || 'Cancel';
+        modalConfirmBtn.textContent = config.confirmText || 'Confirmar';
+        modalCancelBtn.textContent = config.cancelText || 'Cancelar';
 
         // Set button visibility
         modalConfirmBtn.style.display = config.hideConfirm ? 'none' : 'inline-flex';
@@ -144,9 +144,9 @@ const Modal = (function() {
 
     function confirm(message, onConfirm, onCancel) {
         return openModal({
-            title: 'Confirm',
+            title: 'Confirmar',
             content: `<p>${UI.escapeHtml(message)}</p>`,
-            confirmText: 'Yes',
+            confirmText: 'Sí',
             cancelText: 'No',
             onConfirm,
             onCancel,

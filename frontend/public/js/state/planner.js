@@ -2,7 +2,7 @@
  * state/planner.js - Planner: diet templates (server) and the week being edited.
  * The week belongs either to the selected template (each change is saved to
  * the template, after a short pause) or to the selected patient (saved with
- * "Save to Patient").
+ * "Guardar en paciente").
  */
 
 Object.assign(State, (function() {
@@ -106,7 +106,7 @@ Object.assign(State, (function() {
     const removeMeal = (day, mealType) => assignMeal(day, mealType, null);
     const clearWeekPlan = () => changeWeek(week => { Object.assign(week, emptyWeek()); });
 
-    // Show a patient's week in the grid (it is saved with "Save to Patient")
+    // Show a patient's week in the grid (it is saved with "Guardar en paciente")
     function setWeekPlan(plan, patientId) {
         flushTemplateSave();
         working = { source: 'patient', id: patientId, week: normalize(plan) };

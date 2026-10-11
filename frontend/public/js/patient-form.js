@@ -5,9 +5,9 @@
 const PatientForm = (function() {
     function showAddModal() {
         UI.openModal({
-            title: 'Add New Patient',
+            title: 'Nuevo paciente',
             content: createPatientFormHtml(),
-            confirmText: 'Add Patient',
+            confirmText: 'Agregar paciente',
             size: 'large',
             onConfirm: () => handleSavePatient(null),
             footerSpaceBetween: true
@@ -19,9 +19,9 @@ const PatientForm = (function() {
         if (!patient) return;
 
         UI.openModal({
-            title: 'Edit Patient',
+            title: 'Editar paciente',
             content: createPatientFormHtml(patient),
-            confirmText: 'Save Changes',
+            confirmText: 'Guardar cambios',
             size: 'large',
             onConfirm: () => handleSavePatient(id),
             footerSpaceBetween: true
@@ -41,19 +41,19 @@ const PatientForm = (function() {
         return `
             <div class="patient-form">
                 <div class="patient-form__section">
-                    <h4 class="patient-form__section-title">Basic Information</h4>
+                    <h4 class="patient-form__section-title">Datos básicos</h4>
                     <div class="patient-form__row">
                         <div class="form-group">
-                            <label class="form-label" for="patient-firstName">First Name *</label>
+                            <label class="form-label" for="patient-firstName">Nombre *</label>
                             <input type="text" id="patient-firstName" class="form-input" 
                                    value="${UI.escapeHtml(patient.firstName || '')}" 
-                                   placeholder="John" required>
+                                   placeholder="Juan" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="patient-lastName">Last Name *</label>
+                            <label class="form-label" for="patient-lastName">Apellido *</label>
                             <input type="text" id="patient-lastName" class="form-input" 
                                    value="${UI.escapeHtml(patient.lastName || '')}" 
-                                   placeholder="Doe" required>
+                                   placeholder="Pérez" required>
                         </div>
                     </div>
                     <div class="patient-form__row">
@@ -61,27 +61,27 @@ const PatientForm = (function() {
                             <label class="form-label" for="patient-email">Email</label>
                             <input type="email" id="patient-email" class="form-input" 
                                    value="${UI.escapeHtml(patient.email || '')}" 
-                                   placeholder="john@example.com">
+                                   placeholder="juan@ejemplo.com">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="patient-phone">Phone</label>
+                            <label class="form-label" for="patient-phone">Teléfono</label>
                             <input type="tel" id="patient-phone" class="form-input" 
                                    value="${UI.escapeHtml(patient.phone || '')}" 
-                                   placeholder="+1234567890">
+                                   placeholder="0981 123456">
                         </div>
                     </div>
                     <div class="patient-form__row">
                         <div class="form-group">
-                            <label class="form-label" for="patient-dob">Date of Birth</label>
+                            <label class="form-label" for="patient-dob">Fecha de nacimiento</label>
                             <input type="date" id="patient-dob" class="form-input" 
                                    value="${UI.escapeHtml(patient.dateOfBirth || '')}">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="patient-gender">Gender</label>
+                            <label class="form-label" for="patient-gender">Sexo</label>
                             <select id="patient-gender" class="form-select">
-                                <option value="">Select...</option>
+                                <option value="">Elegir...</option>
                                 ${State.GENDERS.map(g => 
-                                    `<option value="${g}" ${patient.gender === g ? 'selected' : ''}>${UI.capitalize(g)}</option>`
+                                    `<option value="${g}" ${patient.gender === g ? 'selected' : ''}>${UI.label('gender', g)}</option>`
                                 ).join('')}
                             </select>
                         </div>
@@ -89,50 +89,50 @@ const PatientForm = (function() {
                 </div>
 
                 <div class="patient-form__section">
-                    <h4 class="patient-form__section-title">Address</h4>
+                    <h4 class="patient-form__section-title">Dirección</h4>
                     <div class="form-group">
-                        <label class="form-label" for="patient-street">Street Address</label>
+                        <label class="form-label" for="patient-street">Dirección</label>
                         <input type="text" id="patient-street" class="form-input" 
                                value="${UI.escapeHtml(patient.address?.street || '')}" 
-                               placeholder="123 Main St">
+                               placeholder="Av. Mcal. López 1234">
                     </div>
                     <div class="patient-form__row">
                         <div class="form-group">
-                            <label class="form-label" for="patient-city">City</label>
+                            <label class="form-label" for="patient-city">Ciudad</label>
                             <input type="text" id="patient-city" class="form-input" 
                                    value="${UI.escapeHtml(patient.address?.city || '')}" 
-                                   placeholder="New York">
+                                   placeholder="Asunción">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="patient-zip">ZIP Code</label>
+                            <label class="form-label" for="patient-zip">Código postal</label>
                             <input type="text" id="patient-zip" class="form-input" 
                                    value="${UI.escapeHtml(patient.address?.zipCode || '')}" 
-                                   placeholder="10001">
+                                   placeholder="1209">
                         </div>
                     </div>
                 </div>
 
                 <div class="patient-form__section">
-                    <h4 class="patient-form__section-title">Emergency Contact</h4>
+                    <h4 class="patient-form__section-title">Contacto de emergencia</h4>
                     <div class="patient-form__row">
                         <div class="form-group">
-                            <label class="form-label" for="patient-ec-name">Contact Name</label>
+                            <label class="form-label" for="patient-ec-name">Nombre del contacto</label>
                             <input type="text" id="patient-ec-name" class="form-input" 
                                    value="${UI.escapeHtml(patient.emergencyContact?.name || '')}" 
-                                   placeholder="Jane Doe">
+                                   placeholder="María Pérez">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="patient-ec-phone">Contact Phone</label>
+                            <label class="form-label" for="patient-ec-phone">Teléfono del contacto</label>
                             <input type="tel" id="patient-ec-phone" class="form-input" 
                                    value="${UI.escapeHtml(patient.emergencyContact?.phone || '')}" 
-                                   placeholder="+1234567890">
+                                   placeholder="0981 123456">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="patient-ec-relation">Relationship</label>
+                        <label class="form-label" for="patient-ec-relation">Parentesco</label>
                         <input type="text" id="patient-ec-relation" class="form-input" 
                                value="${UI.escapeHtml(patient.emergencyContact?.relation || '')}" 
-                               placeholder="Spouse, Parent, etc.">
+                               placeholder="Cónyuge, madre, padre…">
                     </div>
                 </div>
 
@@ -186,22 +186,22 @@ const PatientForm = (function() {
                 </div>
 
                 <div class="patient-form__section">
-                    <h4 class="patient-form__section-title">Notes</h4>
+                    <h4 class="patient-form__section-title">Notas</h4>
                     <div class="form-group">
-                        <label class="form-label" for="patient-notes">General Notes</label>
+                        <label class="form-label" for="patient-notes">Notas generales</label>
                         <textarea id="patient-notes" class="form-input" rows="3" 
-                                  placeholder="Any additional notes about this patient...">${UI.escapeHtml(patient.notes || '')}</textarea>
+                                  placeholder="Notas sobre el paciente...">${UI.escapeHtml(patient.notes || '')}</textarea>
                     </div>
                 </div>
 
                 <div class="patient-form__section">
-                    <h4 class="patient-form__section-title">Status</h4>
+                    <h4 class="patient-form__section-title">Estado</h4>
                     <div class="form-group">
-                        <label class="form-label" for="patient-status">Patient Status</label>
+                        <label class="form-label" for="patient-status">Estado del paciente</label>
                         <select id="patient-status" class="form-select">
-                            <option value="active" ${patient.status === 'active' || !patient.status ? 'selected' : ''}>Active</option>
-                            <option value="inactive" ${patient.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                            <option value="archived" ${patient.status === 'archived' ? 'selected' : ''}>Archived</option>
+                            <option value="active" ${patient.status === 'active' || !patient.status ? 'selected' : ''}>Activo</option>
+                            <option value="inactive" ${patient.status === 'inactive' ? 'selected' : ''}>Inactivo</option>
+                            <option value="archived" ${patient.status === 'archived' ? 'selected' : ''}>Archivado</option>
                         </select>
                     </div>
                 </div>
@@ -238,21 +238,21 @@ const PatientForm = (function() {
     async function handleSavePatient(existingId) {
         const data = readForm();
         if (!data.firstName) {
-            UI.toastError('First name is required');
+            UI.toastError('El nombre es obligatorio');
             return false;
         }
         if (!data.lastName) {
-            UI.toastError('Last name is required');
+            UI.toastError('El apellido es obligatorio');
             return false;
         }
 
         try {
             if (existingId) {
                 await State.updatePatient(existingId, data);
-                UI.toastSuccess('Patient updated');
+                UI.toastSuccess('Paciente actualizado');
             } else {
                 await State.addPatient(data);
-                UI.toastSuccess('Patient added');
+                UI.toastSuccess('Paciente agregado');
             }
             return true;
         } catch (error) {

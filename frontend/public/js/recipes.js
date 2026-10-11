@@ -46,8 +46,8 @@ const Recipes = (function() {
             grid.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state__icon"></div>
-                    <p class="empty-state__text">No recipes yet</p>
-                    <p class="empty-state__hint">Create your first recipe</p>
+                    <p class="empty-state__text">Todavía no hay recetas</p>
+                    <p class="empty-state__hint">Creá tu primera receta</p>
                 </div>
             `;
             return;
@@ -66,7 +66,7 @@ const Recipes = (function() {
             .slice(0, 3)
             .map(ri => {
                 const ing = State.getIngredient(ri.ingredientId);
-                return ing ? ing.name : 'Unknown';
+                return ing ? ing.name : 'Desconocido';
             })
             .join(', ');
         
@@ -97,12 +97,12 @@ const Recipes = (function() {
                             <span class="recipe-nutrition-label">F</span>
                         </div>
                     </div>
-                    <p class="recipe-card__ingredients">${ingredientCount} ingredient${ingredientCount !== 1 ? 's' : ''}</p>
-                    <p class="recipe-card__list">${UI.escapeHtml(ingredientNames) || 'No ingredients'}${ingredientCount > 3 ? '...' : ''}</p>
+                    <p class="recipe-card__ingredients">${UI.plural(ingredientCount, 'alimento')}</p>
+                    <p class="recipe-card__list">${UI.escapeHtml(ingredientNames) || 'Sin alimentos'}${ingredientCount > 3 ? '...' : ''}</p>
                 </div>
                 <div class="recipe-card__footer">
-                    <button class="btn btn--secondary btn--sm btn-edit">Edit</button>
-                    <button class="btn btn--danger btn--sm btn-delete">Delete</button>
+                    <button class="btn btn--secondary btn--sm btn-edit">Editar</button>
+                    <button class="btn btn--danger btn--sm btn-delete">Desactivar</button>
                 </div>
             </div>
         `;

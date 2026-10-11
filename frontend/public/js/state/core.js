@@ -77,7 +77,10 @@ const State = (function() {
      */
     const loadHooks = [];
     async function load() {
-        const all = await api('GET', '/api/bootstrap');
+        const [all, labels] = await Promise.all([api('GET', '/api/bootstrap'), api('GET', '/api/labels')]);
+        State.labels = labels;
+        Object.assign(State.MEAL_LABELS, labels.mealType);
+        Object.assign(State.DAY_LABELS, labels.day);
         for (const list of Object.keys(data)) replaceAll(list, all[list] || []);
         loadHooks.forEach(hook => hook());
         ready = true;
