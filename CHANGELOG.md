@@ -2,6 +2,27 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Paraguay primero: ⭐ alimentos locales, traducciones corregidas, filtros en Crear receta y platos típicos
+
+- **⭐ Se consigue en Paraguay** (`src/lib/paraguay.js`):
+  - Marca 3.861 alimentos, por la primera palabra del nombre y con una lista de lo que hay en mercados, súper y ferias: carnes, surubí, pacú, mandioca, locote, mamón, mburucuyá, yerba, etc.
+  - Quedan afuera las comidas de restaurantes y cadenas, los alimentos infantiles de EE. UU., las marcas y los alimentos nativos.
+  - Los alimentos propios siempre cuentan como locales.
+  - Es una guía para la búsqueda, no una certificación.
+- **Búsquedas:** sin orden elegido, los ⭐ salen primero en Alimentos, en Crear receta y en el selector del Planificador. `GET /api/ingredients?py=1` filtra y `/facets` agrega `py`.
+- **Filtro "⭐ Se consigue en Paraguay"** arriba del árbol de Alimentos, con su cantidad y su etiqueta.
+- **Crear receta:** el buscador de alimentos ahora tiene grupo, origen (con cantidades) y "⭐ Paraguay", que viene marcado. Los resultados muestran ⭐ y el origen.
+- **Traducciones corregidas** en 800 nombres del catálogo. No se tocan los editados a mano.
+  - "93 % de préstamos" → "93 % magro", "broiler o fryers" → "parrillero", "pan-broiled crumbles" → "a la sartén, desmenuzado".
+  - "Amplios porotos (porotos de la fava)" → "Habas", "arvejas de paloma" → "guandú", "tripe" → "mondongo", "diseminado" → "para untar".
+  - "calidad choice/select" → "Choice/Select". Se borró "grado A".
+- **Migración 14:** columna `available_py` y correcciones. `import-usda.js` e `import-foods.js` las aplican al importar.
+- **Platos típicos** (`backend/seed-recetas-paraguay.js`):
+  - Es opcional: no corre solo. Se ejecuta con `node seed-recetas-paraguay.js [orgId]`.
+  - Carga chipa, sopa paraguaya, mbeju, vori vori de pollo, bife koygua, guiso de fideo y mandioca hervida como recetas del consultorio, con cantidades aproximadas por porción.
+  - Si una receta ya existe, la saltea.
+- **Tests:** de 93 a 95.
+
 ## Alimentos: filtro por grupo, origen y preparación
 
 - **Columna de filtros a la izquierda** (`js/ingredient-filters.js`, `css/catalog-filters.css`).

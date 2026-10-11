@@ -12,6 +12,7 @@ const { translateBasicFoods } = require('./src/db/schema/spanish-names');
 const path = require('path');
 const fs = require('fs');
 const { classifyFoods } = require('./src/db/schema/food-groups');
+const { markParaguayFoods } = require('./src/db/schema/paraguay');
 
 const jsonPath = process.argv[2] || path.join(__dirname, '..', 'foods-data', 'calories-in-ingredients.json');
 const dbPath = path.join(__dirname, 'db', 'database.sqlite');
@@ -63,5 +64,6 @@ run();
 const total = db.prepare('SELECT COUNT(*) AS c FROM ingredients').get().c;
 translateBasicFoods(db); // Spanish names (foods-data/translations/calories-in-names-es.json)
 classifyFoods(db); // fixes basic-catalog categories, sets subgroup and form
+markParaguayFoods(db); // ⭐ foods found in Paraguay, translation fixes
 console.log(`Importados: ${imported}, omitidos (nombre repetido): ${skipped}, alimentos en total: ${total}`);
 db.close();

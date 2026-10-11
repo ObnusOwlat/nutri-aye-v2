@@ -16,8 +16,8 @@ const stmts = {
     byId: db.prepare(`SELECT * FROM v_ingredient_with_category WHERE id = @id AND ${VISIBLE}`),
     own: db.prepare('SELECT 1 FROM ingredients WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
     insert: db.prepare(`
-        INSERT INTO ingredients (id, org_id, source, name, category_id, unit_id, subgroup, food_form, created_at, updated_at, ${COLUMNS.join(', ')})
-        VALUES (@id, @orgId, 'user', @name, @category, @unit, @subgroup, @foodForm, @now, @now, ${COLUMNS.map(c => `@${c}`).join(', ')})
+        INSERT INTO ingredients (id, org_id, source, name, category_id, unit_id, subgroup, food_form, available_py, created_at, updated_at, ${COLUMNS.join(', ')})
+        VALUES (@id, @orgId, 'user', @name, @category, @unit, @subgroup, @foodForm, 1, @now, @now, ${COLUMNS.map(c => `@${c}`).join(', ')})
     `),
     update: db.prepare(`
         UPDATE ingredients SET
@@ -67,7 +67,7 @@ const inList = (column, values, where, params) => {
 
 // Conditions shared by the list and the counts. Skipping a filter counts every
 // value of it: the tree shows how many foods each option would give.
-function filters(ctx, { search = '', category = '', subgroup = '', form = '', source = '', scope = '' }, skip = []) {
+function filters(ctx, { search = '', category = '', subgroup = '', form = '', source = '', scope = '', py = '' }, skip = []) {
     const where = ['(org_id IS NULL OR org_id = ?)', 'deactivated_at IS NULL'];
     const params = [ctx.orgId];
     if (scope === 'own') where.push('org_id IS NOT NULL');
@@ -103,6 +103,7 @@ function filters(ctx, { search = '', category = '', subgroup = '', form = '', so
             params.push(...known);
         } else inList('food_form', known, where, params);
     }
+    if (!skip.includes('py') && (py === '1' || py === 1 || py === true)) where.push('available_py = 1');
     if (source === 'usda') {
         where.push("source LIKE 'usda%'"); // both USDA datasets
     } else if (source) {
@@ -131,7 +132,9 @@ function facets(ctx, query) {
         entry.total += n;
         entry.subgroups[subgroup] = n;
     }
-    return { categories, forms: Object.fromEntries(forms.map(f => [f.form, f.n])) };
+    const byPy = filters(ctx, query, ['py']);
+    const py = db.prepare(`SELECT COUNT(*) AS n FROM ingredients WHERE ${byPy.whereSql} AND available_py = 1`).get(...byPy.params).n;
+    return { categories, forms: Object.fromEntries(forms.map(f => [f.form, f.n])), py };
 }
 
 // scope: 'own' (the consultorio's foods), 'catalog' (shared foods) or both
@@ -141,10 +144,11 @@ function search(ctx, { sort, order, limit, offset, ...query }) {
     // Searching without an explicit sort: names starting with the first word
     // first, then shorter (more basic) names: "Limón, crudo" before drinks
     const sortColumn = ['name', 'kcal_per_100g', 'category'].includes(sort) ? sort : 'name';
-    let orderBy = `${sortColumn} ${order === 'desc' ? 'DESC' : 'ASC'}`;
+    // Without an explicit sort, foods found in Paraguay (⭐) go first
+    let orderBy = `${sort ? '' : 'available_py DESC, '}${sortColumn} ${order === 'desc' ? 'DESC' : 'ASC'}`;
     const orderParams = [];
     if (terms.length && !sort) {
-        orderBy = 'unaccent(name) LIKE ? DESC, LENGTH(name) ASC, name ASC';
+        orderBy = 'available_py DESC, unaccent(name) LIKE ? DESC, LENGTH(name) ASC, name ASC';
         orderParams.push(`${terms[0]}%`);
     }
 

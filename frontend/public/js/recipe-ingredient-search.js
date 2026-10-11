@@ -1,6 +1,7 @@
 /**
  * recipe-ingredient-search.js - Food search of the recipe editor (dropdown,
- * keyboard navigation). Calls onPick(food) with the chosen food.
+ * keyboard navigation). Calls onPick(food) with the chosen food. Same filters
+ * as the Alimentos tab: group, origin and "⭐ Paraguay" (local foods first).
  */
 
 const RecipeIngredientSearch = (function() {
@@ -19,7 +20,36 @@ const RecipeIngredientSearch = (function() {
         const input = document.getElementById('recipe-ingredient-search');
         input?.addEventListener('input', (e) => filterIngredients(e.target.value));
         input?.addEventListener('keydown', handleSearchKeydown);
+        const category = document.getElementById('recipe-food-category');
+        category?.addEventListener('change', () => { loadSubgroups(category.value); filterIngredients(input?.value || ''); });
+        document.getElementById('recipe-food-subgroup')?.addEventListener('change', () => filterIngredients(input?.value || ''));
+        document.getElementById('recipe-food-py')?.addEventListener('change', () => filterIngredients(input?.value || ''));
         filterIngredients(input?.value || '');
+    }
+
+    function filters() {
+        const category = document.getElementById('recipe-food-category')?.value || '';
+        const subgroup = document.getElementById('recipe-food-subgroup')?.value || '';
+        const py = document.getElementById('recipe-food-py')?.checked;
+        return { category, subgroup: subgroup && category ? `${category}.${subgroup}` : '', py: py ? '1' : '' };
+    }
+    const hasFilters = () => { const f = filters(); return !!(f.category || f.subgroup); };
+
+    // Origins of the chosen group, with how many foods each has
+    async function loadSubgroups(category) {
+        const select = document.getElementById('recipe-food-subgroup');
+        if (!select) return;
+        select.innerHTML = '<option value="">Todo origen</option>';
+        select.disabled = !category;
+        if (!category) return;
+        try {
+            const res = await fetch(`/api/ingredients/facets?category=${encodeURIComponent(category)}`);
+            const subs = (await res.json()).data?.categories?.[category]?.subgroups || {};
+            select.innerHTML += Object.entries(subs).sort((a, b) => b[1] - a[1])
+                .map(([sub, n]) => `<option value="${sub}">${UI.escapeHtml(UI.label('foodSubgroup', sub))} (${UI.formatNumber(n)})</option>`).join('');
+        } catch (e) {
+            console.warn('[Recipes] Origins failed:', e.message);
+        }
     }
 
     function hide() {
@@ -43,24 +73,33 @@ const RecipeIngredientSearch = (function() {
     function filterIngredients(query) {
         const q = (query || '').trim();
         clearTimeout(searchTimer);
-        if (!q) return renderDropdown(defaults);
+        if (!q && !hasFilters()) return renderDropdown(sortPy(defaults));
         searchTimer = setTimeout(() => searchIngredients(q), 200);
     }
 
     async function searchIngredients(q) {
         const seq = ++searchSeq;
-        const local = State.getIngredients().filter(ing => ing.name.toLowerCase().includes(q.toLowerCase()));
+        const f = filters();
+        const local = State.getIngredients().filter(ing => (!q || ing.name.toLowerCase().includes(q.toLowerCase()))
+            && (!f.category || ing.category === f.category) && (!f.subgroup || `${ing.category}.${ing.subgroup}` === f.subgroup)
+            && (!f.py || ing.availablePy));
         let remote = [];
+        const params = new URLSearchParams({ limit: 30 });
+        if (q) params.set('search', q);
+        for (const [key, value] of Object.entries(f)) if (value) params.set(key, value);
         try {
-            const res = await fetch(`/api/ingredients?search=${encodeURIComponent(q)}&limit=30`);
+            const res = await fetch(`/api/ingredients?${params}`);
             if (res.ok) remote = (await res.json()).data || [];
         } catch (e) {
             console.warn('[Recipes] Ingredient search failed:', e.message);
         }
         if (seq !== searchSeq) return; // a newer search already ran
         const seen = new Set();
-        renderDropdown([...local, ...remote].filter(ing => !seen.has(ing.id) && seen.add(ing.id)));
+        renderDropdown(sortPy([...local, ...remote].filter(ing => !seen.has(ing.id) && seen.add(ing.id))));
     }
+
+    // ⭐ foods found in Paraguay first, keeping the order inside each half
+    const sortPy = (list) => [...list.filter(i => i.availablePy), ...list.filter(i => !i.availablePy)];
 
     function renderDropdown(list) {
         const dropdown = document.getElementById('ingredient-dropdown');
@@ -72,7 +111,8 @@ const RecipeIngredientSearch = (function() {
         } else {
             dropdown.innerHTML = list.map(ing => `
                 <div class="ingredient-dropdown__item" data-id="${UI.escapeHtml(ing.id)}">
-                    <span class="ingredient-dropdown__name">${UI.escapeHtml(ing.name)}</span>
+                    <span class="ingredient-dropdown__name">${ing.availablePy ? '⭐ ' : ''}${UI.escapeHtml(ing.name)}
+                        ${ing.subgroup && ing.subgroup !== 'other' ? `<small class="ingredient-dropdown__group">${UI.escapeHtml(UI.label('foodSubgroup', ing.subgroup))}</small>` : ''}</span>
                     <span class="ingredient-dropdown__kcal">${Math.round(ing.kcalPer100g || 0)} kcal/100g</span>
                 </div>
             `).join('');

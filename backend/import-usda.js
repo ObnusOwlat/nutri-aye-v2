@@ -17,6 +17,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const { classifyFoods } = require('./src/db/schema/food-groups');
+const { markParaguayFoods } = require('./src/db/schema/paraguay');
 
 const usdaDir = path.join(__dirname, '..', 'foods-data', 'usda');
 const files = process.argv.length > 2
@@ -249,6 +250,7 @@ db.transaction(() => {
 
 // Subgroup (origen) and preparation form of every food
 classifyFoods(db);
+markParaguayFoods(db); // ⭐ foods found in Paraguay, translation fixes
 
 const count = (sql) => db.prepare(sql).get().c;
 console.log(`

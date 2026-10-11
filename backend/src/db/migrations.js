@@ -15,6 +15,7 @@ const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
+const { markParaguayFoods } = require('./schema/paraguay');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 
@@ -90,6 +91,11 @@ const MIGRATIONS = [
         version: 12,
         name: 'subgrupos (origen) y forma de preparación de los alimentos; categorías del catálogo básico',
         up: addFoodGroups
+    },
+    {
+        version: 14,
+        name: 'alimentos que se consiguen en Paraguay y correcciones de traducción',
+        up: markParaguayFoods
     }
 ];
 

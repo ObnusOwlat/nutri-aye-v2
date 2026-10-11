@@ -103,6 +103,16 @@ const RecipeEditor = (function() {
                     <!-- Search input -->
                     <div class="ingredient-search-section">
                         <label class="ingredient-search-label">🔍 Buscá y agregá alimentos:</label>
+                        <div class="recipe-food-filters">
+                            <select id="recipe-food-category" class="form-select" aria-label="Grupo">
+                                <option value="">Todos los grupos</option>
+                                ${Object.entries(State.labels?.ingredientCategory || {}).map(([v, t]) => `<option value="${v}">${UI.escapeHtml(t)}</option>`).join('')}
+                            </select>
+                            <select id="recipe-food-subgroup" class="form-select" aria-label="Origen" disabled>
+                                <option value="">Todo origen</option>
+                            </select>
+                            <label class="recipe-food-filters__py"><input type="checkbox" id="recipe-food-py" checked> ⭐ Paraguay</label>
+                        </div>
                         <div class="ingredient-combobox">
                             <input type="text" id="recipe-ingredient-search" class="form-input" 
                                    placeholder="Escribí para buscar..."
