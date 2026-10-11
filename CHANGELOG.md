@@ -2,6 +2,19 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Planificador: actividad física en la misma grilla y barra compacta
+
+- **Selector "🍽 Comidas | 🏃 Actividad"** en la barra del Planificador. En modo Actividad, las mismas tarjetas de los días muestran una pila de ejercicios y actividades, al estilo de la ficha de Smart Fit (`js/planner-activity-grid.js`).
+  - Se arrastran desde la pestaña Actividad de la columna izquierda: actividades del Compendio 2024 agrupadas, y ejercicios de wger con foto. También se pueden tocar para elegir el día. Dentro de la grilla se mueven de un día a otro.
+  - Al tocar un elemento se edita. Los ejercicios tienen series × repeticiones, carga (kg), descanso e intensidad; las actividades, minutos. Ambos aceptan notas.
+  - Se guarda con la plantilla (por ejemplo "Rutina A / B / C") o con "Guardar en paciente". "Vaciar semana" vacía solo lo que se está viendo.
+- **Gasto vs. consumo por día** (`js/planner-energy.js`):
+  - Cada día compara lo que da el plan de comidas con lo que necesita: reposo por Mifflin-St Jeor × 1,2, más la actividad del día. Marca ⚠ si queda 10 % por debajo o por encima.
+  - Las kcal de actividad son MET × VO2 × kg × minutos / 200. Se usa la tabla 60+ desde los 60 años. En los ejercicios de fuerza, los minutos salen de series × (repeticiones × 3 s + descanso).
+- **Barra compacta:** paciente, plantilla, objetivo, promedio, modo y botones quedan en una sola fila, en lugar de dos recuadros de unos 250 px.
+- **Migración 13:** columna `activity_plan` (JSON) en `diet_templates` y `week_planner`. Validación en `src/validation/activity.js`.
+- **Tests:** de 93 a 95.
+
 ## Alimentos: filtro por grupo, origen y preparación
 
 - **Columna de filtros a la izquierda** (`js/ingredient-filters.js`, `css/catalog-filters.css`).

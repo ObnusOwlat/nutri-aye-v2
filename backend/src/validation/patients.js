@@ -1,6 +1,7 @@
 // Patients, metrics and conditions
 const { z, text, requiredText, optionalText, isoDate } = require('./index');
 const { GENDERS, PATIENT_STATUSES, ACTIVITY_LEVELS, CONDITION_TYPES, CONDITION_SEVERITIES } = require('../constants');
+const { activityPlan } = require('./activity');
 
 const emptyToNull = (schema) => z.preprocess(v => (v === '' ? null : v), schema.nullish());
 const measure = (max) => emptyToNull(z.coerce.number().min(0).max(max));
@@ -116,7 +117,8 @@ const templateCreate = z.object({
     goal: z.enum(DIET_GOALS).default('maintenance'),
     dailyTarget: z.coerce.number().int().min(800).max(10000).default(2000),
     mealDistribution: z.record(z.string().max(30), z.coerce.number().min(0).max(100)).nullish(),
-    weekPlan: weekPlan.nullish()
+    weekPlan: weekPlan.nullish(),
+    activityPlan: activityPlan.nullish()
 });
 const templateUpdate = templateCreate.partial().extend({
     goal: z.enum(DIET_GOALS).optional(),

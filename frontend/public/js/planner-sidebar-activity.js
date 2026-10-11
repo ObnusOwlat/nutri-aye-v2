@@ -1,85 +1,92 @@
 /**
  * planner-sidebar-activity.js - "Actividad" tab of the planner's left column:
- * estimated kcal of an activity for the patient (MET, 2024 Compendium; weight
- * from the patient's latest measurement) and the wger exercise catalog.
- * Nothing is saved yet: it is a calculator to plan alongside the diet.
+ * common activities (2024 Compendium, by group) and the wger exercise catalog.
+ * Both are dragged onto a day of the grid in "Actividad" mode, or tapped to
+ * choose the day. Kcal are estimated in the grid (planner-energy.js).
  */
 
 const PlannerSidebarActivity = (function() {
-    let panel, activitySelect, minutesInput, timesInput, weightInput, result, exSearch, exMuscle, exCategory, exList;
-    let activities = [];
+    let panel, activityList, exSearch, exMuscle, exCategory, exList;
     let searchTimer = null;
+    let exercises = new Map();   // shown exercises by id, for drag/tap
     const esc = (t) => UI.escapeHtml(t);
 
-    async function init() {
+    function init() {
         panel = document.querySelector('[data-sidebar-panel="activity"]');
         if (!panel) return;
-        activitySelect = panel.querySelector('#sidebar-activity');
-        minutesInput = panel.querySelector('#sidebar-activity-minutes');
-        timesInput = panel.querySelector('#sidebar-activity-times');
-        weightInput = panel.querySelector('#sidebar-activity-weight');
-        result = panel.querySelector('#sidebar-activity-result');
+        activityList = panel.querySelector('#sidebar-activity-list');
         exSearch = panel.querySelector('#sidebar-exercise-search');
         exMuscle = panel.querySelector('#sidebar-exercise-muscle');
         exCategory = panel.querySelector('#sidebar-exercise-category');
         exList = panel.querySelector('#sidebar-exercise-list');
 
-        [activitySelect, minutesInput, timesInput, weightInput].forEach(el => el.addEventListener('change', estimate));
         [exSearch, exMuscle, exCategory].forEach(el => el.addEventListener('input', () => {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(searchExercises, 250);
         }));
-        exList.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-activity-id]');
-            if (!btn) return;
-            activitySelect.value = btn.dataset.activityId;
-            estimate();
-            panel.querySelector('.sidebar-activity__calc').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        panel.addEventListener('dragstart', (e) => {
+            const source = sourceOf(e.target.closest('[data-source]'));
+            if (!source) return;
+            e.dataTransfer.setData(PlannerActivityGrid.DRAG_NEW, JSON.stringify(source));
+            e.dataTransfer.effectAllowed = 'copy';
+            if (State.getMode() !== 'activity') State.setMode('activity');
         });
-        State.subscribe('plannerPatient:changed', () => { weightInput.value = ''; estimate(); });
-        State.subscribe('state:ready', load);
-        if (State.isReady()) load();
+        panel.addEventListener('click', (e) => {
+            const source = sourceOf(e.target.closest('[data-source]'));
+            if (source) chooseDay(source);
+        });
+        // Activity mode shows this tab
+        State.subscribe('plannerMode:changed', (mode) => { if (mode === 'activity') PlannerSidebar.showTab('activity'); });
+        State.subscribe('activities:loaded', renderActivities);
+        State.subscribe('state:ready', loadFilters);
+        if (State.isReady()) loadFilters();
     }
 
-    async function load() {
-        if (activities.length) return;
+    // { kind, refId, name, activityId } of a list row
+    function sourceOf(row) {
+        if (!row) return null;
+        if (row.dataset.source === 'activity') {
+            const a = PlannerEnergy.getActivity(row.dataset.id);
+            return a && { kind: 'activity', refId: a.id, name: a.name, activityId: a.id };
+        }
+        const ex = exercises.get(row.dataset.id);
+        return ex && { kind: 'exercise', refId: String(ex.id), name: ex.name, activityId: ex.activityId };
+    }
+
+    function chooseDay(source) {
+        const options = State.DAYS.map(d => `<option value="${d}">${esc(UI.label('day', d))}</option>`).join('');
+        UI.openModal({
+            title: `Agregar "${source.name}"`,
+            content: `<div class="form-group"><label class="form-label" for="act-pick-day">Día</label>
+                <select class="form-select" id="act-pick-day">${options}</select></div>`,
+            confirmText: 'Agregar',
+            cancelText: 'Cancelar',
+            onConfirm: () => {
+                State.setMode('activity');
+                PlannerActivityGrid.add(document.getElementById('act-pick-day').value, source);
+            }
+        });
+    }
+
+    function renderActivities() {
+        const groups = {};
+        for (const a of PlannerEnergy.list()) (groups[a.category] = groups[a.category] || []).push(a);
+        activityList.innerHTML = Object.entries(groups).map(([category, list], i) => `
+            <details class="sidebar-group" ${i === 0 ? 'open' : ''}>
+                <summary>${esc(category)} <span>(${list.length})</span></summary>
+                ${list.map(a => `<div class="sidebar-drag" draggable="true" data-source="activity" data-id="${esc(a.id)}"
+                    title="Arrastrá a un día de la semana o tocá para elegirlo">${esc(a.name)} <small>${UI.formatDecimal(a.adult.met)} MET</small></div>`).join('')}
+            </details>`).join('');
+    }
+
+    async function loadFilters() {
         try {
-            const [acts, filters] = await Promise.all([State._api('GET', '/api/activities'), State._api('GET', '/api/exercises/filters')]);
-            activities = acts;
-            const groups = {};
-            for (const a of acts) (groups[a.category] = groups[a.category] || []).push(a);
-            activitySelect.innerHTML = Object.entries(groups).map(([cat, list]) =>
-                `<optgroup label="${esc(cat)}">${list.map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('')}</optgroup>`).join('');
-            activitySelect.value = 'caminar_rapido';
+            const filters = await State._api('GET', '/api/exercises/filters');
             exMuscle.innerHTML = '<option value="">Músculo</option>' + filters.muscles.map(m => `<option>${esc(m)}</option>`).join('');
             exCategory.innerHTML = '<option value="">Zona</option>' + filters.categories.map(c => `<option>${esc(c)}</option>`).join('');
-            estimate();
             searchExercises();
         } catch (error) {
-            result.innerHTML = `<p class="sidebar-note">No se pudieron cargar las actividades: ${esc(error.message)}</p>`;
-        }
-    }
-
-    async function estimate() {
-        if (!activities.length) return;
-        const patientId = PlannerSidebar.getPatientId();
-        const params = new URLSearchParams({ activityId: activitySelect.value, minutes: minutesInput.value || 30 });
-        if (patientId) params.set('patientId', patientId);
-        if (weightInput.value) params.set('weightKg', weightInput.value);
-        if (!patientId && !weightInput.value) {
-            result.innerHTML = '<p class="sidebar-note">Elegí un paciente o escribí un peso para calcular.</p>';
-            return;
-        }
-        try {
-            const r = await State._api('GET', `/api/activities/kcal?${params}`);
-            const times = Math.max(1, parseInt(timesInput.value, 10) || 1);
-            result.innerHTML = `
-                <div class="sidebar-activity__kcal">${UI.formatNumber(r.kcal)} <small>kcal por sesión</small></div>
-                <div class="sidebar-note">${UI.plural(times, 'vez', 'veces')} por semana ≈ <strong>${UI.formatNumber(r.kcal * times)} kcal/semana</strong>
-                    (≈ ${UI.formatNumber(Math.round(r.kcal * times / 7))} kcal/día)</div>
-                <div class="sidebar-note sidebar-note--small">${UI.formatDecimal(r.met)} MET · ${UI.formatDecimal(r.weightKg)} kg${r.age != null ? ` · ${r.age} años` : ''} · ${esc(r.table)}, código ${esc(r.code)}</div>`;
-        } catch (error) {
-            result.innerHTML = `<p class="sidebar-note">${esc(error.message)}</p>`;
+            exList.innerHTML = `<p class="sidebar-note">No se pudieron cargar los ejercicios: ${esc(error.message)}</p>`;
         }
     }
 
@@ -89,15 +96,15 @@ const PlannerSidebarActivity = (function() {
             const res = await fetch(`/api/exercises?${params}`);
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || `Error ${res.status}`);
+            exercises = new Map(json.data.map(e => [String(e.id), e]));
             const more = json.pagination.total - json.data.length;
             exList.innerHTML = json.data.map(e => `
-                <div class="sidebar-exercise">
+                <div class="sidebar-exercise" draggable="true" data-source="exercise" data-id="${esc(String(e.id))}" title="Arrastrá a un día de la semana o tocá para elegirlo">
                     ${e.image ? `<img src="${esc(e.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="sidebar-exercise__noimg">🏋</div>'}
                     <div>
                         <strong>${esc(e.name)}</strong>${e.translated ? '' : ' <small class="sidebar-tag">en inglés</small>'}
                         <div class="sidebar-note">${esc(e.category)}${e.muscles.length ? ' · ' + esc(e.muscles.join(', ')) : ''}</div>
                         <div class="sidebar-note sidebar-note--small">${esc(e.equipment.join(', ') || 'Sin equipo')} · ${esc(e.license || '')}${e.author ? ', ' + esc(e.author) : ''} (wger)</div>
-                        <button class="btn btn--secondary btn--sm" data-activity-id="${esc(e.activityId)}">Estimar kcal</button>
                     </div>
                 </div>`).join('') + (more > 0 ? `<p class="sidebar-note">y ${UI.formatNumber(more)} más: afiná la búsqueda.</p>` : '')
                 || '<p class="sidebar-note">Sin resultados.</p>';
@@ -107,5 +114,5 @@ const PlannerSidebarActivity = (function() {
     }
 
     document.addEventListener('DOMContentLoaded', init);
-    return { estimate };
+    return {};
 })();

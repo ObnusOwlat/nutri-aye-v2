@@ -23,6 +23,8 @@ const Planner = (function() {
 
         PlannerTemplates.init();
         PlannerPatient.init();
+        PlannerActivityGrid.bind(weekGrid);
+        PlannerEnergy.load().catch(() => UI.toastError('No se pudieron cargar las actividades'));
         bindEvents();
         subscribeToState();
         renderWeekPlan();
@@ -48,14 +50,21 @@ const Planner = (function() {
         document.getElementById('btn-clear-week')?.addEventListener('click', () => {
             const template = State.getDietTemplate(PlannerTemplates.getSelectedId());
             const templateName = template ? template.name : 'current';
+            const activity = State.getMode() === 'activity';
             UI.confirmDanger(
-                `¿Vaciar la semana de "${templateName}"?`,
+                `¿Vaciar ${activity ? 'la actividad' : 'las comidas'} de la semana de "${templateName}"?`,
                 () => {
-                    State.clearWeekPlan();
+                    if (activity) State.clearActivityPlan(); else State.clearWeekPlan();
                     UI.toastSuccess('Semana vaciada: ' + templateName);
                 },
                 'Vaciar semana'
             );
+        });
+
+        // Comidas | Actividad: the same grid, other content
+        document.getElementById('planner-mode')?.addEventListener('click', (e) => {
+            const button = e.target.closest('[data-mode]');
+            if (button) State.setMode(button.dataset.mode);
         });
 
         // Event delegation for meal slots
@@ -67,6 +76,7 @@ const Planner = (function() {
      * Handle grid click events (delegation)
      */
     function handleGridClick(e) {
+        if (State.getMode() === 'activity') return; // planner-activity-grid.js
         const slot = e.target.closest('.meal-slot');
         const removeBtn = e.target.closest('.meal-slot__remove');
         const dayCard = e.target.closest('.day-card');
@@ -101,13 +111,19 @@ const Planner = (function() {
         State.subscribe('dietProfile:updated', () => { updateDietDisplay(); });
         State.subscribe('recipes:updated', renderWeekPlan);
         State.subscribe('plannerSuggestions:updated', renderWeekPlan);
+        // Activity mode: its items, the patient (weight) and the MET table change the cards
+        const activityOnly = () => { if (State.getMode() === 'activity') renderWeekPlan(); };
+        State.subscribe('activityPlan:updated', activityOnly);
+        State.subscribe('activities:loaded', activityOnly);
+        State.subscribe('plannerPatient:changed', activityOnly);
+        State.subscribe('plannerMode:changed', renderWeekPlan);
     }
 
     /**
      * Update only the calories display (partial update)
      */
     function updateMealSlotCalories() {
-        if (!weekGrid) return;
+        if (!weekGrid || State.getMode() === 'activity') return;
 
         const target = State.getDietProfile().dailyTarget;
         const today = getTodayIndex();
@@ -145,6 +161,13 @@ const Planner = (function() {
         if (!weekGrid) return;
 
         const today = getTodayIndex();
+        const activity = State.getMode() === 'activity';
+        weekGrid.classList.toggle('week-grid--activity', activity);
+        document.querySelectorAll('#planner-mode [data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === State.getMode()));
+        if (activity) {
+            weekGrid.innerHTML = PlannerActivityGrid.html(DAYS, DAY_LABELS, today);
+            return;
+        }
         const target = State.getDietProfile().dailyTarget;
 
         weekGrid.innerHTML = DAYS.map((day, index) => {

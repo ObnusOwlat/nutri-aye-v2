@@ -18,13 +18,14 @@ const stmts = {
     list: db.prepare('SELECT * FROM diet_templates WHERE org_id = ? AND deactivated_at IS NULL ORDER BY is_default DESC, created_at'),
     byId: db.prepare('SELECT * FROM diet_templates WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
     insert: db.prepare(`
-        INSERT INTO diet_templates (id, org_id, name, description, goal, daily_target, meal_distribution, week_plan, is_default, created_at, updated_at)
-        VALUES (@id, @orgId, @name, @description, @goal, @dailyTarget, @mealDistribution, @weekPlan, @isDefault, @now, @now)
+        INSERT INTO diet_templates (id, org_id, name, description, goal, daily_target, meal_distribution, week_plan, activity_plan, is_default, created_at, updated_at)
+        VALUES (@id, @orgId, @name, @description, @goal, @dailyTarget, @mealDistribution, @weekPlan, @activityPlan, @isDefault, @now, @now)
     `),
     update: db.prepare(`
         UPDATE diet_templates SET name = COALESCE(@name, name), description = COALESCE(@description, description),
             goal = COALESCE(@goal, goal), daily_target = COALESCE(@dailyTarget, daily_target),
             meal_distribution = COALESCE(@mealDistribution, meal_distribution), week_plan = COALESCE(@weekPlan, week_plan),
+            activity_plan = COALESCE(@activityPlan, activity_plan),
             updated_at = @now
         WHERE id = @id AND org_id = @orgId
     `),
@@ -36,7 +37,7 @@ const stmts = {
 
 const toTemplate = (row) => row && ({
     id: row.id, name: row.name, description: row.description, goal: row.goal, dailyTarget: row.daily_target,
-    mealDistribution: parseJson(row.meal_distribution, null), weekPlan: parseJson(row.week_plan, null),
+    mealDistribution: parseJson(row.meal_distribution, null), weekPlan: parseJson(row.week_plan, null), activityPlan: parseJson(row.activity_plan, null),
     isDefault: !!row.is_default, createdAt: row.created_at, updatedAt: row.updated_at
 });
 
@@ -46,7 +47,7 @@ function insert(ctx, data, isDefault = false) {
     const id = newId();
     stmts.insert.run({
         id, orgId: ctx.orgId, name: data.name, description: data.description ?? '', goal: data.goal, dailyTarget: data.dailyTarget,
-        mealDistribution: json(data.mealDistribution), weekPlan: json(data.weekPlan), isDefault: isDefault ? 1 : 0, now: nowIso()
+        mealDistribution: json(data.mealDistribution), weekPlan: json(data.weekPlan), activityPlan: json(data.activityPlan), isDefault: isDefault ? 1 : 0, now: nowIso()
     });
     return id;
 }
@@ -68,7 +69,8 @@ function update(ctx, id, data) {
     if (!getById(ctx, id)) return null;
     stmts.update.run({
         id, orgId: ctx.orgId, name: data.name ?? null, description: data.description ?? null, goal: data.goal ?? null,
-        dailyTarget: data.dailyTarget ?? null, mealDistribution: json(data.mealDistribution), weekPlan: json(data.weekPlan), now: nowIso()
+        dailyTarget: data.dailyTarget ?? null, mealDistribution: json(data.mealDistribution), weekPlan: json(data.weekPlan),
+        activityPlan: json(data.activityPlan), now: nowIso()
     });
     return getById(ctx, id);
 }

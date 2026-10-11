@@ -1,0 +1,174 @@
+/* planner-activity.css - Barra compacta del planificador, modo Actividad y listas arrastrables */
+
+/* ===========================================
+   ONE-LINE PLANNER BAR (patient, template, target, mode, actions)
+   =========================================== */
+
+.planner-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm) var(--space-md);
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-size-sm);
+}
+
+.planner-bar__field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-weight: 600;
+    color: var(--color-text-light);
+}
+
+.planner-bar__field .form-select {
+    min-width: 170px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.planner-bar .calorie-summary__input {
+    width: 80px;
+    padding: 4px 6px;
+}
+
+.planner-bar__avg strong {
+    font-size: var(--font-size-lg);
+}
+
+.planner-bar__actions {
+    display: flex;
+    gap: var(--space-xs);
+    margin-left: auto;
+}
+
+.planner-mode {
+    display: inline-flex;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.planner-mode__btn {
+    background: none;
+    border: 0;
+    padding: 6px 14px;
+    font: inherit;
+    font-weight: 600;
+    color: var(--color-text-light);
+    cursor: pointer;
+}
+
+.planner-mode__btn.active {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* ===========================================
+   ACTIVITY MODE: items stacked in the day cards
+   =========================================== */
+
+.week-grid--activity .day-card__header {
+    background: var(--color-mixed);
+}
+
+.act-balance {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--font-size-xs);
+    background: var(--color-bg);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--space-xs) var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.act-balance small { color: var(--color-text-muted); }
+.act-balance--low { background: #fef3c7; }
+.act-balance--high { background: #fee2e2; }
+.act-balance--ok { background: var(--color-primary-light); }
+
+.act-item {
+    position: relative;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-mixed);
+    border-radius: 6px;
+    padding: 4px 22px 4px 8px;
+    margin-bottom: 4px;
+    background: var(--color-bg-alt);
+    cursor: grab;
+    font-size: var(--font-size-xs);
+}
+
+.act-item--activity { border-left-color: var(--color-primary); }
+.act-item:hover { border-color: var(--color-primary); }
+.act-item__name { font-weight: 600; font-size: var(--font-size-sm); line-height: 1.25; }
+.act-item__detail { color: var(--color-text-light); }
+
+.act-item__remove {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: none;
+    border: 0;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.act-drop {
+    border: 1px dashed var(--color-border-dark);
+    border-radius: 6px;
+    padding: var(--space-sm);
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.day-card--drop {
+    outline: 2px dashed var(--color-primary);
+    outline-offset: 2px;
+}
+
+.act-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 var(--space-md);
+}
+
+/* ===========================================
+   SIDEBAR: draggable activities by group
+   =========================================== */
+
+.sidebar-group summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    padding: 4px 0;
+}
+
+.sidebar-group summary span { color: var(--color-text-muted); font-weight: 400; }
+
+.sidebar-drag {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-xs);
+    padding: 4px 8px;
+    margin: 2px 0;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: var(--font-size-sm);
+    cursor: grab;
+}
+
+.sidebar-drag:hover { border-color: var(--color-primary); }
+.sidebar-drag small { color: var(--color-text-muted); white-space: nowrap; }
+.sidebar-exercise[draggable="true"] { cursor: grab; }
+
+@media print {
+    .planner-bar, .planner-sidebar, .act-drop, .act-item__remove { display: none; }
+}

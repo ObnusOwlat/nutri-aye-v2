@@ -15,6 +15,7 @@ const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
+const { addActivityPlans } = require('./schema/activity-plans');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 const { createPaymentTables } = require('./schema/payments');
@@ -96,6 +97,11 @@ const MIGRATIONS = [
         version: 12,
         name: 'subgrupos (origen) y forma de preparación de los alimentos; categorías del catálogo básico',
         up: addFoodGroups
+    },
+    {
+        version: 13,
+        name: 'semana de actividad física en plantillas y en la semana del paciente',
+        up: addActivityPlans
     }
 ];
 
