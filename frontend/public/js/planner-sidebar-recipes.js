@@ -66,9 +66,15 @@ const PlannerSidebarRecipes = (function() {
         });
     }
 
-    function place(recipeId, day, meal) {
+    function place(recipeId, day, meal, confirmed = false) {
         const recipe = State.getRecipe(recipeId);
-        if (!recipe || !State.assignMeal(day, meal, recipeId)) return;
+        if (!recipe) return;
+        if (!confirmed && PlannerSidebar.isBlocked(recipeId)) {
+            UI.confirmDanger(`${recipe.name}: ${PlannerSidebar.warningsFor(recipeId)[0]}. ¿Agregarla igual?`,
+                () => place(recipeId, day, meal, true), 'Agregar igual');
+            return;
+        }
+        if (!State.assignMeal(day, meal, recipeId)) return;
         const warnings = PlannerSidebar.warningsFor(recipeId);
         const where = `${UI.label('day', day)}, ${UI.label('mealType', meal)}`;
         if (warnings.length) UI.toastWarning(`${recipe.name} en ${where}: ${warnings[0]}`);

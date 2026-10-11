@@ -43,7 +43,7 @@ test('dairy intolerance and celiac disease exclude recipes, last and flagged', a
     const byId = Object.fromEntries(res.body.data.map(r => [r.recipeId, r]));
     assert.equal(byId[safe.id].excluded, false);
     assert.equal(byId[withCheese.id].excluded, true);
-    assert.match(byId[withCheese.id].warnings[0], /^Contiene lácteos: Queso fresco S/);
+    assert.match(byId[withCheese.id].warnings[0], /^Contiene lácteos: Queso fresco S — intolerancia/);
     assert.match(byId[withBread.id].warnings[0], /^Contiene gluten: Pan de trigo S/);
     assert.equal(res.body.data.at(-1).excluded, true);
     assert.ok(res.body.data.every(r => r.category === 'snack'));

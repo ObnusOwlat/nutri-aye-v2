@@ -2,6 +2,27 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Alergias: alérgenos estructurados y control cruzado con los alimentos
+
+- **Alérgenos de cada alimento** (`src/lib/allergen-tags.js`):
+  - Son los 14 de declaración obligatoria en la UE (Reglamento 1169/2011).
+  - Para calcularlos se combinan dos fuentes. Por un lado, la taxonomía de ingredientes de Open Food Facts (ODbL, `foods-data/allergens/off-allergen-terms.json`, se actualiza con `import-off-allergens.js`), buscada en el nombre en inglés de USDA y en el nombre en español. Por otro, reglas locales: manteca, avena (que la UE cuenta como gluten), salsa de soja y pescados de río.
+  - Gana el término más largo: "leche de coco" no cuenta como leche y "nuez moscada" no cuenta como fruto seco.
+  - 2.470 de los 8.231 alimentos llevan algún alérgeno.
+- **Correcciones del consultorio:** en el detalle de un alimento, cada alérgeno se marca o desmarca con un toque (`PUT /api/ingredients/:id/allergens`). La corrección no se borra y queda en el registro de actividad.
+- **Alergias del paciente sin escribir a mano:**
+  - Las alergias e intolerancias ahora tienen casillas con los 14 alérgenos.
+  - Lo que ya estaba escrito se tradujo solo: "Enfermedad celíaca" → gluten, "Intolerancia a la lactosa" → lácteos. Si no se marca ninguno, se deducen del nombre.
+  - La ficha muestra los alérgenos como etiquetas.
+- **Control cruzado:**
+  - Las sugerencias, los ⚠ del Planificador y el selector de recetas usan los alérgenos reales de cada ingrediente, por ejemplo "Contiene lácteos: Queso mozzarella — intolerancia".
+  - Si es una alergia grave, la receta queda `blocked` y arrastrarla al Planificador pide confirmación.
+  - Las metas (`avoid`) también usan esta lista.
+- **Crear receta:** cada alimento muestra sus alérgenos, y arriba aparece "⚠ Contiene: huevo, lácteos" para toda la receta.
+- **Aviso:** la detección se basa en el nombre del alimento y los alimentos crudos no informan trazas. Hay que revisar siempre la etiqueta.
+- **Migración 15:** agrega `ingredients.allergen_tags` (JSON), `ingredient_allergen_overrides` y `patient_conditions.allergens`, y calcula los alérgenos de todos los alimentos.
+- **Tests:** de 103 a 106.
+
 ## Planificador: actividad física en la misma grilla y barra compacta
 
 - **Selector "🍽 Comidas | 🏃 Actividad"** en la barra del Planificador. En modo Actividad, las mismas tarjetas de los días muestran una pila de ejercicios y actividades, al estilo de la ficha de Smart Fit (`js/planner-activity-grid.js`).

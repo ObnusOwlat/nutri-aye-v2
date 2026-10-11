@@ -56,3 +56,13 @@
 .recipe-food-filters__py { display: flex; align-items: center; gap: 4px; font-size: var(--font-size-sm); white-space: nowrap; cursor: pointer; }
 .ingredient-dropdown__group { margin-left: 6px; color: var(--color-text-muted); font-size: var(--font-size-xs); }
 .food-py { font-size: .9em; }
+
+/* Allergens: food profile toggles, recipe summary and chips */
+.food-allergens { margin-top: var(--space-md); }
+.food-allergens__list { display: flex; flex-wrap: wrap; gap: 6px; }
+.food-allergen { border: 1px solid var(--color-border); background: var(--color-bg-card); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: var(--font-size-xs); cursor: pointer; color: var(--color-text-light); }
+.food-allergen--on { background: #fee2e2; border-color: var(--color-danger); color: var(--color-danger-dark); font-weight: 600; }
+.recipe-allergens { background: #fee2e2; color: var(--color-danger-dark); border-radius: 8px; padding: 6px 10px; margin: 0 0 var(--space-sm); font-size: var(--font-size-sm); }
+.recipe-allergens small { color: var(--color-text-light); }
+.ingredient-item__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; font-size: var(--font-size-xs); font-weight: 600; }
+.food-row__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; margin-left: 4px; font-size: var(--font-size-xs); font-weight: 600; }
