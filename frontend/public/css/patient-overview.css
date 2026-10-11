@@ -1,0 +1,119 @@
+/* patient-overview.css - Resumen y formulario del paciente */
+
+   PATIENT OVERVIEW
+   =========================================== */
+
+.patient-overview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.patient-overview__section {
+    padding: var(--space-lg);
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+}
+
+.patient-overview__section h4 {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: var(--font-size-md);
+}
+
+.patient-overview__section--warning {
+    border-left: 4px solid var(--color-warning);
+    background: rgba(255, 152, 0, 0.05);
+}
+
+.patient-overview__section--success {
+    border-left: 4px solid var(--color-success);
+    background: rgba(76, 175, 80, 0.05);
+}
+
+.patient-info-list {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: var(--space-sm) var(--space-md);
+}
+
+.patient-info-list dt {
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+.patient-info-list dd {
+    color: var(--color-text);
+    margin: 0;
+}
+
+.patient-allergies {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.patient-allergies li {
+    font-size: var(--font-size-sm);
+}
+
+.patient-allergies li strong {
+    color: var(--color-danger);
+}
+
+.patient-conditions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.patient-conditions li {
+    font-size: var(--font-size-sm);
+}
+
+/* ===========================================
+   PATIENT FORM
+   =========================================== */
+
+.patient-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.patient-form__section {
+    padding: var(--space-md);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.patient-form__section:last-child {
+    margin-bottom: 0;
+}
+
+.patient-form__section-title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.patient-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.patient-form__row:last-child {
+    margin-bottom: 0;
+}
+
+/* ===========================================

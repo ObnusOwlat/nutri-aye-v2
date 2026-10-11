@@ -1,0 +1,130 @@
+/* planner-bar.css - Filtro por categoría y barra del paciente en el planificador */
+
+   CATEGORY FILTER
+   =========================================== */
+
+.category-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.category-filter__btn {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background-color: var(--color-bg-alt);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+}
+
+.category-filter__btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.category-filter__btn.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* ===========================================
+   PLANNER PATIENT BAR
+   =========================================== */
+
+.planner__patient-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+    background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-alt) 100%);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-lg);
+    border: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+.planner__patient-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.planner__patient-selector label {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.planner__patient-selector .form-select {
+    min-width: 200px;
+}
+
+.planner__patient-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.planner__patient-info span {
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+}
+
+.planner__patient-goal {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.planner__patient-target {
+    font-weight: 600;
+}
+
+.planner__patient-restrictions {
+    color: var(--color-warning);
+}
+
+.planner__patient-restrictions.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--color-warning);
+}
+
+.planner__patient-metrics {
+    color: var(--color-text-light);
+}
+
+.planner__actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+/* Allergen Warning */
+.allergen-warning {
+    color: var(--color-warning);
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.allergen-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--color-warning);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.ingredient-select__item.has-allergen {
+    border-left: 3px solid var(--color-warning);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+/* ===========================================

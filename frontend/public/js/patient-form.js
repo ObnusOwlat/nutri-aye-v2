@@ -11,8 +11,7 @@ const PatientForm = (function() {
             confirmText: 'Add Patient',
             size: 'large',
             onConfirm: () => handleSavePatient(null),
-            footerSpaceBetween: true,
-            onOpen: bindPhysicalActivityToggle
+            footerSpaceBetween: true
         });
     }
 
@@ -26,18 +25,15 @@ const PatientForm = (function() {
             confirmText: 'Save Changes',
             size: 'large',
             onConfirm: () => handleSavePatient(id),
-            footerSpaceBetween: true,
-            onOpen: bindPhysicalActivityToggle
+            footerSpaceBetween: true
         });
     }
 
-    function bindPhysicalActivityToggle() {
-        const select = document.getElementById('patient-physically-active');
-        const details = document.getElementById('physical-activity-details');
-        select?.addEventListener('change', () => {
-            details?.classList.toggle('hidden', select.value !== 'yes');
-        });
-    }
+    // Delegated once: works even if the user answers before the modal finishes opening
+    document.addEventListener('change', (e) => {
+        if (e.target.id !== 'patient-physically-active') return;
+        document.getElementById('physical-activity-details')?.classList.toggle('hidden', e.target.value !== 'yes');
+    });
 
     /**
      * Create patient form HTML string

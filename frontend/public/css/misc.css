@@ -1,0 +1,123 @@
+/* misc.css - Títulos de sección, carga, plantillas y utilidades */
+
+   SECTION TITLE
+   =========================================== */
+
+.section-title {
+    font-size: var(--font-size-xl);
+    color: var(--color-text);
+}
+
+/* ===========================================
+   LOADING STATES
+   =========================================== */
+
+.skeleton {
+    background: linear-gradient(90deg, var(--color-bg) 25%, var(--color-border) 50%, var(--color-bg) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ===========================================
+   TEMPLATE MANAGER
+   =========================================== */
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-fast);
+}
+
+.template-item:hover {
+    border-color: var(--color-primary);
+}
+
+.template-item--default {
+    background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-alt) 100%);
+}
+
+.template-item__info {
+    flex: 1;
+}
+
+.template-item__info h4 {
+    margin-bottom: var(--space-xs);
+    font-size: var(--font-size-md);
+}
+
+.template-item__info p {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.template-item__meta {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+}
+
+.template-item__actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.template-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+}
+
+.template-badge--maintenance {
+    background: rgba(33, 150, 243, 0.15);
+    color: #2196f3;
+}
+
+.template-badge--deficit {
+    background: rgba(244, 67, 54, 0.15);
+    color: #f44336;
+}
+
+.template-badge--bulking {
+    background: rgba(156, 39, 176, 0.15);
+    color: #9c27b0;
+}
+
+.template-badge--performance {
+    background: rgba(255, 152, 0, 0.15);
+    color: #ff9800;
+}
+
+.template-badge--default {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--color-success);
+}
+
+/* ===========================================
+   HIDDEN UTILITY
+   =========================================== */
+
+.hidden {
+    display: none !important;
+}

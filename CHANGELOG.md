@@ -2,6 +2,16 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Frontend y CSS: archivos chicos (2)
+
+- **`planner.js`** (783 líneas) quedó en `planner.js` (grilla), `planner-templates.js`, `planner-patient.js` y `planner-recipe-picker.js`.
+- **`recipes.js`** (626 líneas) quedó en `recipes.js` (lista), `recipe-editor.js` y `recipe-ingredient-search.js`.
+- **`ui.js`** (526 líneas) quedó en `ui.js` (punto de entrada), `ui-modal.js` y `ui-toast.js`. Se borraron funciones que no usaba nadie: ayudantes de formularios, indicadores de carga, `formatWeight`, `App.reset` (borraba todos los datos del navegador) y `handleConfirmClick`.
+- **CSS:** los 4 archivos (3.693 líneas) quedaron en 16 archivos por pantalla o componente, cargados en el mismo orden. Un script comprobó que el resultado es idéntico al original. Se quitó la sección de la lista de compras, que ya no tenía pantalla.
+- **Confirmaciones:** el botón dice "Desactivar" por defecto, porque nada se borra. Vaciar la semana y borrar los alimentos guardados en el navegador tienen su propio texto.
+- **Formularios:** el nombre de la receta, la búsqueda de alimentos y "¿Realiza actividad física?" ya no pierden lo escrito si se completan antes de que la ventana termine de abrirse.
+- **Pendientes a propósito:** `state.js` se reemplaza en la Fase 4, `ingredients.js` se rehace en la Fase 6 y `api.js` se reescribe en la Fase 4.
+
 ## Fase 2: usuarios, consultorios y permisos
 
 ### Usuarios y sesiones

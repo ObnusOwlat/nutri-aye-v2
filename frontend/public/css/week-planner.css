@@ -1,0 +1,227 @@
+/* week-planner.css - Grilla semanal del planificador */
+
+   WEEK PLANNER COMPONENTS
+   =========================================== */
+
+.planner__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.planner__template-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.planner__template-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.planner__template-label {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.planner__template-selector .form-select {
+    min-width: 180px;
+}
+
+.planner__diet-info {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+}
+
+.planner__diet-goal {
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.planner__diet-target {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+}
+
+.calorie-summary {
+    display: flex;
+    gap: var(--space-lg);
+}
+
+.calorie-summary__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.calorie-summary__label {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+}
+
+.calorie-summary__input {
+    width: 80px;
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: var(--font-size-md);
+}
+
+.calorie-summary__value {
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+}
+
+.calorie-summary__unit {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+}
+
+/* Week Grid */
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-md);
+}
+
+.day-card {
+    background-color: var(--color-bg-alt);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.day-card__header {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    padding: var(--space-sm) var(--space-md);
+    text-align: center;
+    font-weight: 600;
+}
+
+.day-card__header--today {
+    background-color: var(--color-primary-dark);
+}
+
+.day-card__content {
+    padding: var(--space-sm);
+}
+
+.day-card__calories {
+    text-align: center;
+    padding: var(--space-sm);
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+    font-size: var(--font-size-sm);
+}
+
+.day-card__calories-value {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.day-card__calories-over {
+    color: var(--color-danger);
+}
+
+/* Meal Slot */
+.meal-slot {
+    padding: var(--space-sm);
+    margin-bottom: var(--space-xs);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-height: 60px;
+}
+
+.meal-slot:last-child {
+    margin-bottom: 0;
+}
+
+.meal-slot:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+.meal-slot--filled {
+    border-style: solid;
+    border-color: var(--color-primary-light);
+    background-color: var(--color-primary-light);
+}
+
+.meal-slot__label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-xs);
+}
+
+.meal-slot__content {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+}
+
+.meal-slot__nutrition {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: var(--space-xs);
+}
+
+.meal-slot__kcal {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.meal-slot__macros {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+}
+
+.meal-slot__empty {
+    color: var(--color-text-light);
+    font-size: var(--font-size-xs);
+    font-style: italic;
+}
+
+.meal-slot__remove {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--color-text-light);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.meal-slot:hover .meal-slot__remove {
+    opacity: 1;
+}
+
+.meal-slot__remove:hover {
+    background-color: var(--color-danger);
+    color: var(--color-text-inverse);
+}
+
+/* ===========================================
