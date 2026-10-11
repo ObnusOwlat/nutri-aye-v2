@@ -12,11 +12,11 @@ router.get('/api/sync/pull', (req, res) => {
     res.json({
         success: true,
         data: {
-            ingredients: ingredients.listLibrary(),
-            recipes: recipes.listAll(),
-            patients: patients.listAll(),
-            patientMetrics: patients.listAllMetrics(),
-            patientConditions: patients.listAllConditions()
+            ingredients: ingredients.listLibrary(req.ctx),
+            recipes: recipes.listAll(req.ctx),
+            patients: patients.listAll(req.ctx),
+            patientMetrics: patients.listAllMetrics(req.ctx),
+            patientConditions: patients.listAllConditions(req.ctx)
         }
     });
 });

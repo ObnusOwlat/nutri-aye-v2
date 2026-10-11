@@ -1,17 +1,22 @@
-// Ingredients: search, CRUD, bulk import and full nutrient detail
+// Ingredients: search, CRUD, bulk import and full nutrient detail.
+// Catalog foods (USDA, calories-in) have org_id NULL: every consultorio reads
+// them, nobody edits them. Foods a consultorio creates are its own.
+// ctx = { orgId, userId } in every function.
 const { db, unaccent } = require('../db/connection');
 const { NUTRIENT_FIELDS } = require('../nutrient-fields');
 const { transformIngredient } = require('../transforms');
 const { newId, nowIso } = require('../lib/http');
 
 const COLUMNS = NUTRIENT_FIELDS.map(f => f.column);
+const VISIBLE = '(org_id IS NULL OR org_id = @orgId) AND deactivated_at IS NULL';
 
 const stmts = {
-    byId: db.prepare('SELECT * FROM v_ingredient_with_category WHERE id = ?'),
-    exists: db.prepare('SELECT 1 FROM ingredients WHERE id = ?'),
+    // Visible to the consultorio (catalog or own), active
+    byId: db.prepare(`SELECT * FROM v_ingredient_with_category WHERE id = @id AND ${VISIBLE}`),
+    own: db.prepare('SELECT 1 FROM ingredients WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
     insert: db.prepare(`
-        INSERT INTO ingredients (id, name, category_id, unit_id, created_at, updated_at, ${COLUMNS.join(', ')})
-        VALUES (@id, @name, @category, @unit, @now, @now, ${COLUMNS.map(c => `@${c}`).join(', ')})
+        INSERT INTO ingredients (id, org_id, source, name, category_id, unit_id, created_at, updated_at, ${COLUMNS.join(', ')})
+        VALUES (@id, @orgId, 'user', @name, @category, @unit, @now, @now, ${COLUMNS.map(c => `@${c}`).join(', ')})
     `),
     update: db.prepare(`
         UPDATE ingredients SET
@@ -21,10 +26,13 @@ const stmts = {
             unit_id = COALESCE(@unit, unit_id),
             updated_at = @now,
             ${COLUMNS.map(c => `${c} = COALESCE(@${c}, ${c})`).join(',\n            ')}
-        WHERE id = @id
+        WHERE id = @id AND org_id = @orgId
     `),
-    remove: db.prepare('DELETE FROM ingredients WHERE id = ?'),
-    usedInRecipes: db.prepare('SELECT COUNT(*) AS n FROM recipe_ingredients WHERE ingredient_id = ?'),
+    deactivate: db.prepare(`
+        UPDATE ingredients SET deactivated_at = @now, deactivated_by = @userId
+        WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL
+    `),
+    reactivate: db.prepare('UPDATE ingredients SET deactivated_at = NULL, deactivated_by = NULL WHERE id = @id AND org_id = @orgId'),
     nutrients: db.prepare(`
         SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group", inut.amount
         FROM ingredient_nutrients inut
@@ -38,9 +46,6 @@ const stmts = {
     `)
 };
 
-// USDA catalog rows are served through the API, not synced/backed up,
-// unless a recipe uses them (8k+ foods do not fit in localStorage)
-const LIBRARY_WHERE = "source NOT LIKE 'usda%' OR id IN (SELECT ingredient_id FROM recipe_ingredients)";
 
 // API object -> named statement params (missing nutrients: null on update, 0 on insert)
 function toParams(data, missing) {
@@ -49,9 +54,9 @@ function toParams(data, missing) {
     return params;
 }
 
-function search({ search = '', category = '', source = '', sort, order, limit, offset }) {
-    const where = ['1=1'];
-    const params = [];
+function search(ctx, { search = '', category = '', source = '', sort, order, limit, offset }) {
+    const where = ['(org_id IS NULL OR org_id = ?)', 'deactivated_at IS NULL'];
+    const params = [ctx.orgId];
 
     // Every word must appear in the Spanish or English name, in any order,
     // ignoring accents and case ("pollo pechuga", "limon")
@@ -90,38 +95,46 @@ function search({ search = '', category = '', source = '', sort, order, limit, o
     return { rows: rows.map(transformIngredient), total };
 }
 
-const getById = (id) => transformIngredient(stmts.byId.get(id));
-const exists = (id) => !!stmts.exists.get(id);
+const getById = (ctx, id) => transformIngredient(stmts.byId.get({ id, orgId: ctx.orgId }));
+const isOwn = (ctx, id) => !!stmts.own.get({ id, orgId: ctx.orgId });
 
 // Full nutrient profile (per 100 g) and household portions
-function getDetails(id) {
-    const ingredient = getById(id);
+function getDetails(ctx, id) {
+    const ingredient = getById(ctx, id);
     if (!ingredient) return null;
     return { ...ingredient, nutrients: stmts.nutrients.all(id), portions: stmts.portions.all(id) };
 }
 
-function create(data) {
+function create(ctx, data) {
     const id = newId();
-    stmts.insert.run({ ...toParams(data, 0), id, now: nowIso() });
-    return getById(id);
+    stmts.insert.run({ ...toParams(data, 0), id, orgId: ctx.orgId, now: nowIso() });
+    return getById(ctx, id);
 }
 
-function update(id, data) {
-    if (!exists(id)) return null;
-    stmts.update.run({ ...toParams(data, null), id, now: nowIso() });
-    return getById(id);
+// Only the consultorio's own foods; null = not found or catalog (read-only)
+function update(ctx, id, data) {
+    if (!isOwn(ctx, id)) return null;
+    stmts.update.run({ ...toParams(data, null), id, orgId: ctx.orgId, now: nowIso() });
+    return getById(ctx, id);
 }
 
-// false = not found; throws a conflict upstream when recipes use it
-const remove = (id) => stmts.remove.run(id).changes > 0;
-const recipeUsage = (id) => stmts.usedInRecipes.get(id).n;
+// Deactivated foods disappear from searches; recipes that use them keep working
+const deactivate = (ctx, id) => stmts.deactivate.run({ id, orgId: ctx.orgId, userId: ctx.userId, now: nowIso() }).changes > 0;
+const reactivate = (ctx, id) => stmts.reactivate.run({ id, orgId: ctx.orgId }).changes > 0;
 
-const bulkCreate = db.transaction((items) => {
+const bulkCreate = db.transaction((ctx, items) => {
     const now = nowIso();
-    for (const item of items) stmts.insert.run({ ...toParams(item, 0), id: newId(), now });
+    for (const item of items) stmts.insert.run({ ...toParams(item, 0), id: newId(), orgId: ctx.orgId, now });
     return items.length;
 });
 
-const listLibrary = () => db.prepare(`SELECT * FROM v_ingredient_with_category WHERE ${LIBRARY_WHERE}`).all().map(transformIngredient);
+// What the browser keeps: own and calories-in foods, plus catalog foods used in
+// the consultorio's recipes (8k+ USDA foods do not fit in localStorage)
+const LIBRARY_SQL = `
+    SELECT * FROM v_ingredient_with_category
+    WHERE (deactivated_at IS NULL AND source NOT LIKE 'usda%' AND (org_id IS NULL OR org_id = @orgId))
+       OR id IN (SELECT ri.ingredient_id FROM recipe_ingredients ri JOIN recipes r ON r.id = ri.recipe_id WHERE r.org_id = @orgId)
+`;
+const listLibrary = (ctx) => db.prepare(LIBRARY_SQL).all({ orgId: ctx.orgId }).map(transformIngredient);
 
-module.exports = { search, getById, getDetails, exists, create, update, remove, recipeUsage, bulkCreate, listLibrary, LIBRARY_WHERE };
+module.exports = { search, getById, getDetails, isOwn, create, update, deactivate, reactivate, bulkCreate, listLibrary };

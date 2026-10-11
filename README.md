@@ -15,7 +15,15 @@ npm start                 # http://127.0.0.1:3001
 
 El server sirve la app (`frontend/public/`) y la API en el mismo puerto. La base SQLite se crea sola en `backend/db/` y el esquema se actualiza con migraciones numeradas al arrancar (tabla `schema_version`).
 
-Por defecto escucha solo en esta computadora (`127.0.0.1`). Para abrirlo a la red local hay que esperar a la Fase 9 (HTTPS y usuarios).
+**Primer uso:** al abrir la app sin usuarios, pide crear el consultorio y la cuenta de administrador. Desde la terminal también se puede hacer:
+
+```bash
+node scripts/create-admin.js admin@consultorio.com "Nombre" "contraseña"
+```
+
+El admin agrega a los demás usuarios desde el menú de usuario → *Usuarios del consultorio* (roles: administrador/a, nutricionista, recepción). Cada usuario nuevo recibe una contraseña temporal que debe cambiar al entrar.
+
+Por defecto escucha solo en esta computadora (`127.0.0.1`). Para abrirlo a la red local hay que esperar a la Fase 9 (HTTPS).
 
 ## Desarrollo
 
@@ -47,19 +55,26 @@ tools/                         # traducción offline de nombres USDA
 foods-data/                    # datos de alimentos y traducciones
 ```
 
-Reglas del código: archivos chicos (unas 300 líneas como máximo), un archivo por dominio, el SQL solo en `repos/`.
+Reglas del código:
+- Archivos chicos (unas 300 líneas como máximo), un archivo por dominio, el SQL solo en `repos/`.
+- **Nada se borra:** "eliminar" desactiva (`deactivated_at`, `deactivated_by`). Un test falla si aparece un `DELETE FROM` sobre datos.
+- Toda consulta filtra por el consultorio de la sesión (`req.ctx.orgId`). Los permisos por rol están en `src/lib/permissions.js`.
 
 ### Convenciones de la API
 
 - Respuestas `{ success: true, data }`; las listas suman `pagination`.
-- Errores `{ success: false, error, code, details? }`, con `code` en `VALIDATION_ERROR` (400), `NOT_FOUND` (404), `CONFLICT` (409) o `INTERNAL_ERROR` (500, sin detalles internos).
+- Errores `{ success: false, error, code, details? }`, con `code` en `VALIDATION_ERROR` (400), `UNAUTHENTICATED` (401), `FORBIDDEN` / `PASSWORD_CHANGE_REQUIRED` / `CATALOG_READONLY` (403), `NOT_FOUND` (404), `CONFLICT` (409) o `INTERNAL_ERROR` (500, sin detalles internos).
+- Todo requiere sesión salvo `/api/health`, `/api/auth/status`, `/api/auth/login` y `/api/auth/setup`.
+- `DELETE` desactiva; `POST /…/:id/reactivate` reactiva.
 - Los ids los genera siempre el server. Los totales de facturas y presupuestos se calculan en el server a partir de los ítems.
 - Cada respuesta lleva `X-Request-Id`, que aparece en el log. Los logs nunca incluyen el cuerpo de las solicitudes.
 
 ## Respaldo
 
-- `GET /api/backup/export` descarga un JSON (`format: "nutri-aye-backup"`, `version: 4`) con todas las tablas del consultorio. No incluye el catálogo USDA, salvo los alimentos que usan las recetas.
-- `POST /api/backup/import` restaura un respaldo: actualiza o agrega por id dentro de una transacción. **No borra nada.** Si el archivo tiene un error, no se importa nada.
+Solo el admin, y solo para su consultorio.
+
+- `GET /api/backup/export` descarga un JSON (`format: "nutri-aye-backup"`, `version: 5`) con los datos del consultorio, incluidos los desactivados. No incluye el catálogo USDA, salvo los alimentos que usan sus recetas.
+- `POST /api/backup/import` restaura un respaldo: actualiza o agrega por id dentro de una transacción. **No borra nada**, y rechaza datos de otro consultorio. Si el archivo tiene un error, no se importa nada.
 
 ## Catálogo de alimentos (USDA FoodData Central)
 

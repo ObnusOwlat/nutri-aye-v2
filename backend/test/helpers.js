@@ -4,8 +4,27 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const { app, db } = require('../server');
+const auth = require('../src/repos/auth');
 
-const api = () => request(app);
+// A consultorio with a user of the given role, logged in. Returns its cookie.
+let userCount = 0;
+function sessionFor(role = 'admin', orgId = null) {
+    const org = orgId ? { id: orgId } : auth.createOrganization(`Consultorio ${++userCount}`);
+    const user = auth.createUser({ email: `u${++userCount}@ejemplo.com`, name: `Usuario ${userCount}`, password: 'clave-segura-1' });
+    auth.addMembership(user.id, org.id, role);
+    const token = auth.createSession({ userId: user.id, orgId: org.id });
+    return { cookie: `nutri_sid=${token}`, orgId: org.id, userId: user.id, email: user.email };
+}
+
+// Default: admin of a fresh consultorio (every test file has its own database)
+const admin = sessionFor('admin');
+
+// Requests with a session cookie: api() as the default admin, api(other) as someone else
+function api(session = admin) {
+    const agent = request(app);
+    const withCookie = (method) => (path) => agent[method](path).set('Cookie', session?.cookie || '');
+    return { get: withCookie('get'), post: withCookie('post'), put: withCookie('put'), delete: withCookie('delete') };
+}
 
 // Minimal nutrient catalog + one USDA-like ingredient, written straight to the DB
 function seedNutrients() {
@@ -34,4 +53,4 @@ async function createRecipe(ingredientId, overrides = {}) {
     return res.body.data;
 }
 
-module.exports = { api, db, seedNutrients, createIngredient, createPatient, createRecipe };
+module.exports = { api, app, db, admin, sessionFor, seedNutrients, createIngredient, createPatient, createRecipe };

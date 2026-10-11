@@ -1,0 +1,80 @@
+/* Login / first admin screen, user menu and users admin */
+
+/* Until the session is confirmed nothing of the app is shown */
+body.auth-pending .header,
+body.auth-pending .tabs,
+body.auth-pending main { display: none; }
+
+.auth-screen {
+    display: none;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    background: var(--color-bg);
+}
+.auth-screen.active { display: flex; }
+
+.auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: var(--space-xl);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+.auth-card__logo {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--color-primary-gradient); color: var(--color-text-inverse);
+    display: flex; align-items: center; justify-content: center;
+    font: 700 26px var(--font-family-heading); margin-bottom: var(--space-md);
+}
+.auth-card h2 { font-family: var(--font-family-heading); margin: 0 0 var(--space-xs); }
+.auth-card p { color: var(--color-text-light); margin: 0 0 var(--space-lg); font-size: var(--font-size-sm); }
+.auth-card .form-group { margin-bottom: var(--space-md); }
+.auth-card .btn { width: 100%; justify-content: center; }
+.auth-card__error { color: var(--color-danger-dark); font-size: var(--font-size-sm); min-height: 1.2em; margin-bottom: var(--space-sm); }
+
+/* User menu in the header */
+.user-menu { position: relative; }
+.user-menu__button { display: flex; align-items: center; gap: var(--space-sm); }
+.user-menu__avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--color-primary-light); color: var(--color-primary-dark);
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px;
+}
+.user-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 50;
+    min-width: 240px; background: var(--color-bg-card); border: 1px solid var(--color-border);
+    border-radius: 12px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); padding: var(--space-sm);
+}
+.user-menu.open .user-menu__panel { display: block; }
+.user-menu__info { padding: var(--space-sm); border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-xs); }
+.user-menu__info strong { display: block; }
+.user-menu__info small { color: var(--color-text-light); }
+.user-menu__item {
+    display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 8px;
+    padding: var(--space-sm); font: inherit; color: var(--color-text); cursor: pointer;
+}
+.user-menu__item:hover { background: var(--color-bg); }
+.user-menu select { width: 100%; margin: var(--space-xs) 0; }
+
+/* Reception does not see clinical areas */
+body[data-role="recepcion"] .tabs__tab[data-tab="planner"],
+body[data-role="recepcion"] .tabs__tab[data-tab="ingredients"],
+body[data-role="recepcion"] .tabs__tab[data-tab="recipes"],
+body[data-role="recepcion"] .patient-tabs__tab[data-tab="metrics"],
+body[data-role="recepcion"] .patient-tabs__tab[data-tab="conditions"],
+body[data-role="recepcion"] .patient-tabs__tab[data-tab="plans"],
+body[data-role="recepcion"] .patient-tabs__tab[data-tab="progress"] { display: none; }
+
+/* Users admin */
+.users-table { width: 100%; border-collapse: collapse; }
+.users-table th, .users-table td { padding: var(--space-sm); border-bottom: 1px solid var(--color-border); text-align: left; font-size: var(--font-size-sm); }
+.users-table tr.inactive td { color: var(--color-text-muted); }
+.users-table .actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+.temp-password {
+    font: 600 18px ui-monospace, monospace; background: var(--color-bg); border: 1px dashed var(--color-border-dark);
+    border-radius: 8px; padding: var(--space-md); text-align: center; letter-spacing: 1px; user-select: all;
+}

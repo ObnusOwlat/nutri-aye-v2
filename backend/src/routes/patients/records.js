@@ -1,4 +1,4 @@
-// Patient metrics, conditions and allergies
+// Patient metrics, conditions and allergies ("delete" deactivates)
 const express = require('express');
 const patients = require('../../repos/patients');
 const { validate } = require('../../validation');
@@ -9,7 +9,7 @@ const router = express.Router();
 
 // 404 for every route under a patient that does not exist
 router.param('patientId', (req, res, next, id) => {
-    next(patients.exists(id) ? undefined : notFound('Paciente'));
+    next(patients.exists(req.ctx, id) ? undefined : notFound('Paciente'));
 });
 
 router.post('/api/patients/:patientId/metrics', validate(metricCreate), (req, res) => {
@@ -17,7 +17,7 @@ router.post('/api/patients/:patientId/metrics', validate(metricCreate), (req, re
 });
 
 router.delete('/api/patients/:patientId/metrics/:metricId', (req, res) => {
-    if (!patients.removeMetric(req.params.patientId, req.params.metricId)) throw notFound('Medición');
+    if (!patients.deactivateMetric(req.ctx, req.params.patientId, req.params.metricId)) throw notFound('Medición');
     res.json({ success: true });
 });
 
@@ -26,7 +26,7 @@ router.post('/api/patients/:patientId/conditions', validate(conditionCreate), (r
 });
 
 router.delete('/api/patients/:patientId/conditions/:conditionId', (req, res) => {
-    if (!patients.removeCondition(req.params.patientId, req.params.conditionId)) throw notFound('Condición');
+    if (!patients.deactivateCondition(req.ctx, req.params.patientId, req.params.conditionId)) throw notFound('Condición');
     res.json({ success: true });
 });
 

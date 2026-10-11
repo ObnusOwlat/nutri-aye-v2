@@ -2,6 +2,44 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Fase 2: usuarios, consultorios y permisos
+
+### Usuarios y sesiones
+- **Tablas nuevas:** `organizations` (consultorios), `users`, `memberships` (usuario × consultorio × rol) y `sessions`.
+- **Contraseñas:** se guardan con scrypt (incluido en Node). Las sesiones usan una cookie `HttpOnly` y `SameSite=Lax`, y en la base se guarda solo el hash del token.
+- **Duración:** la sesión se cierra tras 12 h sin uso o 7 días en total (configurable en `.env`). Cerrar sesión revoca la sesión en el server.
+- **Primer uso:** si no hay usuarios, la app pide crear el consultorio y su admin. También está `node scripts/create-admin.js` para instalar desde la terminal.
+- **Login:** el mismo mensaje para contraseña incorrecta y para email inexistente, y un límite de 20 intentos fallidos cada 15 minutos.
+- **Contraseña temporal:** el usuario que entra con una debe cambiarla antes de poder usar la app. Cambiar la contraseña cierra las demás sesiones.
+- **Varios consultorios:** una misma persona puede pertenecer a más de uno y cambiar entre ellos desde el menú.
+
+### Roles (`src/lib/permissions.js`, una sola tabla)
+- **Administrador/a:** todo, más los usuarios del consultorio, el respaldo y los datos de facturación del consultorio.
+- **Nutricionista:** pacientes, datos clínicos, recetas, alimentos, Planner y facturación.
+- **Recepción:** pacientes (datos personales) y facturación. Puede ver, pero no editar, mediciones, condiciones, recetas, alimentos ni el Planner. En la interfaz no ve esas pestañas.
+- **Escrituras desde otros sitios:** se rechazan revisando el header `Origin` (protección CSRF).
+
+### Datos aislados por consultorio
+- Pacientes, recetas, alimentos propios y facturación llevan `org_id`. Cada consulta filtra por el consultorio de la sesión, así que otro consultorio recibe 404.
+- **Catálogo compartido:** USDA y calories-in son comunes a todos y de solo lectura (`403 CATALOG_READONLY`).
+- **Migración:** los datos existentes pasaron al "Consultorio principal".
+- **Numeración:** facturas y presupuestos se numeran por consultorio, lo que obligó a reconstruir esas dos tablas en la migración 4.
+- **Respaldo (versión 5):** exporta solo el consultorio propio. Al importar rechaza filas o referencias de otro consultorio, y no modifica el catálogo.
+
+### Nada se borra: todo se desactiva
+- Pacientes, mediciones, condiciones, recetas, alimentos propios, semanas del Planner, clientes, facturas, presupuestos, medios de pago y usuarios se desactivan (`deactivated_at`, `deactivated_by`), con endpoints para reactivarlos.
+- Un alimento o receta desactivado deja de aparecer en búsquedas, pero las recetas y planes que lo usan siguen funcionando.
+- Un test revisa que ningún archivo del backend tenga un `DELETE FROM` sobre datos. Solo se permite reemplazar las líneas de una receta, una semana o una factura al editarla.
+
+### Interfaz
+- Pantallas de login, alta del primer admin y cambio de contraseña, todas en español.
+- Menú de usuario: consultorio, rol, cambiar de consultorio, usuarios, contraseña y cerrar sesión.
+- Ventana de usuarios del consultorio: agregar con contraseña temporal, cambiar rol, desactivar, reactivar y generar una contraseña nueva.
+- **Datos del navegador:** se guardan aparte para cada usuario. Si otra persona entra en el mismo navegador, los datos del anterior se apartan y se le devuelven cuando vuelve a entrar.
+
+### Tests
+- De 35 a 50. Cubren login, cookie, cierre de sesión, contraseña temporal, roles, origen de las escrituras, usuarios, cambio de consultorio, alta del primer admin, aislamiento entre consultorios, desactivación y ausencia de `DELETE`.
+
 ## Frontend: pacientes en archivos chicos
 
 - **División:** `patients.js` pasó de 1.048 líneas a 162. El resto quedó en `patient-form.js` (alta y edición), `patient-profile.js` (ficha, pestañas y resumen) y `patient-billing.js` (pestaña de facturación).

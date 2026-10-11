@@ -99,14 +99,14 @@ const Patients = (function() {
     }
 
     /**
-     * Delete on the server first (otherwise the next sync brings the patient back)
+     * Deactivate on the server first (nothing is deleted; otherwise the next sync brings the patient back)
      */
     function showDeleteConfirmation(id) {
         const patient = State.getPatient(id);
         if (!patient) return;
 
         UI.confirmDanger(
-            `Delete patient "${patient.firstName} ${patient.lastName}"? This will also delete all their metrics, conditions, plans, and progress data.`,
+            `¿Desactivar a ${patient.firstName} ${patient.lastName}? Deja de aparecer en la lista, pero su historia queda guardada y se puede reactivar.`,
             async () => {
                 try {
                     const response = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
@@ -115,11 +115,11 @@ const Patients = (function() {
                         throw new Error((await response.json()).error || `HTTP ${response.status}`);
                     }
                 } catch (error) {
-                    UI.toastError('Could not delete on the server: ' + error.message);
+                    UI.toastError('No se pudo desactivar en el servidor: ' + error.message);
                     return;
                 }
                 State.deletePatient(id);
-                UI.toastSuccess('Patient deleted');
+                UI.toastSuccess('Paciente desactivado');
                 if (PatientProfile.getCurrentId() === id) PatientProfile.close();
             }
         );
