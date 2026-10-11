@@ -1,5 +1,6 @@
 /* planner-bar.css - Filtro por categoría y barra del paciente en el planificador */
 
+/* ===========================================
    CATEGORY FILTER
    =========================================== */
 
@@ -126,5 +127,3 @@
     border-left: 3px solid var(--color-warning);
     background: rgba(245, 158, 11, 0.05);
 }
-
-/* ===========================================

@@ -1,5 +1,6 @@
 /* recipes.css - Recetas, editor de recetas y selector de recetas */
 
+/* ===========================================
    RECIPES GRID
    =========================================== */
 
@@ -273,5 +274,3 @@
     font-size: var(--font-size-xs);
     color: var(--color-text-light);
 }
-
-/* ===========================================

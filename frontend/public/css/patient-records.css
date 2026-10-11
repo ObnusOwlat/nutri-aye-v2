@@ -1,5 +1,6 @@
 /* patient-records.css - Mediciones y condiciones */
 
+/* ===========================================
    METRICS
    =========================================== */
 
@@ -306,5 +307,3 @@
 .condition-tag.severity-severe {
     border-left: 3px solid var(--color-danger);
 }
-
-/* ===========================================
