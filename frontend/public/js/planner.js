@@ -54,7 +54,7 @@ const Planner = (function() {
         const currentTemplateId = State.getCurrentTemplateId();
 
         templateSelect.innerHTML = templates.map(t => 
-            `<option value="${t.id}">${UI.escapeHtml(t.name)} (${t.dailyTarget} kcal)</option>`
+            `<option value="${UI.escapeHtml(t.id)}">${UI.escapeHtml(t.name)} (${t.dailyTarget} kcal)</option>`
         ).join('');
 
         // Restore current selection
@@ -212,7 +212,7 @@ const Planner = (function() {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Daily Calories</label>
-                    <input type="number" id="tpl-calories" class="form-input" value="${template.dailyTarget}" min="800" max="10000">
+                    <input type="number" id="tpl-calories" class="form-input" value="${UI.escapeHtml(template.dailyTarget)}" min="800" max="10000">
                 </div>
             </div>
         `;
@@ -270,7 +270,7 @@ const Planner = (function() {
         const currentValue = patientSelect.value;
 
         patientSelect.innerHTML = '<option value="">-- No patient selected --</option>' +
-            patients.map(p => `<option value="${p.id}">${UI.escapeHtml(p.firstName)} ${UI.escapeHtml(p.lastName)}</option>`).join('');
+            patients.map(p => `<option value="${UI.escapeHtml(p.id)}">${UI.escapeHtml(p.firstName)} ${UI.escapeHtml(p.lastName)}</option>`).join('');
 
         // Restore selection
         if (currentValue && patients.find(p => p.id === currentValue)) {
@@ -612,7 +612,7 @@ const Planner = (function() {
             if (selectedPatientId) {
                 const check = State.checkRecipeAllergens(recipeId, selectedPatientId);
                 if (check.hasAllergens) {
-                    allergenWarning = `<span class="allergen-warning" title="Contains: ${check.allergens.join(', ')}">⚠</span>`;
+                    allergenWarning = `<span class="allergen-warning" title="Contains: ${UI.escapeHtml(check.allergens.join(', '))}">⚠</span>`;
                 }
             }
 
@@ -705,7 +705,7 @@ const Planner = (function() {
                 const check = State.checkRecipeAllergens(recipe.id, selectedPatientId);
                 hasAllergens = check.hasAllergens;
                 if (check.hasAllergens) {
-                    allergenWarning = `<span class="allergen-badge" title="Contains: ${check.allergens.join(', ')}">⚠ Allergen</span>`;
+                    allergenWarning = `<span class="allergen-badge" title="Contains: ${UI.escapeHtml(check.allergens.join(', '))}">⚠ Allergen</span>`;
                 }
             }
 

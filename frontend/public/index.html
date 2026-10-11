@@ -223,16 +223,16 @@
     </main>
 
     <!-- Modal Container -->
-    <div class="modal-overlay" id="modal-overlay" onclick="if(event.target === this) UI.closeModal()">
+    <div class="modal-overlay" id="modal-overlay">
         <div class="modal" id="modal">
             <div class="modal__header">
                 <h3 class="modal__title" id="modal-title">Modal Title</h3>
-                <button class="modal__close" id="modal-close" onclick="UI.closeModal()">×</button>
+                <button class="modal__close" id="modal-close">×</button>
             </div>
             <div class="modal__body" id="modal-body"></div>
             <div class="modal__footer" id="modal-footer">
-                <button class="btn btn--secondary" id="modal-cancel" onclick="UI.closeModal()">Cancel</button>
-                <button class="btn btn--primary" id="modal-confirm" onclick="UI.handleConfirmClick()">Confirm</button>
+                <button class="btn btn--secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn--primary" id="modal-confirm">Confirm</button>
             </div>
         </div>
     </div>

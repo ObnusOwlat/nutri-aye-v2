@@ -256,7 +256,7 @@ const Recipes = (function() {
         
         // Render category options
         const categoryOptionsHtml = CATEGORIES.map(cat => 
-            `<option value="${cat.id}" ${formState.category === cat.id ? 'selected' : ''}>${cat.name}</option>`
+            `<option value="${UI.escapeHtml(cat.id)}" ${formState.category === cat.id ? 'selected' : ''}>${cat.name}</option>`
         ).join('');
         
         return `
@@ -334,7 +334,7 @@ const Recipes = (function() {
                     <div class="ingredient-item__main">
                         <span class="ingredient-item__name">${UI.escapeHtml(ing.name)}</span>
                         <input type="number" class="ingredient-item__grams" 
-                               value="${ri.grams}" min="1" max="10000"
+                               value="${UI.escapeHtml(ri.grams)}" min="1" max="10000"
                                data-grams-idx="${idx}">
                         <span class="ingredient-item__kcal">${kcal} kcal</span>
                         <button class="ingredient-item__remove" data-remove-idx="${idx}">X</button>

@@ -59,6 +59,15 @@ const UI = (function() {
 
         // Toast delegation (single listener)
         toastContainer.addEventListener('click', handleToastClose);
+
+        // Range inputs show their value in the element named by data-output (no inline handlers: CSP)
+        modalBody.addEventListener('input', (e) => {
+            const outputId = e.target.dataset?.output;
+            if (outputId) {
+                const output = document.getElementById(outputId);
+                if (output) output.textContent = e.target.value;
+            }
+        });
     }
 
     // ==========================================
@@ -232,14 +241,17 @@ const UI = (function() {
         const { type = 'info', title, message, duration = 4000 } = options;
         const toast = document.createElement('div');
         toast.className = `toast toast--${type}`;
+        // Messages can contain user data (names, server errors): set as text, never as HTML
         toast.innerHTML = `
             <span class="toast__icon">${getToastIcon(type)}</span>
             <div class="toast__content">
-                ${title ? `<div class="toast__title">${title}</div>` : ''}
-                <div class="toast__message">${message || ''}</div>
+                ${title ? '<div class="toast__title"></div>' : ''}
+                <div class="toast__message"></div>
             </div>
             <button class="toast__close">×</button>
         `;
+        if (title) toast.querySelector('.toast__title').textContent = title;
+        toast.querySelector('.toast__message').textContent = message || '';
 
         toastContainer.appendChild(toast);
 
@@ -398,7 +410,7 @@ const UI = (function() {
     function confirm(message, onConfirm, onCancel) {
         return openModal({
             title: 'Confirm',
-            content: `<p>${message}</p>`,
+            content: `<p>${escapeHtml(message)}</p>`,
             confirmText: 'Yes',
             cancelText: 'No',
             onConfirm: onConfirm,
@@ -413,7 +425,7 @@ const UI = (function() {
     function confirmDanger(message, onConfirm) {
         return openModal({
             title: 'Are you sure?',
-            content: `<p class="text-danger">${message}</p>`,
+            content: `<p class="text-danger">${escapeHtml(message)}</p>`,
             confirmText: 'Delete',
             cancelText: 'Cancel',
             onConfirm: onConfirm,
@@ -474,11 +486,9 @@ const UI = (function() {
     /**
      * Escape HTML
      */
-    const escapeHtml = (text) => {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    };
+    // Safe for element content AND attribute values (escapes quotes too)
+    const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    const escapeHtml = (text) => (text == null ? '' : String(text).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]));
 
     /**
      * Emit event
