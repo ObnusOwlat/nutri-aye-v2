@@ -29,7 +29,7 @@ const PatientProfile = (function() {
         });
     }
 
-    function open(id) {
+    function open(id, tab = 'overview') {
         const patient = State.getPatient(id);
         if (!patient) {
             UI.toastError('Ese paciente ya no existe');
@@ -39,7 +39,7 @@ const PatientProfile = (function() {
         document.getElementById('patients-list-container')?.classList.add('hidden');
         patientProfile?.classList.remove('hidden');
         renderProfileHeader(patient);
-        switchTab('overview');
+        switchTab(tab);
     }
 
     function close() {

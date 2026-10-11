@@ -65,6 +65,13 @@ const quote = z.object({
     validUntil: isoDate.nullish()
 });
 
+const payment = z.object({
+    amount: z.coerce.number().positive('El monto tiene que ser mayor que cero'),
+    date: isoDate.nullish(),
+    methodId: text(64).nullish(),
+    notes: optionalText(1000)
+});
+
 const paymentMethod = z.object({
     name: requiredText(100),
     type: z.enum(PAYMENT_TYPES).default('BANK_TRANSFER'),
@@ -72,4 +79,4 @@ const paymentMethod = z.object({
     isDefault: z.boolean().default(false)
 });
 
-module.exports = { company, pdfConfig, client, invoice, quote, paymentMethod };
+module.exports = { company, pdfConfig, client, invoice, quote, payment, paymentMethod };

@@ -17,6 +17,7 @@ const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
+const { createPaymentTables } = require('./schema/payments');
 
 const MIGRATIONS = [
     {
@@ -85,6 +86,11 @@ const MIGRATIONS = [
         version: 10,
         name: 'nombre de la vitamina A sin la sigla EAR',
         up: renameVitaminA
+    },
+    {
+        version: 11,
+        name: 'pagos de los recibos internos',
+        up: createPaymentTables
     },
     {
         version: 12,

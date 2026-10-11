@@ -1,0 +1,144 @@
+/* billing.css - Pestaña Cobros, cobros del paciente, editor, detalle e impresión de recibos */
+
+/* Lista */
+.billing__header {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md);
+    flex-wrap: wrap; margin-bottom: var(--space-md);
+}
+.billing__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.billing__stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+.stat-card {
+    background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+}
+.stat-card h5 { margin: 0; font-size: var(--font-size-xs); color: var(--color-text-light); text-transform: uppercase; letter-spacing: .04em; }
+.stat-value { font-size: var(--font-size-lg); font-weight: 700; margin-top: 2px; }
+.stat-value.money { color: var(--color-primary-dark); }
+.stat-value.warning, .text-warning { color: #b45309; }
+
+.billing__toolbar {
+    display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);
+    flex-wrap: wrap; margin-bottom: var(--space-sm);
+}
+.billing__views { display: inline-flex; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 3px; }
+.billing__view {
+    border: 0; background: none; padding: 6px 16px; border-radius: var(--radius-full); font: inherit;
+    font-size: var(--font-size-sm); color: var(--color-text-light); cursor: pointer;
+}
+.billing__view.active { background: var(--color-bg-card); color: var(--color-text); font-weight: 600; box-shadow: var(--shadow-xs); }
+.billing__status { max-width: 220px; }
+.billing__status[hidden] { display: none; }
+
+/* Tablas */
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; background: var(--color-bg-card); }
+.data-table th, .data-table td {
+    padding: var(--space-sm); border-bottom: 1px solid var(--color-border); text-align: left;
+    font-size: var(--font-size-sm); white-space: nowrap;
+}
+.data-table td:first-child { white-space: normal; }
+.data-table th { color: var(--color-text-light); font-weight: 600; font-size: var(--font-size-xs); text-transform: uppercase; }
+.data-table .num, .num { text-align: right; font-variant-numeric: tabular-nums; }
+.billing__row { cursor: pointer; }
+.billing__row:hover, .billing__row:focus { background: var(--color-primary-light); outline: none; }
+
+/* Estados */
+.badge {
+    display: inline-block; padding: 2px 10px; border-radius: var(--radius-full); font-size: var(--font-size-xs);
+    font-weight: 600; background: var(--color-bg); color: var(--color-text-light);
+}
+.badge-paid, .badge-accepted { background: #dcfce7; color: #166534; }
+.badge-unpaid, .badge-sent { background: #fef3c7; color: #92400e; }
+.badge-overdue, .badge-rejected { background: #fee2e2; color: #991b1b; }
+.badge-cancelled, .badge-expired { background: #e2e8f0; color: #475569; text-decoration: line-through; }
+.badge-draft { background: #e0f2fe; color: #075985; }
+
+/* Cobros del paciente */
+.patient-billing__actions { display: flex; justify-content: flex-end; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.patient-billing__header { display: grid; grid-template-columns: minmax(200px, 1fr) 2fr; gap: var(--space-md); margin-bottom: var(--space-md); }
+.patient-billing__client h4, .patient-billing__section h4 { margin: 0 0 var(--space-xs); }
+.patient-billing__client p { margin: 2px 0; }
+.patient-billing__section { margin-top: var(--space-md); }
+
+/* Editor */
+.billing-editor__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-sm); }
+.billing-editor__notes { grid-column: span 2; }
+.billing-editor__new-client {
+    display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-sm);
+    border: 1px dashed var(--color-border-dark); border-radius: var(--radius-md); padding: var(--space-sm); margin: 0 0 var(--space-sm);
+}
+.billing-editor__new-client[hidden] { display: none; }
+.billing-items { margin: var(--space-sm) 0; }
+.billing-items__head, .billing-items__row {
+    display: grid; grid-template-columns: minmax(0, 3fr) 70px 120px 120px 36px; gap: var(--space-xs); align-items: center;
+}
+.billing-items__head { font-size: var(--font-size-xs); color: var(--color-text-light); text-transform: uppercase; padding: 0 2px; }
+.billing-items__row { margin-bottom: var(--space-xs); }
+.billing-items__amount { font-weight: 600; font-size: var(--font-size-sm); }
+.billing-editor__totals { text-align: right; margin: var(--space-sm) 0 0; }
+.billing-editor__legend { font-size: var(--font-size-xs); text-align: right; margin: 2px 0 0; }
+
+/* Detalle */
+.billing-detail__header { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-md); }
+.billing-detail__header > div { display: flex; flex-direction: column; gap: 2px; }
+.billing-detail__header small { color: var(--color-text-light); }
+.billing-detail__items tfoot td { border-bottom: 0; }
+.billing-detail__notes { white-space: pre-line; color: var(--color-text-light); font-size: var(--font-size-sm); }
+.billing-detail__payments { margin-top: var(--space-md); }
+.billing-detail__payments h4 { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); }
+.billing-payments { list-style: none; padding: 0; margin: 0 0 var(--space-sm); }
+.billing-payments li {
+    display: grid; grid-template-columns: 100px 1fr 130px 2fr auto; gap: var(--space-sm); align-items: center;
+    padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-border); font-size: var(--font-size-sm);
+}
+.billing-pay {
+    display: grid; grid-template-columns: 140px 150px 1fr 1fr auto; gap: var(--space-xs); align-items: center;
+    background: var(--color-bg); border-radius: var(--radius-md); padding: var(--space-sm);
+}
+.billing-detail__quote { display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap; margin-top: var(--space-md); }
+.billing-detail__quote label { display: flex; gap: var(--space-xs); align-items: center; }
+.billing-detail__actions { display: flex; gap: var(--space-sm); justify-content: flex-end; margin-top: var(--space-md); }
+.billing-detail__voided { margin-top: var(--space-md); color: #991b1b; font-weight: 600; }
+
+/* Medios de pago */
+.billing-methods { margin-top: var(--space-lg); }
+.billing-methods__list { list-style: none; padding: 0; margin: 0 0 var(--space-sm); }
+.billing-methods__list li { display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap; padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-border); }
+.billing-methods__add { display: grid; grid-template-columns: 1fr 160px auto; gap: var(--space-xs); }
+
+@media (max-width: 720px) {
+    .patient-billing__header, .billing-editor__new-client, .billing-pay, .billing-methods__add { grid-template-columns: 1fr; }
+    .billing-editor__notes { grid-column: auto; }
+    .billing-items__head { display: none; }
+    .billing-items__row { grid-template-columns: 1fr 70px 110px 36px; }
+    .billing-items__row .form-input[data-field=description] { grid-column: 1 / -1; }
+    .billing-items__amount { display: none; }
+    .billing-payments li { grid-template-columns: 1fr auto; }
+}
+
+/* Impresión: solo el documento */
+.print-area { display: none; }
+@media print {
+    body.printing-document > *:not(.print-area) { display: none !important; }
+    body.printing-document .print-area { display: block !important; }
+    @page { size: A4; margin: 15mm; }
+}
+.print-doc { font: 11pt/1.4 Arial, Helvetica, sans-serif; color: #000; }
+.print-doc h1 { font-size: 16pt; margin: 0 0 4px; }
+.print-doc h2 { font-size: 14pt; margin: 0; text-transform: uppercase; }
+.print-doc h3 { font-size: 11pt; margin: 12pt 0 4pt; }
+.print-doc p { margin: 1px 0; }
+.print-doc__header { display: flex; justify-content: space-between; gap: 12pt; border-bottom: 2px solid #000; padding-bottom: 8pt; }
+.print-doc__title { text-align: right; }
+.print-doc__void { font-weight: 700; color: #b91c1c; border: 2px solid #b91c1c; display: inline-block; padding: 0 6px; }
+.print-doc__client { margin: 10pt 0; }
+.print-doc table { width: 100%; border-collapse: collapse; }
+.print-doc th, .print-doc td { border-bottom: 1px solid #999; padding: 4pt; text-align: left; }
+.print-doc .num { text-align: right; }
+.print-doc tfoot td { border-bottom: 0; }
+.print-doc__balance { text-align: right; margin-top: 4pt; }
+.print-doc__notes { margin-top: 10pt; white-space: pre-line; }
+.print-doc__legend { margin-top: 18pt; padding-top: 6pt; border-top: 1px solid #999; font-size: 9pt; text-align: center; font-weight: 600; }

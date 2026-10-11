@@ -3,6 +3,7 @@ const { db } = require('../../db/connection');
 const { camelizeRow } = require('../../transforms');
 const { newId, nowIso } = require('../../lib/http');
 const company = require('./company');
+const payments = require('./payments');
 
 const stmts = {
     byId: db.prepare('SELECT * FROM billing_clients WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
@@ -21,7 +22,7 @@ const stmts = {
     `),
     patient: db.prepare('SELECT * FROM patients WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
     linkPatient: db.prepare('UPDATE patients SET billing_client_id = ?, updated_at = ? WHERE id = ?'),
-    invoicesOf: db.prepare('SELECT * FROM billing_invoices WHERE client_id = ? AND deactivated_at IS NULL ORDER BY created_at DESC'),
+    invoicesOf: db.prepare(`SELECT d.*, ${payments.PAID_SQL} AS paid FROM billing_invoices d WHERE d.client_id = ? AND d.deactivated_at IS NULL ORDER BY d.created_at DESC`),
     quotesOf: db.prepare('SELECT * FROM billing_quotes WHERE client_id = ? AND deactivated_at IS NULL ORDER BY created_at DESC')
 };
 
@@ -83,13 +84,18 @@ function patientBilling(ctx, patientId) {
     const patient = stmts.patient.get({ id: patientId, orgId: ctx.orgId });
     if (!patient) return null;
     const client = patient.billing_client_id ? getById(ctx, patient.billing_client_id) : null;
-    if (!client) return { linked: false, client: null, invoices: [], quotes: [] };
-    return {
+    if (!client) return { linked: false, client: null, invoices: [], quotes: [], balance: 0 };
+    return withBalance({
         linked: true,
         client,
-        invoices: stmts.invoicesOf.all(client.id).map(camelizeRow),
+        invoices: stmts.invoicesOf.all(client.id).map(({ paid, ...row }) => ({ ...camelizeRow(row), ...payments.summary({ ...row, paid }) })),
         quotes: stmts.quotesOf.all(client.id).map(camelizeRow)
-    };
+    });
+}
+
+// Adds the total still owed (cancelled receipts do not count)
+function withBalance(billing) {
+    return { ...billing, balance: billing.invoices.reduce((sum, i) => sum + i.balance, 0) };
 }
 
 module.exports = { list, getById, exists, create, update, deactivate, linkPatient, patientBilling };

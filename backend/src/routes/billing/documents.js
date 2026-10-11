@@ -5,7 +5,7 @@ const clients = require('../../repos/billing/clients');
 const { tracked } = require('../../audit/log');
 const { validate } = require('../../validation');
 const schemas = require('../../validation/billing');
-const { notFound, badRequest, pageParams, sendPage } = require('../../lib/http');
+const { notFound, badRequest, conflict, pageParams, sendPage } = require('../../lib/http');
 
 const router = express.Router();
 
@@ -29,6 +29,7 @@ function mount(path, repo, schema, label, entity) {
     });
 
     router.put(`${path}/:id`, validate(schema), checkClient, (req, res) => {
+        if (repo.getById(req.ctx, req.params.id)?.status === 'CANCELLED') throw conflict(`${label} anulado: no se puede editar`);
         const updated = tracked(req.ctx, entity, req.params.id, () => repo.update(req.ctx, req.params.id, req.body));
         if (!updated) throw notFound(label);
         res.json({ success: true, data: updated });
@@ -40,7 +41,7 @@ function mount(path, repo, schema, label, entity) {
     });
 }
 
-mount('/billing-api/invoices', invoices, schemas.invoice, 'Factura', 'invoice');
+mount('/billing-api/invoices', invoices, schemas.invoice, 'Recibo', 'invoice');
 mount('/billing-api/quotes', quotes, schemas.quote, 'Presupuesto', 'quote');
 
 module.exports = router;
