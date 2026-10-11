@@ -267,7 +267,7 @@ const RecipeEditor = (function() {
         if (summary) summary.innerHTML = nutritionValuesHtml();
     }
 
-    function handleSave() {
+    async function handleSave() {
         // Validate
         const name = formState.name.trim();
 
@@ -294,10 +294,10 @@ const RecipeEditor = (function() {
 
         try {
             if (formState.recipeId) {
-                State.updateRecipe(formState.recipeId, data);
+                await State.updateRecipe(formState.recipeId, data);
                 UI.toastSuccess('Recipe updated');
             } else {
-                State.addRecipe(data);
+                await State.addRecipe(data);
                 UI.toastSuccess('Recipe created');
             }
             return true; // Close modal

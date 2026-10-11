@@ -29,45 +29,17 @@ const PatientProfile = (function() {
         });
     }
 
-    /**
-     * Open a profile; patients missing in this browser are fetched from the server
-     */
-    async function open(id) {
-        if (!State.getPatient(id)) {
-            try {
-                const response = await (await fetch(`/api/patients/${id}`)).json();
-                if (!response.success) {
-                    UI.toastError('This patient no longer exists');
-                    return;
-                }
-                // Keep the server id: a new local id would open an empty profile
-                State.addPatient({ ...response.data, id });
-            } catch (err) {
-                console.error('Error loading patient:', err);
-                UI.toastError('Error loading patient');
-                return;
-            }
-        }
-        show(id);
-    }
-
-    function show(id) {
+    function open(id) {
         const patient = State.getPatient(id);
-        if (!patient) return;
+        if (!patient) {
+            UI.toastError('This patient no longer exists');
+            return;
+        }
         currentPatientId = id;
-
         document.getElementById('patients-list-container')?.classList.add('hidden');
         patientProfile?.classList.remove('hidden');
         renderProfileHeader(patient);
         switchTab('overview');
-
-        // Fresh server data (billing link, edits made on another computer)
-        fetch(`/api/patients/${id}`)
-            .then(res => res.json())
-            .then(response => {
-                if (response.success) State.updatePatient(id, { ...State.getPatient(id), ...response.data });
-            })
-            .catch(err => console.error('Error fetching patient:', err));
     }
 
     function close() {

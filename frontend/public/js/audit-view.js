@@ -15,7 +15,8 @@ const AuditView = (function() {
         patient: 'paciente', metric: 'medición', condition: 'condición', planner: 'semana del planificador',
         recipe: 'receta', ingredient: 'alimento', billing_client: 'cliente', invoice: 'factura', quote: 'presupuesto',
         payment_method: 'medio de pago', company: 'datos del consultorio', pdf_config: 'formato de PDF',
-        user: 'usuario', session: 'sesión', backup: 'respaldo'
+        user: 'usuario', session: 'sesión', backup: 'respaldo', plan: 'plan de alimentación', progress: 'seguimiento',
+        template: 'plantilla de dieta', browser_data: 'datos del navegador'
     };
 
     // Field names; unknown fields are shown as they are
@@ -29,7 +30,10 @@ const AuditView = (function() {
         muscle_mass: 'masa muscular', waist: 'cintura', hips: 'cadera', chest: 'pecho', type: 'tipo', severity: 'severidad',
         description: 'descripción', dietary_notes: 'notas dietarias', medications: 'medicación', total: 'total',
         subtotal: 'subtotal', discount: 'descuento', client_id: 'cliente', due_date: 'vencimiento', valid_until: 'válido hasta',
-        invoice_number: 'número', quote_number: 'número', kcal_per_100g: 'kcal/100 g', count: 'cantidad'
+        invoice_number: 'número', quote_number: 'número', kcal_per_100g: 'kcal/100 g', count: 'cantidad',
+        diet_goal: 'objetivo', daily_target: 'calorías diarias', start_date: 'inicio', end_date: 'fin', adherence: 'adherencia',
+        energy_level: 'energía', sleep_quality: 'sueño', mood: 'ánimo', symptoms: 'síntomas', physical_activity: 'actividad física',
+        week_plan: 'semana', goal: 'objetivo', cia_abdominal: 'circ. abdominal', cia_brazo: 'circ. brazo', cia_pierna: 'circ. pierna', cadera: 'cadera'
     };
 
     const esc = (v) => UI.escapeHtml(v);

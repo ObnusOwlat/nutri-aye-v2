@@ -39,7 +39,7 @@ test('weekly planner per patient with all six meal types', async () => {
     assert.equal((await api().get(`/api/planner?patientId=${p.id}`)).body.data.length, 0);
 });
 
-test('sync pull: library ingredients plus USDA foods used in recipes, patients with metrics', async () => {
+test('bootstrap: library ingredients plus USDA foods used in recipes, patients with metrics', async () => {
     const own = await createIngredient({ name: 'Propio' });
     const usdaUsed = await createIngredient({ name: 'USDA usado' });
     const usdaUnused = await createIngredient({ name: 'USDA sin usar' });
@@ -48,14 +48,14 @@ test('sync pull: library ingredients plus USDA foods used in recipes, patients w
     const p = await createPatient({ firstName: 'Sync' });
     await api().post(`/api/patients/${p.id}/metrics`).send({ weight: 60, height: 160 });
 
-    const pull = (await api().get('/api/sync/pull')).body.data;
+    const pull = (await api().get('/api/bootstrap')).body.data;
     const ids = pull.ingredients.map(i => i.id);
     assert.ok(ids.includes(own.id));
     assert.ok(ids.includes(usdaUsed.id));
     assert.ok(!ids.includes(usdaUnused.id));
     assert.ok(pull.patients.some(x => x.id === p.id));
     assert.ok(pull.patientMetrics.some(m => m.patientId === p.id));
-    assert.equal(pull.weekPlan, undefined);
+    assert.ok(pull.dietTemplates.length >= 5);
     const recipe = pull.recipes.find(r => r.name === 'Con USDA');
     assert.ok(recipe.nutrition.calories > 0);
 });

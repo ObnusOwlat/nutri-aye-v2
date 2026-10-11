@@ -53,7 +53,7 @@ app.use('/api', apiLimiter);
 app.use('/billing-api', apiLimiter);
 
 // Imports need a bigger body; everything else 1 MB
-app.use(['/api/ingredients/bulk', '/api/backup/import'], express.json({ limit: '20mb' }));
+app.use(['/api/ingredients/bulk', '/api/backup/import', '/api/migration/browser-data'], express.json({ limit: '20mb' }));
 app.use(express.json({ limit: '1mb' }));
 
 // Only frontend/public is served; no-cache makes the browser revalidate after updates
@@ -68,8 +68,8 @@ app.use(authenticate);
 
 const ROUTES = [
     'auth', 'users', 'activity', 'stats', 'ingredients', 'nutrients', 'nutrition', 'recipes',
-    'patients/index', 'patients/records', 'patients/billing-link',
-    'sync', 'backup', 'planner',
+    'patients/index', 'patients/records', 'patients/plans', 'patients/billing-link',
+    'bootstrap', 'diet-templates', 'migration', 'backup', 'planner',
     'billing/company', 'billing/clients', 'billing/documents', 'billing/payment-methods'
 ];
 for (const route of ROUTES) {

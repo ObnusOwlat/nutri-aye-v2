@@ -99,7 +99,7 @@ const Patients = (function() {
     }
 
     /**
-     * Deactivate on the server first (nothing is deleted; otherwise the next sync brings the patient back)
+     * Deactivate in the server (nothing is deleted; the patient can be reactivated)
      */
     function showDeleteConfirmation(id) {
         const patient = State.getPatient(id);
@@ -108,17 +108,7 @@ const Patients = (function() {
         UI.confirmDanger(
             `¿Desactivar a ${patient.firstName} ${patient.lastName}? Deja de aparecer en la lista, pero su historia queda guardada y se puede reactivar.`,
             async () => {
-                try {
-                    const response = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
-                    // 404: never reached the server (created only in this browser)
-                    if (!response.ok && response.status !== 404) {
-                        throw new Error((await response.json()).error || `HTTP ${response.status}`);
-                    }
-                } catch (error) {
-                    UI.toastError('No se pudo desactivar en el servidor: ' + error.message);
-                    return;
-                }
-                State.deletePatient(id);
+                await State.deletePatient(id);
                 UI.toastSuccess('Paciente desactivado');
                 if (PatientProfile.getCurrentId() === id) PatientProfile.close();
             }

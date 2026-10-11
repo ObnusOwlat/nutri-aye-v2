@@ -99,7 +99,7 @@ const Progress = (function() {
         UI.openModal({ title: 'Add Check-in', content, confirmText: 'Add', onConfirm: handleAdd, size: 'medium' });
     }
 
-    function handleAdd() {
+    async function handleAdd() {
         const data = {
             date: document.getElementById('progress-date')?.value,
             weight: document.getElementById('progress-weight')?.value ? parseFloat(document.getElementById('progress-weight').value) : null,
@@ -112,9 +112,9 @@ const Progress = (function() {
         try {
             if (data.weight) {
                 const latest = State.getLatestMetrics(currentPatientId);
-                State.addPatientMetric(currentPatientId, { date: data.date, weight: data.weight, height: latest?.height });
+                await State.addPatientMetric(currentPatientId, { date: data.date, weight: data.weight, height: latest?.height });
             }
-            State.addPatientProgress(currentPatientId, data);
+            await State.addPatientProgress(currentPatientId, data);
             UI.toastSuccess('Check-in added'); render(currentPatientId); return true;
         } catch (e) { UI.toastError(e.message); return false; }
     }
@@ -122,7 +122,8 @@ const Progress = (function() {
     document.addEventListener('click', (e) => {
         if (e.target.closest('#btn-add-progress')) showAddModal();
         if (e.target.closest('.btn-delete-progress')) {
-            UI.confirmDanger('Delete this check-in?', () => { State.deletePatientProgress(e.target.closest('.btn-delete-progress').dataset.id); UI.toastSuccess('Deleted'); render(currentPatientId); });
+            const id = e.target.closest('.btn-delete-progress').dataset.id;
+            UI.confirmDanger('¿Desactivar este seguimiento?', async () => { await State.deletePatientProgress(id); UI.toastSuccess('Seguimiento desactivado'); render(currentPatientId); });
         }
     });
 

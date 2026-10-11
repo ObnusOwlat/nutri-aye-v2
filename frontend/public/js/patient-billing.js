@@ -115,7 +115,7 @@ const PatientBilling = (function() {
         try {
             const result = await (await fetch(`/api/patients/${id}/sync-to-billing`, { method: 'POST' })).json();
             if (!result.success) throw new Error(result.error || 'Failed to link');
-            State.updatePatient(id, { ...State.getPatient(id), billingClientId: result.data.id });
+            await State.refreshPatient(id);
             UI.toastSuccess(result.alreadyLinked ? 'Patient already linked to billing' : 'Patient linked to billing');
             render(id, container);
         } catch (error) {

@@ -3,7 +3,7 @@ const express = require('express');
 const patients = require('../../repos/patients');
 const { tracked } = require('../../audit/log');
 const { validate } = require('../../validation');
-const { metricCreate, conditionCreate } = require('../../validation/patients');
+const { metricCreate, conditionCreate, conditionUpdate } = require('../../validation/patients');
 const { notFound } = require('../../lib/http');
 
 const router = express.Router();
@@ -24,6 +24,13 @@ router.delete('/api/patients/:patientId/metrics/:metricId', (req, res) => {
 
 router.post('/api/patients/:patientId/conditions', validate(conditionCreate), (req, res) => {
     res.status(201).json({ success: true, data: tracked(req.ctx, 'condition', null, () => patients.addCondition(req.params.patientId, req.body)) });
+});
+
+router.put('/api/patients/:patientId/conditions/:conditionId', validate(conditionUpdate), (req, res) => {
+    const { patientId, conditionId } = req.params;
+    const updated = tracked(req.ctx, 'condition', conditionId, () => patients.updateCondition(patientId, conditionId, req.body));
+    if (!updated) throw notFound('Condición');
+    res.json({ success: true, data: updated });
 });
 
 router.delete('/api/patients/:patientId/conditions/:conditionId', (req, res) => {

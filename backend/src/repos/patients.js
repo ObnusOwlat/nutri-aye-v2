@@ -10,8 +10,11 @@ const FIELDS = [
     ['dateOfBirth', 'date_of_birth'], ['gender', 'gender'], ['status', 'status'], ['notes', 'notes'], ['photo', 'photo'],
     ['address.street', 'street'], ['address.city', 'city'], ['address.zipCode', 'zip_code'],
     ['emergencyContact.name', 'emergency_name'], ['emergencyContact.phone', 'emergency_phone'],
-    ['emergencyContact.relation', 'emergency_relation']
+    ['emergencyContact.relation', 'emergency_relation'], ['physicalActivity', 'physical_activity']
 ];
+// Objects stored as JSON text
+const JSON_COLUMNS = new Set(['physical_activity']);
+const toColumn = (column, value) => (JSON_COLUMNS.has(column) && value != null ? JSON.stringify(value) : value);
 const COLUMNS = FIELDS.map(([, column]) => column);
 const pick = (data, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), data);
 
@@ -30,9 +33,9 @@ const stmts = {
     conditions: db.prepare('SELECT * FROM patient_conditions WHERE patient_id = ? AND deactivated_at IS NULL ORDER BY created_at'),
     insertMetric: db.prepare(`
         INSERT INTO patient_metrics (id, patient_id, date, weight, height, bmi, bmi_category,
-            body_fat, muscle_mass, waist, chest, hips, activity_level, notes)
+            body_fat, muscle_mass, waist, chest, hips, cia_abdominal, cia_brazo, cia_pierna, cadera, activity_level, notes)
         VALUES (@id, @patientId, @date, @weight, @height, @bmi, @bmiCategory,
-            @bodyFat, @muscleMass, @waist, @chest, @hips, @activityLevel, @notes)
+            @bodyFat, @muscleMass, @waist, @chest, @hips, @ciaAbdominal, @ciaBrazo, @ciaPierna, @cadera, @activityLevel, @notes)
     `),
     metricById: db.prepare('SELECT * FROM patient_metrics WHERE id = ?'),
     deactivateMetric: db.prepare(`
@@ -44,6 +47,13 @@ const stmts = {
         VALUES (@id, @patientId, @type, @name, @severity, @description, @dietaryNotes, @medications)
     `),
     conditionById: db.prepare('SELECT * FROM patient_conditions WHERE id = ?'),
+    updateCondition: db.prepare(`
+        UPDATE patient_conditions SET type = COALESCE(@type, type), name = COALESCE(@name, name),
+            severity = COALESCE(@severity, severity), description = COALESCE(@description, description),
+            dietary_notes = COALESCE(@dietaryNotes, dietary_notes), medications = COALESCE(@medications, medications),
+            updated_at = @now
+        WHERE id = @id AND patient_id = @patientId AND deactivated_at IS NULL
+    `),
     deactivateCondition: db.prepare(`
         UPDATE patient_conditions SET deactivated_at = @now, deactivated_by = @userId
         WHERE id = @id AND patient_id = @patientId AND deactivated_at IS NULL
@@ -80,7 +90,7 @@ function getDetail(ctx, id) {
 
 function create(ctx, data) {
     const id = newId();
-    const params = Object.fromEntries(FIELDS.map(([path, column]) => [column, pick(data, path) ?? null]));
+    const params = Object.fromEntries(FIELDS.map(([path, column]) => [column, toColumn(column, pick(data, path) ?? null)]));
     stmts.insert.run({ ...params, status: params.status || 'active', id, orgId: ctx.orgId, now: nowIso() });
     return getById(ctx, id);
 }
@@ -91,7 +101,7 @@ function update(ctx, id, data) {
     const changes = FIELDS.filter(([path]) => pick(data, path) !== undefined);
     if (changes.length) {
         const sets = changes.map(([, column]) => `${column} = @${column}`).join(', ');
-        const params = Object.fromEntries(changes.map(([path, column]) => [column, pick(data, path)]));
+        const params = Object.fromEntries(changes.map(([path, column]) => [column, toColumn(column, pick(data, path))]));
         db.prepare(`UPDATE patients SET ${sets}, updated_at = @now WHERE id = @id`).run({ ...params, id, now: nowIso() });
     }
     return getById(ctx, id);
@@ -102,7 +112,8 @@ const reactivate = (ctx, id) => stmts.reactivate.run({ id, orgId: ctx.orgId }).c
 
 function addMetric(patientId, data) {
     const id = newId();
-    const nullable = ['weight', 'height', 'bmi', 'bmiCategory', 'bodyFat', 'muscleMass', 'waist', 'chest', 'hips'];
+    const nullable = ['weight', 'height', 'bmi', 'bmiCategory', 'bodyFat', 'muscleMass', 'waist', 'chest', 'hips',
+        'ciaAbdominal', 'ciaBrazo', 'ciaPierna', 'cadera'];
     const params = Object.fromEntries(nullable.map(k => [k, data[k] ?? null]));
     stmts.insertMetric.run({
         ...params, id, patientId,
@@ -124,6 +135,14 @@ function addCondition(patientId, data) {
     return transformCondition(stmts.conditionById.get(id));
 }
 
+// Only the fields sent change; null = not found
+function updateCondition(patientId, id, data) {
+    const fields = ['type', 'name', 'severity', 'description', 'dietaryNotes', 'medications'];
+    const params = Object.fromEntries(fields.map(f => [f, data[f] ?? null]));
+    const changed = stmts.updateCondition.run({ ...params, id, patientId, now: nowIso() }).changes;
+    return changed ? transformCondition(stmts.conditionById.get(id)) : null;
+}
+
 const deactivateCondition = (ctx, patientId, id) =>
     stmts.deactivateCondition.run({ id, patientId, userId: ctx.userId, now: nowIso() }).changes > 0;
 
@@ -141,6 +160,6 @@ const listAllConditions = (ctx) => db.prepare(`SELECT * FROM patient_conditions 
 
 module.exports = {
     list, getById, exists, getDetail, create, update, deactivate, reactivate,
-    addMetric, deactivateMetric, addCondition, deactivateCondition, allergies,
+    addMetric, deactivateMetric, addCondition, updateCondition, deactivateCondition, allergies,
     listAll, listAllMetrics, listAllConditions
 };

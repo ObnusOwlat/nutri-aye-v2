@@ -118,10 +118,10 @@ const App = (function() {
             switchTab(tabMap[e.key]);
         }
 
-        // Ctrl/Cmd + S for save (export backup)
+        // Ctrl/Cmd + S: download the consultorio's backup (admins)
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
-            Sync.createBackup();
+            if (Auth.current()?.role === 'admin') window.location.href = '/api/backup/export';
         }
 
         // Ctrl/Cmd + P for print

@@ -151,7 +151,7 @@ const PlannerTemplates = (function() {
             title: 'Add Diet Template',
             content,
             confirmText: 'Add Template',
-            onConfirm: () => {
+            onConfirm: async () => {
                 const name = document.getElementById('tpl-name')?.value.trim();
                 const description = document.getElementById('tpl-description')?.value.trim();
                 const goal = document.getElementById('tpl-goal')?.value;
@@ -162,7 +162,7 @@ const PlannerTemplates = (function() {
                     return false;
                 }
 
-                State.addDietTemplate({ name, description, goal, dailyTarget: calories });
+                await State.addDietTemplate({ name, description, goal, dailyTarget: calories });
                 UI.toastSuccess('Template added');
                 showTemplateModal(); // Refresh the modal
                 populateTemplateSelector(); // Refresh the selector
@@ -205,7 +205,7 @@ const PlannerTemplates = (function() {
             title: 'Edit Diet Template',
             content,
             confirmText: 'Save Changes',
-            onConfirm: () => {
+            onConfirm: async () => {
                 const name = document.getElementById('tpl-name')?.value.trim();
                 const description = document.getElementById('tpl-description')?.value.trim();
                 const goal = document.getElementById('tpl-goal')?.value;
@@ -216,7 +216,7 @@ const PlannerTemplates = (function() {
                     return false;
                 }
 
-                State.updateDietTemplate(templateId, { name, description, goal, dailyTarget: calories });
+                await State.updateDietTemplate(templateId, { name, description, goal, dailyTarget: calories });
                 UI.toastSuccess('Template updated');
                 showTemplateModal(); // Refresh the modal
                 populateTemplateSelector(); // Refresh the selector
@@ -238,8 +238,8 @@ const PlannerTemplates = (function() {
         }
         if (e.target.closest('.btn-delete-template')) {
             const id = e.target.closest('.btn-delete-template').dataset.id;
-            UI.confirmDanger('Delete this template?', () => {
-                State.deleteDietTemplate(id);
+            UI.confirmDanger('¿Desactivar esta plantilla?', async () => {
+                await State.deleteDietTemplate(id);
                 UI.toastSuccess('Template deleted');
                 showTemplateModal(); // Refresh the modal
                 populateTemplateSelector(); // Refresh the selector
