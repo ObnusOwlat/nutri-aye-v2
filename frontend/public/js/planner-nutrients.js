@@ -3,6 +3,7 @@
  * edited (daily average) or of one day. The server gives each recipe's
  * nutrients (POST /api/nutrition/analyze); the sums are made here, so changing
  * the day needs no request. Clicking a day's header in the grid selects it.
+ * The patient's daily targets and bars come from planner-targets.js.
  */
 
 const PlannerNutrients = (function() {
@@ -44,6 +45,7 @@ const PlannerNutrients = (function() {
         });
 
         State.subscribe('weekPlan:updated', refresh);
+        PlannerTargets.onChange(render);
         State.subscribe('recipes:updated', () => { perRecipe.clear(); refresh(); });
         if (State.isReady()) refresh();
     }
@@ -117,13 +119,15 @@ const PlannerNutrients = (function() {
         <div class="nutrients-panel__row">
             <span class="nutrients-panel__name" title="${UI.escapeHtml(n.nameEn || '')}">${UI.escapeHtml(n.name)}</span>
             <span class="nutrients-panel__amount">${formatAmount(totals[n.id])} <small>${UI.escapeHtml(n.unit)}</small></span>
+            ${PlannerTargets.barHtml(n.id, totals[n.id])}
         </div>`;
 
     function render() {
         if (!body) return;
         const { totals, days } = totalsForSelection();
+        const summary = PlannerTargets.summaryHtml();
         if (!days) {
-            body.innerHTML = `<p class="nutrients-panel__note">${selected === AVERAGE
+            body.innerHTML = summary + `<p class="nutrients-panel__note">${selected === AVERAGE
                 ? 'Agregá comidas a la semana para ver sus nutrientes.'
                 : `${DAY_NAMES[selected]} no tiene comidas.`}</p>`;
             return;
@@ -148,16 +152,17 @@ const PlannerNutrients = (function() {
             </details>`).join('');
 
         body.innerHTML = `
+            ${summary}
             <p class="nutrients-panel__note">${note}</p>
             ${keyHtml}
             ${restHtml ? `<h4 class="nutrients-panel__block">Ver todos</h4>${restHtml}` : ''}
-            <p class="nutrients-panel__note nutrients-panel__note--small">Datos USDA por receta. Sin comparación con la recomendación diaria todavía.</p>`;
+            <p class="nutrients-panel__note nutrients-panel__note--small">Datos USDA por receta. Metas orientativas: ingestas de referencia NASEM y guías OMS, adaptadas a las condiciones del paciente.</p>`;
 
         document.querySelectorAll('#week-grid .day-card').forEach(card =>
             card.classList.toggle('day-card--nutrients-selected', card.dataset.day === selected));
     }
 
-    return { init, selectDay };
+    return { init, selectDay, knownNutrients: () => nutrients };
 })();
 
 // After planner.js: the grid is redrawn first, then the selected day is marked

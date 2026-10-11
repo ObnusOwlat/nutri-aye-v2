@@ -16,7 +16,7 @@ const AuditView = (function() {
         recipe: 'receta', ingredient: 'alimento', billing_client: 'cliente', invoice: 'factura', quote: 'presupuesto',
         payment_method: 'medio de pago', company: 'datos del consultorio', pdf_config: 'formato de PDF',
         user: 'usuario', session: 'sesión', backup: 'respaldo', plan: 'plan de alimentación', progress: 'seguimiento',
-        template: 'plantilla de dieta', browser_data: 'datos del navegador'
+        template: 'plantilla de dieta', browser_data: 'datos del navegador', targets: 'metas nutricionales'
     };
 
     // Field names; unknown fields are shown as they are
@@ -68,6 +68,8 @@ const AuditView = (function() {
     // "vitamin_b12_per_100g" -> "Vitamina B12 (100 g)"
     function fieldLabel(field) {
         if (FIELDS[field]) return FIELDS[field];
+        if (field === 'energy') return 'energía (kcal)';
+        if (/^nutrient_\d+$/.test(field)) return `nutriente ${field.slice(9)}`;
         const per100 = /^(.+)_per_100g$/.exec(field);
         if (per100) {
             const base = per100[1].replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());

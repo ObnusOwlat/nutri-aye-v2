@@ -15,6 +15,7 @@ const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
+const { createTargetTables } = require('./schema/targets');
 
 const MIGRATIONS = [
     {
@@ -73,6 +74,11 @@ const MIGRATIONS = [
         version: 8,
         name: 'nombres del catálogo básico de alimentos en español',
         up: translateBasicFoods
+    },
+    {
+        version: 9,
+        name: 'ajustes de metas nutricionales por paciente',
+        up: createTargetTables
     }
 ];
 
