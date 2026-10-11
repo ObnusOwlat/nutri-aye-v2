@@ -18,18 +18,18 @@ function ownOrThrow(req) {
     throw notFound('Alimento');
 }
 
-// ?search=&category=a,b&subgroup=protein.beef,protein.pork&form=raw,cooked,none&source=&scope=
+// ?search=&category=a,b&subgroup=protein.beef,protein.pork&form=raw,cooked,none&py=1&source=&scope=
 router.get('/api/ingredients', (req, res) => {
     const paging = pageParams(req.query);
-    const { search, category, subgroup, form, source, scope, sort, order } = req.query;
-    const { rows, total } = ingredients.search(req.ctx, { search, category, subgroup, form, source, scope, sort, order, ...paging });
+    const { search, category, subgroup, form, source, scope, sort, order, py } = req.query;
+    const { rows, total } = ingredients.search(req.ctx, { search, category, subgroup, form, source, scope, sort, order, py, ...paging });
     sendPage(res, rows, paging, total);
 });
 
 // Counts per category/subgroup and per form for the filter tree (same filters)
 router.get('/api/ingredients/facets', (req, res) => {
-    const { search, category, subgroup, form, source, scope } = req.query;
-    res.json({ success: true, data: ingredients.facets(req.ctx, { search, category, subgroup, form, source, scope }) });
+    const { search, category, subgroup, form, source, scope, py } = req.query;
+    res.json({ success: true, data: ingredients.facets(req.ctx, { search, category, subgroup, form, source, scope, py }) });
 });
 
 router.get('/api/ingredients/:id', (req, res) => {

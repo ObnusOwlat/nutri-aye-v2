@@ -3,6 +3,7 @@
  * categories and their subgroups ("origen": Vaca, Cerdo, Pescados…) and the
  * preparation form (crudo, cocido…), each with how many foods it would give.
  * Several options can be checked; a whole category OR chosen subgroups.
+ * "⭐ Se consigue en Paraguay" keeps only local foods (they also go first).
  */
 
 const IngredientFilters = (function() {
@@ -11,6 +12,7 @@ const IngredientFilters = (function() {
     const categories = new Set();          // whole categories
     const subgroups = new Set();           // "category.subgroup"
     const forms = new Set();
+    let onlyPy = false;                    // ⭐ foods found in Paraguay
     const open = new Set();                // expanded categories
     let root, onChange = () => {};
     let counts = { categories: {}, forms: {} };
@@ -46,6 +48,8 @@ const IngredientFilters = (function() {
                 box.checked ? subgroups.add(key) : subgroups.delete(key);
             } else if (box.dataset.form) {
                 box.checked ? forms.add(box.dataset.form) : forms.delete(box.dataset.form);
+            } else if (box.dataset.py !== undefined) {
+                onlyPy = box.checked;
             }
             render();
             onChange();
@@ -54,21 +58,21 @@ const IngredientFilters = (function() {
     }
 
     function clear() {
-        categories.clear(); subgroups.clear(); forms.clear();
+        categories.clear(); subgroups.clear(); forms.clear(); onlyPy = false;
         render();
         onChange();
     }
 
     // Query string values for /api/ingredients and /api/ingredients/facets
-    const query = () => ({ category: [...categories].join(','), subgroup: [...subgroups].join(','), form: [...forms].join(',') });
-    const active = () => categories.size + subgroups.size + forms.size > 0;
+    const query = () => ({ category: [...categories].join(','), subgroup: [...subgroups].join(','), form: [...forms].join(','), py: onlyPy ? '1' : '' });
+    const active = () => categories.size + subgroups.size + forms.size > 0 || onlyPy;
 
     // Same rule as the server, for own foods kept in the browser
     function matches(food) {
         const key = `${food.category}.${food.subgroup || 'other'}`;
         const byGroup = !categories.size && !subgroups.size || categories.has(food.category) || subgroups.has(key);
         const byForm = !forms.size || forms.has(food.form || 'none');
-        return byGroup && byForm;
+        return byGroup && byForm && (!onlyPy || food.availablePy);
     }
 
     // Counts like /api/ingredients/facets, from a list in memory
@@ -83,6 +87,7 @@ const IngredientFilters = (function() {
         }
         const byGroup = foods.filter(f => !categories.size && !subgroups.size || categories.has(f.category) || subgroups.has(`${f.category}.${f.subgroup || 'other'}`));
         for (const f of byGroup) result.forms[f.form || 'none'] = (result.forms[f.form || 'none'] || 0) + 1;
+        result.py = foods.filter(f => f.availablePy).length;
         return result;
     }
 
@@ -125,6 +130,10 @@ const IngredientFilters = (function() {
                 <h4>Filtros</h4>
                 ${active() ? '<button type="button" class="btn btn--secondary btn--sm" data-clear>Limpiar</button>' : ''}
             </div>
+            <ul class="food-filters__tree"><li class="food-filters__row">
+                <label><input type="checkbox" data-py ${onlyPy ? 'checked' : ''}> ⭐ Se consigue en Paraguay</label>
+                <span class="food-filters__n">${UI.formatNumber(counts.py || 0)}</span>
+            </li></ul>
             <h5>Grupo y origen</h5>
             <ul class="food-filters__tree">${CATEGORIES.map(categoryHtml).join('')}</ul>
             <h5>Preparación</h5>
@@ -137,14 +146,16 @@ const IngredientFilters = (function() {
         const chips = [
             ...[...categories].map(c => [`cat:${c}`, UI.label('ingredientCategory', c)]),
             ...[...subgroups].map(s => [`sub:${s}`, UI.label('foodSubgroup', s.split('.')[1])]),
-            ...[...forms].map(f => [`form:${f}`, formLabel(f)])
+            ...[...forms].map(f => [`form:${f}`, formLabel(f)]),
+            ...(onlyPy ? [['py:1', '⭐ Paraguay']] : [])
         ];
         return chips.map(([key, text]) => `<button type="button" class="food-filters__chip" data-remove="${esc(key)}">${esc(text)} ×</button>`).join('');
     }
 
     function remove(key) {
         const [kind, value] = key.split(/:(.*)/s);
-        ({ cat: categories, sub: subgroups, form: forms })[kind]?.delete(value);
+        if (kind === 'py') onlyPy = false;
+        else ({ cat: categories, sub: subgroups, form: forms })[kind]?.delete(value);
         render();
         onChange();
     }

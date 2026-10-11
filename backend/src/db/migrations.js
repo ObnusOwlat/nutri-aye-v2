@@ -16,6 +16,7 @@ const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
 const { addActivityPlans } = require('./schema/activity-plans');
+const { markParaguayFoods } = require('./schema/paraguay');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 const { createPaymentTables } = require('./schema/payments');
@@ -102,6 +103,11 @@ const MIGRATIONS = [
         version: 13,
         name: 'semana de actividad física en plantillas y en la semana del paciente',
         up: addActivityPlans
+    },
+    {
+        version: 14,
+        name: 'alimentos que se consiguen en Paraguay y correcciones de traducción',
+        up: markParaguayFoods
     }
 ];
 
