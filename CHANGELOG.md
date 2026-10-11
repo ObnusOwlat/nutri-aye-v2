@@ -2,6 +2,22 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Sugerencias de recetas y ejercicios (parte del server)
+
+- **`GET /api/patients/:id/recipe-suggestions?mealType=&limit=&week=&days=`:** ordena las recetas del consultorio para un paciente. Devuelve `score`, `reasons` ("Bajo en sodio (164 mg)", "Aporta 101 % de folato del día") y `warnings`. Son una guía; decide la nutricionista.
+  - **Condiciones** (`src/lib/diet-rules.js`): diabetes, hipertensión, enfermedad renal, colesterol, anemia y embarazo. Se detectan por palabras clave en el nombre o la descripción de la condición. Cada regla cita su guía (OMS, ADA, KDIGO, DASH, NASEM).
+  - **Alergias e intolerancias** (`src/lib/allergens.js`): gluten, lácteos, huevo, maní, frutos secos, pescado, mariscos y soja. Se buscan por nombre de ingrediente, como palabra completa ("pan" no marca "panceta"). La receta que choca queda al final con `excluded: true`. Solo cuentan las condiciones de tipo alergia o intolerancia, así una nota como "tomar leche" no excluye nada.
+  - **Necesidades por sexo y edad** (`src/lib/dri.js`, NASEM): proteínas, fibra, hierro, calcio, folato, vitamina D, potasio, vitamina C, magnesio, zinc y B12. Con `week=` pesan más los nutrientes que la semana planificada no cubre. Es la base de la Fase 7.
+- **Ejercicios (wger):**
+  - `import-wger.js` baja el catálogo a `foods-data/exercises/wger-exercises.json`, versionado: 920 ejercicios, 645 con nombre en español y el resto en inglés con `translated: false`.
+  - Cada ejercicio trae licencia y autor (CC-BY-SA 3/4 o CC0, con atribución).
+  - Endpoints: `GET /api/exercises?search=&category=&muscle=&equipment=` y `GET /api/exercises/filters`.
+- **Actividades con MET** (`foods-data/exercises/met-compendium.json`):
+  - 50 actividades comunes (caminar, correr, bici, natación, gimnasio, yoga, baile, deportes y hogar) con el MET del Compendio 2024 de adultos y, cuando existe, del Compendio 60+.
+  - `GET /api/activities/kcal?activityId=&minutes=&patientId=`: kcal = MET × VO2 × kg × min / 200. El VO2 es 3,5 ml/kg/min en adultos y 2,7 desde los 60 años, y el peso sale de la última medición del paciente.
+- **Sin migración:** los dos catálogos son archivos que el server lee en memoria; no hay tablas nuevas.
+- **Tests:** de 71 a 78.
+
 ## Planner: panel lateral de nutrientes
 
 - **Panel "Nutrientes" a la derecha de la semana** (`js/planner-nutrients.js`, `css/planner-nutrients.css`):

@@ -7,18 +7,12 @@ const nutrition = require('./nutrition');
 const { rulesFor } = require('../lib/diet-rules');
 const { allergensFor, conflicts } = require('../lib/allergens');
 const { driFor, DRI_NAMES } = require('../lib/dri');
+const { ageOf } = require('../lib/age');
 
 // Planner meal slot -> recipe category
 const CATEGORY_OF_MEAL = { morning_snack: 'snack' };
 const ALLERGY_TYPES = ['allergy', 'intolerance'];
 
-function ageOf(dateOfBirth) {
-    if (!dateOfBirth) return null;
-    const birth = new Date(dateOfBirth), now = new Date();
-    let age = now.getFullYear() - birth.getFullYear();
-    if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
-    return Number.isFinite(age) ? age : null;
-}
 
 const fmt = (amount) => amount.toLocaleString('es-PY', { maximumFractionDigits: amount >= 100 ? 0 : 1 });
 

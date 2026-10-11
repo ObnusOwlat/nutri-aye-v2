@@ -1,0 +1,564 @@
+{
+ "source": "2024 Adult Compendium of Physical Activities y 2024 Older Adult Compendium (pacompendium.com)",
+ "reference": "Herrmann SD et al. J Sport Health Sci 2024;13(1):6-12. Older Adult: Willis EA et al. J Sport Health Sci 2024;13(1):13-17",
+ "notes": "MET de adultos (19-59 años) con 3,5 ml O2/kg/min; MET60 de mayores de 60 con 2,7 ml O2/kg/min. kcal = MET x VO2 x kg x minutos / 200. Si una actividad no tiene valor 60+, se usa el de adultos.",
+ "activities": [
+  {
+   "id": "caminar_lento",
+   "name": "Caminar lento (3-4 km/h)",
+   "category": "Caminar",
+   "adult": {
+    "code": "17152",
+    "met": 2.8
+   },
+   "older": {
+    "code": "1715360",
+    "met": 3.8
+   }
+  },
+  {
+   "id": "caminar_moderado",
+   "name": "Caminar a paso moderado (4,5-5 km/h)",
+   "category": "Caminar",
+   "adult": {
+    "code": "17190",
+    "met": 3.8
+   },
+   "older": {
+    "code": "1719060",
+    "met": 5.3
+   }
+  },
+  {
+   "id": "caminar_rapido",
+   "name": "Caminar rápido (5,6-6,3 km/h)",
+   "category": "Caminar",
+   "adult": {
+    "code": "17200",
+    "met": 4.8
+   },
+   "older": {
+    "code": "1720060",
+    "met": 6.0
+   }
+  },
+  {
+   "id": "caminar_muy_rapido",
+   "name": "Caminar muy rápido (6,4-7 km/h)",
+   "category": "Caminar",
+   "adult": {
+    "code": "17220",
+    "met": 5.5
+   },
+   "older": {
+    "code": "1722060",
+    "met": 7.3
+   }
+  },
+  {
+   "id": "caminata_nordica",
+   "name": "Caminata nórdica (con bastones)",
+   "category": "Caminar",
+   "adult": {
+    "code": "17304",
+    "met": 5.3
+   },
+   "older": {
+    "code": "1731060",
+    "met": 7.0
+   }
+  },
+  {
+   "id": "senderismo",
+   "name": "Senderismo / trekking",
+   "category": "Caminar",
+   "adult": {
+    "code": "17080",
+    "met": 6.0
+   },
+   "older": null
+  },
+  {
+   "id": "escaleras",
+   "name": "Subir escaleras",
+   "category": "Caminar",
+   "adult": {
+    "code": "17131",
+    "met": 6.8
+   },
+   "older": {
+    "code": "1713360",
+    "met": 4.0
+   }
+  },
+  {
+   "id": "trotar",
+   "name": "Trotar (ritmo propio)",
+   "category": "Correr",
+   "adult": {
+    "code": "12020",
+    "met": 7.5
+   },
+   "older": null
+  },
+  {
+   "id": "correr_8",
+   "name": "Correr a 8 km/h",
+   "category": "Correr",
+   "adult": {
+    "code": "12030",
+    "met": 8.5
+   },
+   "older": null
+  },
+  {
+   "id": "correr_10",
+   "name": "Correr a 10 km/h",
+   "category": "Correr",
+   "adult": {
+    "code": "12050",
+    "met": 9.3
+   },
+   "older": null
+  },
+  {
+   "id": "correr_11",
+   "name": "Correr a 11 km/h",
+   "category": "Correr",
+   "adult": {
+    "code": "12070",
+    "met": 11.0
+   },
+   "older": {
+    "code": "1207060",
+    "met": 15.8
+   }
+  },
+  {
+   "id": "correr_14",
+   "name": "Correr a 14 km/h",
+   "category": "Correr",
+   "adult": {
+    "code": "12100",
+    "met": 12.5
+   },
+   "older": null
+  },
+  {
+   "id": "bici_paseo",
+   "name": "Bicicleta de paseo (< 16 km/h)",
+   "category": "Bicicleta",
+   "adult": {
+    "code": "01010",
+    "met": 4.0
+   },
+   "older": null
+  },
+  {
+   "id": "bici_moderada",
+   "name": "Bicicleta, ritmo moderado",
+   "category": "Bicicleta",
+   "adult": {
+    "code": "01016",
+    "met": 7.0
+   },
+   "older": null
+  },
+  {
+   "id": "bici_intensa",
+   "name": "Bicicleta, ritmo intenso",
+   "category": "Bicicleta",
+   "adult": {
+    "code": "01017",
+    "met": 9.0
+   },
+   "older": null
+  },
+  {
+   "id": "bici_fija",
+   "name": "Bicicleta fija, general",
+   "category": "Bicicleta",
+   "adult": {
+    "code": "01200",
+    "met": 6.8
+   },
+   "older": {
+    "code": "0101060",
+    "met": 5.3
+   }
+  },
+  {
+   "id": "spinning",
+   "name": "Spinning (clase)",
+   "category": "Bicicleta",
+   "adult": {
+    "code": "01270",
+    "met": 9.0
+   },
+   "older": null
+  },
+  {
+   "id": "natacion_recreativa",
+   "name": "Natación recreativa",
+   "category": "Agua",
+   "adult": {
+    "code": "18310",
+    "met": 6.0
+   },
+   "older": null
+  },
+  {
+   "id": "natacion_lenta",
+   "name": "Natación crol, lenta",
+   "category": "Agua",
+   "adult": {
+    "code": "18240",
+    "met": 5.8
+   },
+   "older": null
+  },
+  {
+   "id": "natacion_rapida",
+   "name": "Natación crol, rápida",
+   "category": "Agua",
+   "adult": {
+    "code": "18230",
+    "met": 9.8
+   },
+   "older": null
+  },
+  {
+   "id": "aquagym",
+   "name": "Aquagym / gimnasia en el agua",
+   "category": "Agua",
+   "adult": {
+    "code": "02120",
+    "met": 5.3
+   },
+   "older": null
+  },
+  {
+   "id": "pesas_general",
+   "name": "Pesas, varios ejercicios (8-15 repeticiones)",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02054",
+    "met": 3.5
+   },
+   "older": {
+    "code": "0205460",
+    "met": 4.3
+   }
+  },
+  {
+   "id": "pesas_intensas",
+   "name": "Pesas intensas / musculación",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02050",
+    "met": 6.0
+   },
+   "older": null
+  },
+  {
+   "id": "sentadillas_peso_muerto",
+   "name": "Sentadillas y peso muerto",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02052",
+    "met": 5.0
+   },
+   "older": {
+    "code": "0205160",
+    "met": 3.0
+   }
+  },
+  {
+   "id": "calistenia_moderada",
+   "name": "Calistenia moderada (flexiones, abdominales, estocadas)",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02022",
+    "met": 3.8
+   },
+   "older": {
+    "code": "0202260",
+    "met": 3.5
+   }
+  },
+  {
+   "id": "calistenia_intensa",
+   "name": "Calistenia intensa (burpees, saltos, dominadas)",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02020",
+    "met": 7.5
+   },
+   "older": null
+  },
+  {
+   "id": "circuito",
+   "name": "Entrenamiento en circuito",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02040",
+    "met": 7.5
+   },
+   "older": {
+    "code": "0203560",
+    "met": 4.5
+   }
+  },
+  {
+   "id": "hiit_moderado",
+   "name": "HIIT moderado",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02210",
+    "met": 7.0
+   },
+   "older": null
+  },
+  {
+   "id": "hiit_intenso",
+   "name": "HIIT intenso (Tabata, burpees)",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02214",
+    "met": 11.0
+   },
+   "older": null
+  },
+  {
+   "id": "eliptica_moderada",
+   "name": "Elíptica, moderada",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02048",
+    "met": 5.0
+   },
+   "older": {
+    "code": "0204760",
+    "met": 3.0
+   }
+  },
+  {
+   "id": "eliptica_intensa",
+   "name": "Elíptica, intensa",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02049",
+    "met": 9.0
+   },
+   "older": null
+  },
+  {
+   "id": "remo",
+   "name": "Remo en máquina, moderado",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02071",
+    "met": 5.0
+   },
+   "older": {
+    "code": "0207260",
+    "met": 6.5
+   }
+  },
+  {
+   "id": "soga",
+   "name": "Saltar la soga",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02068",
+    "met": 11.0
+   },
+   "older": null
+  },
+  {
+   "id": "clase_gimnasio",
+   "name": "Clase de gimnasio general",
+   "category": "Gimnasio",
+   "adult": {
+    "code": "02060",
+    "met": 5.5
+   },
+   "older": {
+    "code": "0206260",
+    "met": 5.0
+   }
+  },
+  {
+   "id": "yoga",
+   "name": "Yoga (hatha)",
+   "category": "Cuerpo y mente",
+   "adult": {
+    "code": "02150",
+    "met": 2.3
+   },
+   "older": {
+    "code": "0219060",
+    "met": 2.5
+   }
+  },
+  {
+   "id": "yoga_power",
+   "name": "Power yoga",
+   "category": "Cuerpo y mente",
+   "adult": {
+    "code": "02160",
+    "met": 4.0
+   },
+   "older": null
+  },
+  {
+   "id": "pilates",
+   "name": "Pilates",
+   "category": "Cuerpo y mente",
+   "adult": {
+    "code": "02105",
+    "met": 2.8
+   },
+   "older": null
+  },
+  {
+   "id": "estiramientos",
+   "name": "Estiramientos suaves",
+   "category": "Cuerpo y mente",
+   "adult": {
+    "code": "02101",
+    "met": 2.3
+   },
+   "older": null
+  },
+  {
+   "id": "tai_chi",
+   "name": "Tai chi / qi gong",
+   "category": "Cuerpo y mente",
+   "adult": {
+    "code": "15670",
+    "met": 3.3
+   },
+   "older": {
+    "code": "0221060",
+    "met": 3.8
+   }
+  },
+  {
+   "id": "zumba",
+   "name": "Zumba (clase)",
+   "category": "Baile",
+   "adult": {
+    "code": "02310",
+    "met": 6.5
+   },
+   "older": null
+  },
+  {
+   "id": "aerobico_bajo",
+   "name": "Baile aeróbico de bajo impacto",
+   "category": "Baile",
+   "adult": {
+    "code": "02005",
+    "met": 4.8
+   },
+   "older": null
+  },
+  {
+   "id": "baile_social",
+   "name": "Baile (salsa, bachata, polca, folclore)",
+   "category": "Baile",
+   "adult": {
+    "code": "03025",
+    "met": 4.5
+   },
+   "older": {
+    "code": "0303160",
+    "met": 6.3
+   }
+  },
+  {
+   "id": "futbol",
+   "name": "Fútbol recreativo",
+   "category": "Deportes",
+   "adult": {
+    "code": "15610",
+    "met": 7.0
+   },
+   "older": null
+  },
+  {
+   "id": "basquet",
+   "name": "Básquet",
+   "category": "Deportes",
+   "adult": {
+    "code": "15055",
+    "met": 7.5
+   },
+   "older": null
+  },
+  {
+   "id": "voley",
+   "name": "Vóley recreativo",
+   "category": "Deportes",
+   "adult": {
+    "code": "15710",
+    "met": 4.0
+   },
+   "older": null
+  },
+  {
+   "id": "tenis",
+   "name": "Tenis",
+   "category": "Deportes",
+   "adult": {
+    "code": "15675",
+    "met": 6.8
+   },
+   "older": null
+  },
+  {
+   "id": "artes_marciales",
+   "name": "Artes marciales (judo, karate, taekwondo, kickboxing)",
+   "category": "Deportes",
+   "adult": {
+    "code": "15430",
+    "met": 10.3
+   },
+   "older": null
+  },
+  {
+   "id": "boxeo",
+   "name": "Boxeo",
+   "category": "Deportes",
+   "adult": {
+    "code": "15100",
+    "met": 12.3
+   },
+   "older": null
+  },
+  {
+   "id": "limpieza_liviana",
+   "name": "Limpieza de la casa, liviana",
+   "category": "Hogar",
+   "adult": {
+    "code": "05040",
+    "met": 2.5
+   },
+   "older": null
+  },
+  {
+   "id": "limpieza_pesada",
+   "name": "Limpieza pesada (lavar el auto, fregar pisos)",
+   "category": "Hogar",
+   "adult": {
+    "code": "05020",
+    "met": 3.5
+   },
+   "older": {
+    "code": "0504360",
+    "met": 4.3
+   }
+  }
+ ]
+}
