@@ -5,10 +5,11 @@ const { db } = require('../../db/connection');
 const { camelizeRow } = require('../../transforms');
 const { newId, nowIso } = require('../../lib/http');
 const company = require('./company');
+const payments = require('./payments');
 
 const KINDS = {
-    invoice: { table: 'billing_invoices', items: 'billing_invoice_items', fk: 'invoice_id', number: 'invoice_number', prefix: 'INV-', dateField: ['dueDate', 'due_date'], extra: [['paidAt', 'paid_at']] },
-    quote: { table: 'billing_quotes', items: 'billing_quote_items', fk: 'quote_id', number: 'quote_number', prefix: 'QT-', dateField: ['validUntil', 'valid_until'], extra: [] }
+    invoice: { table: 'billing_invoices', items: 'billing_invoice_items', fk: 'invoice_id', number: 'invoice_number', prefix: 'REC-', dateField: ['dueDate', 'due_date'], extra: [['paidAt', 'paid_at']], withPayments: true },
+    quote: { table: 'billing_quotes', items: 'billing_quote_items', fk: 'quote_id', number: 'quote_number', prefix: 'PRE-', dateField: ['validUntil', 'valid_until'], extra: [] }
 };
 
 function documentsRepo(kind) {
@@ -16,16 +17,23 @@ function documentsRepo(kind) {
     const fields = [['clientId', 'client_id'], ['status', 'status'], ['date', 'date'], k.dateField, ...k.extra,
         ['subtotal', 'subtotal'], ['discount', 'discount'], ['total', 'total'], ['notes', 'notes']];
     const columns = fields.map(([, c]) => c);
+    const paidColumn = k.withPayments ? `, ${payments.PAID_SQL} AS paid` : '';
+    // Receipts carry what was paid and what is still owed
+    const withBalance = (row) => {
+        if (!k.withPayments) return camelizeRow(row);
+        const { paid, ...rest } = row;
+        return { ...camelizeRow(rest), ...payments.summary(row) };
+    };
 
     const stmts = {
         byId: db.prepare(`
-            SELECT d.*, c.name AS client_name, c.email AS client_email, c.address AS client_address
+            SELECT d.*, c.name AS client_name, c.email AS client_email, c.address AS client_address, c.vat_id AS client_vat_id${paidColumn}
             FROM ${k.table} d LEFT JOIN billing_clients c ON d.client_id = c.id
             WHERE d.id = @id AND d.org_id = @orgId AND d.deactivated_at IS NULL
         `),
         items: db.prepare(`SELECT id, description, quantity, unit_price, type FROM ${k.items} WHERE ${k.fk} = ? ORDER BY rowid`),
         // Includes deactivated documents: a number is never given twice
-        lastNumber: db.prepare(`SELECT MAX(CAST(SUBSTR(${k.number}, ${k.prefix.length + 1}) AS INTEGER)) AS n FROM ${k.table} WHERE org_id = ?`),
+        lastNumber: db.prepare(`SELECT MAX(CAST(SUBSTR(${k.number}, ${k.prefix.length + 1}) AS INTEGER)) AS n FROM ${k.table} WHERE org_id = ? AND ${k.number} LIKE '${k.prefix}%'`),
         insert: db.prepare(`
             INSERT INTO ${k.table} (id, org_id, company_id, ${k.number}, ${columns.join(', ')}, created_at, updated_at)
             VALUES (@id, @orgId, @companyId, @number, ${columns.map(c => `@${c}`).join(', ')}, @now, @now)
@@ -44,16 +52,17 @@ function documentsRepo(kind) {
         const whereSql = where.join(' AND ');
         const { total } = db.prepare(`SELECT COUNT(*) AS total FROM ${k.table} d WHERE ${whereSql}`).get(...params);
         const rows = db.prepare(`
-            SELECT d.*, c.name AS client_name FROM ${k.table} d LEFT JOIN billing_clients c ON d.client_id = c.id
+            SELECT d.*, c.name AS client_name${paidColumn} FROM ${k.table} d LEFT JOIN billing_clients c ON d.client_id = c.id
             WHERE ${whereSql} ORDER BY d.created_at DESC LIMIT ? OFFSET ?
         `).all(...params, limit, offset);
-        return { rows: rows.map(camelizeRow), total };
+        return { rows: rows.map(withBalance), total };
     }
 
     function getById(ctx, id, { withCompany = false } = {}) {
         const row = stmts.byId.get({ id, orgId: ctx.orgId });
         if (!row) return null;
-        const doc = { ...camelizeRow(row), items: stmts.items.all(id).map(camelizeRow) };
+        const doc = { ...withBalance(row), items: stmts.items.all(id).map(camelizeRow) };
+        if (k.withPayments) doc.payments = payments.listFor(id);
         return withCompany ? { ...doc, company: company.get(ctx), pdfConfig: company.getPdfConfig(ctx) } : doc;
     }
 
@@ -67,7 +76,9 @@ function documentsRepo(kind) {
         for (const i of items) stmts.insertItem.run(newId(), id, i.description, i.quantity, i.unitPrice, i.type);
     }
 
-    const toParams = (data, items) => {
+    // A receipt's status and payment date come from its payments, never from the request
+    const toParams = (data, items, existing = null) => {
+        if (k.withPayments) data = { ...data, status: existing?.status || 'UNPAID', paidAt: existing?.paidAt ?? null };
         const params = Object.fromEntries(fields.map(([key, column]) => [column, data[key] ?? null]));
         return { ...params, ...totals(items, data.discount), notes: data.notes ?? '' };
     };
@@ -86,8 +97,9 @@ function documentsRepo(kind) {
         const existing = getById(ctx, id);
         if (!existing) return null;
         const items = data.items || existing.items;
-        stmts.update.run({ ...toParams(data, items), id, now: nowIso() });
+        stmts.update.run({ ...toParams(data, items, existing), id, now: nowIso() });
         if (data.items) writeItems(id, items);
+        if (k.withPayments) payments.recompute(ctx, id);
         return getById(ctx, id);
     });
 

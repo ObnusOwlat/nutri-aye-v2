@@ -18,16 +18,20 @@ test('company, pdf config, clients, invoices, quotes, payment methods, dashboard
     const invoice = (await api().post('/billing-api/invoices').send({
         clientId: client.id, total: 1, items: [{ description: 'Consulta', unitPrice: 150000 }]
     })).body.data;
-    assert.equal(invoice.invoiceNumber, 'INV-0001');
+    assert.equal(invoice.invoiceNumber, 'REC-0001');
     assert.equal(invoice.total, 150000);
     const invDetail = await api().get(`/billing-api/invoices/${invoice.id}`);
     assert.equal(invDetail.body.data.items.length, 1);
-    const paid = await api().put(`/billing-api/invoices/${invoice.id}`).send({ clientId: client.id, status: 'PAID', discount: 10000 });
-    assert.equal(paid.body.data.total, 140000);
-    assert.equal(paid.body.data.items.length, 1);
+    // status sent by the client is ignored: it comes from the payments
+    const edited = await api().put(`/billing-api/invoices/${invoice.id}`).send({ clientId: client.id, status: 'PAID', discount: 10000 });
+    assert.equal(edited.body.data.total, 140000);
+    assert.equal(edited.body.data.status, 'UNPAID');
+    assert.equal(edited.body.data.items.length, 1);
+    const paid = await api().post(`/billing-api/invoices/${invoice.id}/payments`).send({ amount: 140000 });
+    assert.equal(paid.body.data.status, 'PAID');
 
     const quote = (await api().post('/billing-api/quotes').send({ clientId: client.id, items: [{ description: 'Plan' }] })).body.data;
-    assert.equal(quote.quoteNumber, 'QT-0001');
+    assert.equal(quote.quoteNumber, 'PRE-0001');
     assert.equal((await api().get(`/billing-api/quotes/${quote.id}`)).body.data.items.length, 1);
 
     const method = (await api().post('/billing-api/payment-methods').send({ name: 'Transferencia', isDefault: true })).body.data;
@@ -39,7 +43,7 @@ test('company, pdf config, clients, invoices, quotes, payment methods, dashboard
     assert.equal(stats.paidInvoices, 1);
 
     assert.equal((await api().delete(`/billing-api/quotes/${quote.id}`)).status, 200);
-    assert.equal((await api().delete(`/billing-api/invoices/${invoice.id}`)).status, 200);
+    assert.equal((await api().delete(`/billing-api/invoices/${invoice.id}`)).status, 409); // has payments
     assert.equal((await api().delete(`/billing-api/payment-methods/${method.id}`)).status, 200);
     assert.equal((await api().delete(`/billing-api/clients/${client.id}`)).status, 200);
     assert.equal((await api().delete(`/billing-api/clients/${client.id}`)).status, 404);

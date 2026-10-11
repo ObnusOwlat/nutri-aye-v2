@@ -34,6 +34,7 @@ const ENTITIES = {
         table: 'billing_quotes',
         extra: { items: lines('SELECT description, quantity, unit_price, type FROM billing_quote_items WHERE quote_id = ? ORDER BY rowid') }
     },
+    payment: { table: 'billing_payments' },
     payment_method: { table: 'billing_payment_methods' },
     company: { table: 'billing_company' },
     pdf_config: { table: 'billing_pdf_config' },

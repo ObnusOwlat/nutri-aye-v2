@@ -48,8 +48,8 @@ test('billing: own clients and documents; numbering per consultorio', async () =
     const clientB = (await api(b).post('/billing-api/clients').send({ name: 'Cliente B' })).body.data;
     const invA = (await api(a).post('/billing-api/invoices').send({ clientId: clientA.id })).body.data;
     const invB = (await api(b).post('/billing-api/invoices').send({ clientId: clientB.id })).body.data;
-    assert.equal(invA.invoiceNumber, 'INV-0001');
-    assert.equal(invB.invoiceNumber, 'INV-0001');
+    assert.equal(invA.invoiceNumber, 'REC-0001');
+    assert.equal(invB.invoiceNumber, 'REC-0001');
 
     assert.equal((await api(b).get(`/billing-api/invoices/${invA.id}`)).status, 404);
     assert.equal((await api(b).post('/billing-api/invoices').send({ clientId: clientA.id })).status, 400);

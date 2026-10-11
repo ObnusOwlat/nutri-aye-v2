@@ -57,6 +57,7 @@ function savePdfConfig(ctx, data) {
 }
 
 function dashboard(ctx) {
+    const { PAID_SQL } = require('./payments');
     const active = 'org_id = @orgId AND deactivated_at IS NULL';
     const count = (sql) => db.prepare(sql).get({ orgId: ctx.orgId }).n;
     return {
@@ -64,8 +65,11 @@ function dashboard(ctx) {
         totalInvoices: count(`SELECT COUNT(*) AS n FROM billing_invoices WHERE ${active}`),
         totalQuotes: count(`SELECT COUNT(*) AS n FROM billing_quotes WHERE ${active}`),
         paidInvoices: count(`SELECT COUNT(*) AS n FROM billing_invoices WHERE ${active} AND status = 'PAID'`),
-        totalRevenue: count(`SELECT COALESCE(SUM(total), 0) AS n FROM billing_invoices WHERE ${active} AND status = 'PAID'`),
-        pendingRevenue: count(`SELECT COALESCE(SUM(total), 0) AS n FROM billing_invoices WHERE ${active} AND status IN ('UNPAID', 'OVERDUE')`)
+        // Collected = active payments of receipts that were not voided; pending = what is still owed
+        totalRevenue: count(`SELECT COALESCE(SUM(p.amount), 0) AS n FROM billing_payments p JOIN billing_invoices d ON d.id = p.invoice_id
+            WHERE p.org_id = @orgId AND p.deactivated_at IS NULL AND d.deactivated_at IS NULL AND d.status != 'CANCELLED'`),
+        pendingRevenue: count(`SELECT COALESCE(SUM(d.total - ${PAID_SQL}), 0) AS n FROM billing_invoices d
+            WHERE d.org_id = @orgId AND d.deactivated_at IS NULL AND d.status IN ('UNPAID', 'OVERDUE')`)
     };
 }
 
