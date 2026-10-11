@@ -31,6 +31,22 @@ const LABELS = {
     itemType: { SERVICE: 'Servicio', PRODUCT: 'Producto' },
     paymentType: { BANK_TRANSFER: 'Transferencia', CASH: 'Efectivo', CARD: 'Tarjeta', OTHER: 'Otro' },
     clientType: { INDIVIDUAL: 'Persona', COMPANY: 'Empresa' },
+    // Food subgroups ("origen") inside each category and preparation forms (lib/food-groups.js)
+    foodSubgroup: {
+        beef: 'Vaca', pork: 'Cerdo', poultry: 'Pollo y aves', fish: 'Pescados', shellfish: 'Mariscos',
+        lamb_game: 'Cordero, ternera y caza', processed: 'Embutidos y fiambres', legumes: 'Legumbres y soja',
+        leafy: 'Hojas verdes', cruciferous: 'Crucíferas', roots_tubers: 'Raíces y tubérculos', alliums: 'Cebolla y ajo',
+        fruit_vegetables: 'Tomate, zapallo y otros frutos', mushrooms: 'Hongos', sprouts: 'Brotes', pods_corn: 'Vainas, arvejas y choclo',
+        citrus: 'Cítricos', berries: 'Frutos rojos y uvas', tropical: 'Tropicales', pome_stone: 'Manzana, pera y de carozo',
+        melons: 'Melón y sandía', juices: 'Jugos',
+        grains_flours: 'Granos y harinas', pasta: 'Pastas y fideos', bread_bakery: 'Panes y galletas', breakfast_cereals: 'Cereales de desayuno',
+        oils_fats: 'Aceites y grasas', nuts_seeds: 'Frutos secos y semillas',
+        milk: 'Leches', cheese: 'Quesos', yogurt: 'Yogures', cream_butter: 'Crema y manteca', eggs: 'Huevos',
+        beverages: 'Bebidas', sweets: 'Dulces', spices_condiments: 'Especias y condimentos', soups_sauces: 'Sopas y salsas',
+        snacks: 'Snacks', prepared: 'Comidas preparadas', baby: 'Alimentos infantiles', native: 'Alimentos nativos de EE. UU.',
+        other: 'Otros'
+    },
+    foodForm: { raw: 'Crudo', cooked: 'Cocido', canned: 'Enlatado', frozen: 'Congelado', dried: 'Seco o en polvo' },
     // Per-100 g nutrient columns, by API key without "Per100g"
     nutrient: {
         kcal: 'Calorías', protein: 'Proteínas', carbs: 'Carbohidratos', fat: 'Grasas', saturatedFat: 'Grasas saturadas',

@@ -14,6 +14,7 @@ const { createOrganizationTables } = require('./schema/organizations');
 const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
 const { createServerFirstTables } = require('./schema/server-first');
+const { addFoodGroups } = require('./schema/food-groups');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 
@@ -84,6 +85,11 @@ const MIGRATIONS = [
         version: 10,
         name: 'nombre de la vitamina A sin la sigla EAR',
         up: renameVitaminA
+    },
+    {
+        version: 12,
+        name: 'subgrupos (origen) y forma de preparación de los alimentos; categorías del catálogo básico',
+        up: addFoodGroups
     }
 ];
 
@@ -91,8 +97,10 @@ function migrate() {
     db.exec(`CREATE TABLE IF NOT EXISTS schema_version (
         version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     )`);
-    const current = db.prepare('SELECT COALESCE(MAX(version), 0) AS v FROM schema_version').get().v;
-    for (const m of MIGRATIONS.filter(x => x.version > current)) {
+    // Every migration not applied yet, in order: a lower number merged later
+    // (another branch) still runs instead of being skipped
+    const applied = new Set(db.prepare('SELECT version FROM schema_version').all().map(r => r.version));
+    for (const m of MIGRATIONS.filter(x => !applied.has(x.version))) {
         // Table rebuilds need foreign keys off (cannot change inside a transaction)
         if (m.foreignKeysOff) db.pragma('foreign_keys = OFF');
         try {

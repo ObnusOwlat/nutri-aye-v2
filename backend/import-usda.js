@@ -16,6 +16,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const { classifyFoods } = require('./src/db/schema/food-groups');
 
 const usdaDir = path.join(__dirname, '..', 'foods-data', 'usda');
 const files = process.argv.length > 2
@@ -245,6 +246,9 @@ const setNutrientEs = db.prepare('UPDATE nutrients SET name_es = ? WHERE id = ?'
 db.transaction(() => {
     for (const n of db.prepare('SELECT id, name FROM nutrients').all()) setNutrientEs.run(nutrientNameEs(n), n.id);
 })();
+
+// Subgroup (origen) and preparation form of every food
+classifyFoods(db);
 
 const count = (sql) => db.prepare(sql).get().c;
 console.log(`

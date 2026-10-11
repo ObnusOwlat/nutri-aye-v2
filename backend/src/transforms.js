@@ -25,7 +25,9 @@ function transformIngredient(row) {
         nameEn: row.name_en,
         source: row.source,
         fdcId: row.fdc_id,
-        sourceCategory: row.source_category
+        sourceCategory: row.source_category,
+        subgroup: row.subgroup ?? null,
+        form: row.food_form ?? null
     };
     for (const { column, key } of NUTRIENT_FIELDS) ingredient[key] = row[column];
     return ingredient;
