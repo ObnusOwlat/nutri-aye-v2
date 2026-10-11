@@ -14,4 +14,9 @@ function createTargetTables(db) {
     `);
 }
 
-module.exports = { createTargetTables };
+// "Vitamina A (EAR)" was misleading: EAR is also the Estimated Average Requirement
+function renameVitaminA(db) {
+    db.prepare("UPDATE nutrients SET name_es = 'Vitamina A (equivalentes de retinol)' WHERE id = 1106").run();
+}
+
+module.exports = { createTargetTables, renameVitaminA };
