@@ -1,11 +1,11 @@
 // Weekly planner per patient (meals replaced in one transaction). The consultorio
 // is the patient's: every query joins patients.org_id. "Delete" deactivates.
 const { db } = require('../db/connection');
-const { camelizeRow } = require('../transforms');
+const { camelizeRow, parseJson } = require('../transforms');
 const { newId, nowIso } = require('../lib/http');
 
 const PLANNER_SELECT = `
-    SELECT wp.id, wp.patient_id, wp.template_id, wp.created_at, wp.updated_at,
+    SELECT wp.id, wp.patient_id, wp.template_id, wp.activity_plan, wp.created_at, wp.updated_at,
            p.first_name || ' ' || p.last_name AS patient_name
     FROM week_planner wp JOIN patients p ON wp.patient_id = p.id
     WHERE p.org_id = @orgId AND wp.deactivated_at IS NULL
@@ -16,7 +16,8 @@ const stmts = {
     insert: db.prepare('INSERT INTO week_planner (id, patient_id, template_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'),
     touch: db.prepare(`
         UPDATE week_planner SET patient_id = COALESCE(@patientId, patient_id),
-            template_id = COALESCE(@templateId, template_id), updated_at = @now
+            template_id = COALESCE(@templateId, template_id),
+            activity_plan = COALESCE(@activityPlan, activity_plan), updated_at = @now
         WHERE id = @id
     `),
     deactivate: db.prepare('UPDATE week_planner SET deactivated_at = @now, deactivated_by = @userId WHERE id = @id AND deactivated_at IS NULL'),
@@ -34,8 +35,9 @@ function withMeals(planners) {
         WHERE wpm.planner_id IN (${ids.map(() => '?').join(',')})
         ORDER BY wpm.rowid
     `).all(...ids);
-    return planners.map(p => ({
+    return planners.map(({ activity_plan: activity, ...p }) => ({
         ...camelizeRow(p),
+        activityPlan: parseJson(activity, null),
         meals: meals.filter(m => m.planner_id === p.id)
             .map(m => ({ id: m.id, day: m.day, mealType: m.meal_type, recipeId: m.recipe_id, recipeName: m.recipe_name }))
     }));
@@ -65,10 +67,10 @@ function create(ctx, { patientId, templateId }) {
 const missingRecipes = (ctx, meals = []) => meals.map(m => m.recipeId)
     .filter(id => id && !stmts.recipeUsable.get({ id, orgId: ctx.orgId }));
 
-const update = db.transaction((ctx, id, { patientId, templateId, meals }) => {
+const update = db.transaction((ctx, id, { patientId, templateId, meals, activityPlan }) => {
     if (!getById(ctx, id)) return null;
     const now = nowIso();
-    stmts.touch.run({ id, patientId: patientId ?? null, templateId: templateId ?? null, now });
+    stmts.touch.run({ id, patientId: patientId ?? null, templateId: templateId ?? null, activityPlan: activityPlan ? JSON.stringify(activityPlan) : null, now });
     if (meals) {
         stmts.clearMeals.run(id);
         for (const meal of meals) stmts.insertMeal.run(newId(), id, meal.day, meal.mealType, meal.recipeId || null, now);

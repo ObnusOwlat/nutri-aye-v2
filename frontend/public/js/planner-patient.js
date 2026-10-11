@@ -55,7 +55,7 @@ const PlannerPatient = (function() {
         try {
             const week = await State.loadPatientWeek(patientId);
             if (patientId !== selectedId) return; // another patient was chosen meanwhile
-            State.setWeekPlan(week || {}, patientId);
+            State.setWeekPlan(week || {}, patientId, State.getLoadedActivity(patientId));
             if (week) UI.toastInfo(`Semana de ${State.getPatient(patientId)?.firstName} cargada`);
         } catch (e) {
             UI.toastError('No se pudo cargar la semana del paciente: ' + e.message);

@@ -52,5 +52,5 @@ test('a backup with broken references imports nothing', async () => {
 
 test('migrations are recorded', () => {
     const versions = db.prepare('SELECT version FROM schema_version ORDER BY version').all().map(r => r.version);
-    assert.deepEqual(versions, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12]);
+    assert.deepEqual(versions, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13]);
 });

@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="css/planner-targets.css">
     <link rel="stylesheet" href="css/planner-sidebar.css">
     <link rel="stylesheet" href="css/planner-sidebar-items.css">
+    <link rel="stylesheet" href="css/planner-activity.css">
     <link rel="stylesheet" href="css/ingredients.css">
     <link rel="stylesheet" href="css/catalog.css">
     <link rel="stylesheet" href="css/catalog-filters.css">
@@ -88,45 +89,31 @@
         <!-- Planner Tab -->
         <section class="tab-content" id="tab-planner">
             <div class="planner">
-                <!-- Patient Context Bar -->
-                <div class="planner__patient-bar" id="planner-patient-bar">
-                    <div class="planner__patient-selector">
-                        <label>Paciente:</label>
+                <div class="planner-bar">
+                    <label class="planner-bar__field">Paciente
                         <select id="planner-patient-select" class="form-select">
                             <option value="">-- Sin paciente --</option>
                         </select>
+                    </label>
+                    <label class="planner-bar__field">Plantilla
+                        <select id="planner-template-select" class="form-select">
+                            <option value="">-- Personalizado --</option>
+                        </select>
+                    </label>
+                    <button class="btn btn--secondary btn--sm" id="btn-manage-templates" title="Administrar plantillas">Plantillas</button>
+                    <span class="planner__diet-goal" id="planner-diet-goal">Mantenimiento</span>
+                    <span class="planner__diet-target" id="planner-diet-target">2.000 kcal/día</span>
+                    <label class="planner-bar__field planner-bar__field--inline">Objetivo
+                        <input type="number" class="calorie-summary__input" id="daily-target" value="2000" min="800" max="10000"> kcal
+                    </label>
+                    <span class="planner-bar__avg">Promedio <strong class="calorie-summary__value" id="weekly-avg">0</strong> kcal</span>
+                    <div class="planner-mode" id="planner-mode" role="tablist" aria-label="Qué se planifica">
+                        <button type="button" class="planner-mode__btn active" data-mode="meals">🍽 Comidas</button>
+                        <button type="button" class="planner-mode__btn" data-mode="activity">🏃 Actividad</button>
                     </div>
-                </div>
-
-                <div class="planner__header">
-                    <div class="planner__template-section">
-                        <div class="planner__template-selector">
-                            <label class="planner__template-label">Plantilla de dieta:</label>
-                            <select id="planner-template-select" class="form-select">
-                                <option value="">-- Personalizado --</option>
-                            </select>
-                            <button class="btn btn--secondary btn--sm" id="btn-manage-templates" title="Administrar plantillas">Plantillas</button>
-                        </div>
-                        <div class="planner__diet-info">
-                            <span class="planner__diet-goal" id="planner-diet-goal">Mantenimiento</span>
-                            <span class="planner__diet-target" id="planner-diet-target">2.000 kcal/día</span>
-                        </div>
-                    </div>
-                    <div class="calorie-summary">
-                        <div class="calorie-summary__item">
-                            <span class="calorie-summary__label">Objetivo diario:</span>
-                            <input type="number" class="calorie-summary__input" id="daily-target" value="2000" min="800" max="10000">
-                            <span class="calorie-summary__unit">kcal</span>
-                        </div>
-                        <div class="calorie-summary__item">
-                            <span class="calorie-summary__label">Promedio semanal:</span>
-                            <span class="calorie-summary__value" id="weekly-avg">0</span>
-                            <span class="calorie-summary__unit">kcal</span>
-                        </div>
-                    </div>
-                    <div class="planner__actions">
-                        <button class="btn btn--primary" id="btn-save-patient-plan">Guardar en paciente</button>
-                        <button class="btn btn--danger" id="btn-clear-week">Vaciar semana</button>
+                    <div class="planner-bar__actions">
+                        <button class="btn btn--primary btn--sm" id="btn-save-patient-plan">Guardar en paciente</button>
+                        <button class="btn btn--danger btn--sm" id="btn-clear-week">Vaciar semana</button>
                     </div>
                 </div>
                 <div class="planner__body">
@@ -151,16 +138,9 @@
                             <div class="planner-sidebar__list" id="sidebar-recipe-list"></div>
                         </div>
                         <div class="planner-sidebar__panel" data-sidebar-panel="activity" hidden>
-                            <div class="sidebar-activity__calc">
-                                <h5 class="sidebar-subtitle">Gasto estimado</h5>
-                                <select class="form-select" id="sidebar-activity" aria-label="Actividad"></select>
-                                <div class="planner-sidebar__filters">
-                                    <label class="sidebar-field">Minutos<input type="number" class="form-input" id="sidebar-activity-minutes" value="30" min="1" max="600"></label>
-                                    <label class="sidebar-field">Veces/sem.<input type="number" class="form-input" id="sidebar-activity-times" value="3" min="1" max="14"></label>
-                                    <label class="sidebar-field">Peso (kg)<input type="number" class="form-input" id="sidebar-activity-weight" placeholder="auto" min="10" max="400" step="0.1"></label>
-                                </div>
-                                <div id="sidebar-activity-result"></div>
-                            </div>
+                            <p class="sidebar-note sidebar-note--small">Arrastrá una actividad o un ejercicio a un día de la semana (modo Actividad), o tocalo para elegir el día.</p>
+                            <h5 class="sidebar-subtitle">Actividades</h5>
+                            <div id="sidebar-activity-list"></div>
                             <h5 class="sidebar-subtitle">Ejercicios</h5>
                             <input type="search" class="form-input" id="sidebar-exercise-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio">
                             <div class="planner-sidebar__filters">
@@ -348,6 +328,8 @@
     <script src="js/planner-templates.js"></script>
     <script src="js/planner-patient.js"></script>
     <script src="js/planner-recipe-picker.js"></script>
+    <script src="js/planner-energy.js"></script>
+    <script src="js/planner-activity-grid.js"></script>
     <script src="js/planner.js"></script>
     <script src="js/planner-targets.js"></script>
     <script src="js/planner-nutrients.js"></script>
