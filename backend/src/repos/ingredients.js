@@ -33,17 +33,6 @@ const stmts = {
         WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL
     `),
     reactivate: db.prepare('UPDATE ingredients SET deactivated_at = NULL, deactivated_by = NULL WHERE id = @id AND org_id = @orgId'),
-    nutrients: db.prepare(`
-        SELECT n.id, COALESCE(n.name_es, n.name) AS name, n.name AS nameEn, n.unit, n.nutrient_group AS "group", inut.amount
-        FROM ingredient_nutrients inut
-        JOIN nutrients n ON n.id = inut.nutrient_id
-        WHERE inut.ingredient_id = ?
-        ORDER BY n.rank, n.id
-    `),
-    portions: db.prepare(`
-        SELECT amount, unit, modifier, gram_weight AS gramWeight
-        FROM ingredient_portions WHERE ingredient_id = ? ORDER BY sequence, id
-    `)
 };
 
 
@@ -54,9 +43,12 @@ function toParams(data, missing) {
     return params;
 }
 
-function search(ctx, { search = '', category = '', source = '', sort, order, limit, offset }) {
+// scope: 'own' (the consultorio's foods), 'catalog' (shared foods) or both
+function search(ctx, { search = '', category = '', source = '', scope = '', sort, order, limit, offset }) {
     const where = ['(org_id IS NULL OR org_id = ?)', 'deactivated_at IS NULL'];
     const params = [ctx.orgId];
+    if (scope === 'own') where.push('org_id IS NOT NULL');
+    if (scope === 'catalog') where.push('org_id IS NULL');
 
     // Every word must appear in the Spanish or English name, in any order,
     // ignoring accents and case ("pollo pechuga", "limon")
@@ -98,13 +90,6 @@ function search(ctx, { search = '', category = '', source = '', sort, order, lim
 const getById = (ctx, id) => transformIngredient(stmts.byId.get({ id, orgId: ctx.orgId }));
 const isOwn = (ctx, id) => !!stmts.own.get({ id, orgId: ctx.orgId });
 
-// Full nutrient profile (per 100 g) and household portions
-function getDetails(ctx, id) {
-    const ingredient = getById(ctx, id);
-    if (!ingredient) return null;
-    return { ...ingredient, nutrients: stmts.nutrients.all(id), portions: stmts.portions.all(id) };
-}
-
 function create(ctx, data) {
     const id = newId();
     stmts.insert.run({ ...toParams(data, 0), id, orgId: ctx.orgId, now: nowIso() });
@@ -137,4 +122,4 @@ const LIBRARY_SQL = `
 `;
 const listLibrary = (ctx) => db.prepare(LIBRARY_SQL).all({ orgId: ctx.orgId }).map(transformIngredient);
 
-module.exports = { search, getById, getDetails, isOwn, create, update, deactivate, reactivate, bulkCreate, listLibrary };
+module.exports = { search, getById, isOwn, create, update, deactivate, reactivate, bulkCreate, listLibrary };

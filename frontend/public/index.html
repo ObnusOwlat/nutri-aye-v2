@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/week-planner.css">
     <link rel="stylesheet" href="css/planner-nutrients.css">
     <link rel="stylesheet" href="css/ingredients.css">
+    <link rel="stylesheet" href="css/catalog.css">
     <link rel="stylesheet" href="css/recipes.css">
     <link rel="stylesheet" href="css/misc.css">
     <link rel="stylesheet" href="css/responsive.css">
@@ -163,8 +164,17 @@
                         </button>
                     </div>
                 </div>
-                <div class="search-bar" style="margin: 12px 0;">
-                    <input type="text" id="ingredient-search" class="form-input" placeholder="Buscar alimentos..." style="width: 100%;">
+                <div class="catalog-views" role="tablist">
+                    <button class="catalog-views__btn active" data-view="own" type="button">Mis alimentos</button>
+                    <button class="catalog-views__btn" data-view="catalog" type="button">Catálogo (USDA y básico)</button>
+                </div>
+                <div class="catalog-search">
+                    <input type="text" id="ingredient-search" class="form-input" placeholder="Buscar en mis alimentos..." autocomplete="off">
+                    <select id="ingredient-source" class="form-select hidden" aria-label="Origen">
+                        <option value="">Todo el catálogo</option>
+                        <option value="usda">USDA</option>
+                        <option value="calories_in">Catálogo básico</option>
+                    </select>
                 </div>
                 <div class="category-filter">
                     <button class="category-filter__btn active" data-category="all">Todas</button>
@@ -177,6 +187,7 @@
                     <button class="category-filter__btn" data-category="mixed">Mixtos</button>
                 </div>
                 <div class="ingredients__list" id="ingredients-list"></div>
+                <div class="catalog-pager" id="ingredients-pager"></div>
             </div>
         </section>
 
@@ -289,8 +300,13 @@
     <script src="js/ui-modal.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/users-admin.js"></script>
+    <script src="js/ingredient-form.js"></script>
+    <script src="js/ingredient-detail.js"></script>
+    <script src="js/ingredient-list.js"></script>
+    <script src="js/ingredient-import.js"></script>
     <script src="js/ingredients.js"></script>
     <script src="js/recipe-ingredient-search.js"></script>
+    <script src="js/recipe-lines.js"></script>
     <script src="js/recipe-editor.js"></script>
     <script src="js/recipes.js"></script>
     <script src="js/planner-templates.js"></script>

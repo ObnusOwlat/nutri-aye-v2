@@ -41,6 +41,11 @@ const LABELS = {
         vitaminE: 'Vitamina E', vitaminK: 'Vitamina K', magnesium: 'Magnesio', calcium: 'Calcio', phosphorus: 'Fósforo',
         potassium: 'Potasio', iron: 'Hierro', selenium: 'Selenio', zinc: 'Zinc', manganese: 'Manganeso', copper: 'Cobre'
     },
+    nutrientGroup: {
+        energy: 'Energía', proximates: 'Composición general', carbohydrates: 'Carbohidratos', lipids: 'Grasas',
+        vitamins: 'Vitaminas', minerals: 'Minerales', amino_acids: 'Aminoácidos', sterols: 'Esteroles',
+        organic_acids: 'Ácidos orgánicos', other: 'Otros'
+    },
     source: {
         user: 'Propio', calories_in: 'Catálogo básico', usda_foundation: 'USDA Foundation', usda_sr_legacy: 'USDA SR Legacy'
     }

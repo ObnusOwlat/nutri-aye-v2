@@ -110,6 +110,8 @@ unzip -o /tmp/en_es.zip -d tools/models          # -> tools/models/en_es/
 tools/.venv/bin/python tools/translate-usda.py   # ~40 s; después, node import-usda.js
 ```
 
+Las porciones caseras se traducen con `tools/translate-portions.py` (resultado en `foods-data/translations/portions-es.json`, que el backend lee al arrancar).
+
 El catálogo básico (calories-in) se traduce con `tools/translate-basic.py` (mismo traductor, más las correcciones de `tools/basic-overrides-es.json`); el resultado está versionado en `foods-data/translations/calories-in-names-es.json` y lo aplica la migración 8.
 
 Usa `tools/glossary-usda-es.json` (~900 términos con nombres de la región: porotos, batata, palta, cortes de carne) y un modelo OPUS-MT local (Argos Translate) para el resto.
@@ -117,7 +119,9 @@ Usa `tools/glossary-usda-es.json` (~900 términos con nombres de la región: por
 | Endpoint | Descripción |
 |----------|-------------|
 | `GET /api/ingredients?search=&source=usda` | Búsqueda paginada (`usda`, `usda_foundation`, `usda_sr_legacy`, `calories_in`, `user`) |
-| `GET /api/ingredients/:id` | Alimento con `nutrients` (por 100 g) y `portions` |
+| `GET /api/ingredients?scope=own\|catalog` | Alimentos propios o del catálogo compartido |
+| `GET /api/ingredients/:id` | Alimento con `keyNutrients`, todos los `nutrients` (por 100 g) y `portions` en español |
+| `POST /api/ingredients/:id/duplicate` | Copia propia de un alimento del catálogo, con nutrientes y porciones |
 | `GET /api/nutrients?group=vitamins` | Catálogo de nutrientes |
 | `GET /api/nutrients/:id/ingredients?category=vegetables` | Alimentos más ricos en un nutriente |
 | `GET /api/recipes/:id` | Receta con `nutrients` (totales completos) |

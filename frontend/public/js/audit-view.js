@@ -65,6 +65,17 @@ const AuditView = (function() {
         return esc(String(v).length > 80 ? `${String(v).slice(0, 80)}…` : v);
     }
 
+    // "vitamin_b12_per_100g" -> "Vitamina B12 (100 g)"
+    function fieldLabel(field) {
+        if (FIELDS[field]) return FIELDS[field];
+        const per100 = /^(.+)_per_100g$/.exec(field);
+        if (per100) {
+            const base = per100[1].replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+            return `${UI.label('nutrient', base)} (100 g)`;
+        }
+        return field;
+    }
+
     function activityText(json) {
         let a;
         try { a = typeof json === 'string' ? JSON.parse(json) : json; } catch { return String(json); }
@@ -78,7 +89,7 @@ const AuditView = (function() {
         const rows = Object.entries(entry.changes)
             .filter(([field]) => entry.action !== 'deactivate' || field === 'deactivated_at')
             .map(([field, [before, after]]) => {
-                const label = esc(FIELDS[field] || field);
+                const label = esc(fieldLabel(field));
                 return entry.action === 'create' || before === null && entry.entity === 'backup'
                     ? `<li><span>${label}:</span> ${value(after, field, entry.entity)}</li>`
                     : `<li><span>${label}:</span> ${value(before, field, entry.entity)} → ${value(after, field, entry.entity)}</li>`;

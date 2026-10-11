@@ -50,7 +50,7 @@ const RecipeEditor = (function() {
             recipeId: recipeId,
             name: recipe?.name || '',
             category: recipe?.category || 'breakfast',
-            ingredients: recipe ? [...recipe.ingredients] : [],
+            ingredients: recipe ? recipe.ingredients.map(ri => ({ ingredientId: ri.ingredientId, grams: ri.grams })) : [],
             isEdit: !!recipe
         };
 
@@ -66,7 +66,7 @@ const RecipeEditor = (function() {
 
     function buildFormContent() {
         // Render ingredient list
-        const ingredientListHtml = renderIngredientList();
+        const ingredientListHtml = RecipeLines.render(formState.ingredients);
 
         // Render category options
         const categoryOptionsHtml = CATEGORIES.map(cat => 
@@ -123,43 +123,6 @@ const RecipeEditor = (function() {
         `;
     }
 
-    function renderIngredientList() {
-        if (formState.ingredients.length === 0) {
-            return '<p class="empty-message">Todavía no hay alimentos. Buscalos y elegilos abajo.</p>';
-        }
-
-        return formState.ingredients.map((ri, idx) => {
-            const ing = State.getIngredient(ri.ingredientId);
-            if (!ing) {
-                return `<div class="ingredient-item ingredient-item--error">Alimento desconocido</div>`;
-            }
-
-            const factor = ri.grams / 100;
-            const kcal = Math.round(ing.kcalPer100g * factor);
-            const protein = UI.formatDecimal((ing.proteinPer100g || 0) * factor, 1);
-            const carbs = UI.formatDecimal((ing.carbsPer100g || 0) * factor, 1);
-            const fat = UI.formatDecimal((ing.fatPer100g || 0) * factor, 1);
-
-            return `
-                <div class="ingredient-item" data-index="${idx}">
-                    <div class="ingredient-item__main">
-                        <span class="ingredient-item__name">${UI.escapeHtml(ing.name)}</span>
-                        <input type="number" class="ingredient-item__grams" 
-                               value="${UI.escapeHtml(ri.grams)}" min="1" max="10000"
-                               data-grams-idx="${idx}">
-                        <span class="ingredient-item__kcal">${kcal} kcal</span>
-                        <button class="ingredient-item__remove" data-remove-idx="${idx}">X</button>
-                    </div>
-                    <div class="ingredient-item__macros">
-                        <span>P: ${protein}g</span>
-                        <span>C: ${carbs}g</span>
-                        <span>G: ${fat}g</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
     function calculateFormNutrition() {
         const result = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
@@ -192,23 +155,10 @@ const RecipeEditor = (function() {
 
         RecipeIngredientSearch.attach(ingredientsCache, addIngredient);
 
-        // Ingredient list interactions
-        document.getElementById('recipe-ingredient-list')?.addEventListener('input', (e) => {
-            if (e.target.matches('[data-grams-idx]')) {
-                const idx = parseInt(e.target.dataset.gramsIdx);
-                const grams = Math.max(1, parseInt(e.target.value) || 100);
-                formState.ingredients[idx].grams = grams;
-                refreshNutrition();
-            }
-        });
-
-        document.getElementById('recipe-ingredient-list')?.addEventListener('click', (e) => {
-            if (e.target.matches('[data-remove-idx]')) {
-                const idx = parseInt(e.target.dataset.removeIdx);
-                formState.ingredients.splice(idx, 1);
-                refreshForm();
-            }
-        });
+        // Quantities in grams or household portions (recipe-lines.js)
+        const list = document.getElementById('recipe-ingredient-list');
+        if (list) RecipeLines.bind(list, () => formState.ingredients, { onTotals: refreshNutrition, onRedraw: refreshForm });
+        RecipeLines.loadPortions(formState.ingredients).then(refreshForm);
     }
 
     /**
@@ -232,6 +182,7 @@ const RecipeEditor = (function() {
         formState.ingredients.push({ ingredientId, grams: 100 });
 
         refreshForm();
+        RecipeLines.loadPortions(formState.ingredients).then(refreshForm);
         UI.toastSuccess('Alimento agregado');
     }
 
@@ -242,7 +193,7 @@ const RecipeEditor = (function() {
 
         // Update ingredient list
         if (ingredientList) {
-            ingredientList.innerHTML = renderIngredientList();
+            ingredientList.innerHTML = RecipeLines.render(formState.ingredients);
         }
 
         // Update dropdown with current search
