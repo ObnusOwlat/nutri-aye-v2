@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { api } = require('./helpers');
+const { errorHandler } = require('../src/lib/errors');
 
 test('no CORS headers: other origins cannot read the API', async () => {
     const res = await api().get('/api/health').set('Origin', 'https://evil.example');
@@ -39,21 +40,34 @@ test('bodies over 1 MB are rejected', async () => {
     assert.equal(res.status, 413);
 });
 
-test('internal errors do not leak database messages', async () => {
-    // last_name is NOT NULL in the schema
-    const res = await api().post('/api/patients').send({ firstName: 'Solo' });
-    assert.equal(res.status, 500);
-    assert.equal(res.body.code, 'INTERNAL_ERROR');
-    assert.doesNotMatch(JSON.stringify(res.body), /SQLITE|constraint/i);
+test('internal errors do not leak database messages', () => {
+    let status, body;
+    const res = { status(code) { status = code; return this; }, json(b) { body = b; } };
+    const err = Object.assign(new Error('SQLITE_CONSTRAINT: NOT NULL constraint failed: patients.last_name'), { code: 'SQLITE_CONSTRAINT' });
+    errorHandler(err, { log: { error() {} } }, res, () => {});
+    assert.equal(status, 500);
+    assert.equal(body.code, 'INTERNAL_ERROR');
+    assert.doesNotMatch(JSON.stringify(body), /SQLITE|constraint/i);
+});
+
+test('every response carries a request id', async () => {
+    const res = await api().get('/api/health');
+    assert.match(res.headers['x-request-id'], /^[0-9a-f-]{36}$/);
 });
 
 test('ids sent by the client are ignored', async () => {
     const res = await api().post('/api/patients').send({ id: 'my-own-id', firstName: 'A', lastName: 'B' });
-    assert.equal(res.status, 200);
+    assert.equal(res.status, 201);
     assert.notEqual(res.body.data.id, 'my-own-id');
 });
 
-test('backup import is disabled', async () => {
-    const res = await api().post('/api/backup/import').send({ ingredients: [] });
-    assert.equal(res.status, 503);
+test('backup import rejects files that are not a valid backup', async () => {
+    assert.equal((await api().post('/api/backup/import').send({ ingredients: [] })).status, 400);
+    const injection = await api().post('/api/backup/import').send({
+        format: 'nutri-aye-backup', version: 4, tables: { patients: [{ id: 'x', 'first_name) VALUES (1); DROP TABLE patients; --': 1 }] }
+    });
+    assert.equal(injection.status, 400);
+    assert.match(injection.body.error, /columnas desconocidas/);
+    const unknownTable = await api().post('/api/backup/import').send({ format: 'nutri-aye-backup', version: 4, tables: { sqlite_master: [] } });
+    assert.equal(unknownTable.status, 400);
 });

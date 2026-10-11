@@ -23,7 +23,6 @@ const Patients = (function() {
         subscribeToState();
         renderPatientsList();
 
-        console.log('[Patients] Initialized');
     }
 
     /**
@@ -493,24 +492,8 @@ const Patients = (function() {
                 .then(res => res.json())
                 .then(response => {
                     if (response.success && response.data) {
-                        // Add to state using updatePatient (which handles existing patients)
-                        // First check if it exists
-                        const exists = State.getPatient(id);
-                        if (!exists) {
-                            // Need to add - use the raw data
-                            const p = response.data;
-                            State.addPatient({
-                                firstName: p.firstName,
-                                lastName: p.lastName,
-                                email: p.email,
-                                phone: p.phone,
-                                dateOfBirth: p.dateOfBirth,
-                                gender: p.gender,
-                                address: p.address,
-                                emergencyContact: p.emergencyContact,
-                                notes: p.notes
-                            });
-                        }
+                        // Keep the server id: a new local id would open an empty profile
+                        if (!State.getPatient(id)) State.addPatient({ ...response.data, id });
                         // Now open with the ID
                         doOpenPatientProfile(id);
                     } else {
@@ -804,7 +787,6 @@ const Patients = (function() {
             }
             
             var patient = response.data;
-            console.log('Got patient:', patient?.firstName, patient?.lastName, 'billingClientId:', patient?.billingClientId);
         } catch (err) {
             content.innerHTML = `<div class="empty-state"><p>Error: ${err.message}</p></div>`;
             return;
@@ -925,7 +907,7 @@ const Patients = (function() {
                                     <tbody>
                                         ${invoices.slice(0, 5).map(inv => `
                                             <tr>
-                                                <td>${inv.invoice_number}</td>
+                                                <td>${inv.invoiceNumber}</td>
                                                 <td>${new Date(inv.date).toLocaleDateString()}</td>
                                                 <td>$${inv.total.toFixed(2)}</td>
                                                 <td><span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span></td>
@@ -951,8 +933,8 @@ const Patients = (function() {
                                     <tbody>
                                         ${quotes.slice(0, 5).map(q => `
                                             <tr>
-                                                <td>${q.quote_number}</td>
-                                                <td>${new Date(q.valid_until).toLocaleDateString()}</td>
+                                                <td>${q.quoteNumber}</td>
+                                                <td>${new Date(q.validUntil).toLocaleDateString()}</td>
                                                 <td>$${q.total.toFixed(2)}</td>
                                                 <td><span class="badge badge-${q.status.toLowerCase()}">${q.status}</span></td>
                                             </tr>

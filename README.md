@@ -1,178 +1,121 @@
-# Meal Prep Planner
+# Nutri Aye
 
-A local-first web application for meal planning, recipe management, and shopping list generation.
+Sistema para consultorios de nutrición: pacientes (mediciones, condiciones, alergias), recetas con cálculo nutricional completo, planificación semanal por paciente, catálogo de ~7.900 alimentos (USDA, en español) y facturación interna.
 
-## Features
+## Puesta en marcha
 
-- **Weekly Meal Planner**: 7-day grid with 4 meals per day
-- **Ingredient Management**: Add, edit, delete, and import/export ingredients via CSV
-- **Recipe Builder**: Create recipes with live calorie calculation
-- **Shopping List**: Auto-generate aggregated shopping lists from meal plans
-- **Diet Goals**: Set daily calorie targets with visual tracking
-- **Offline Support**: Works fully offline using localStorage
-- **Optional Sync**: Backend sync for multi-device support (Node.js + SQLite)
-
-## Quick Start
-
-### Frontend Only (Recommended for Starters)
-
-1. Open `frontend/index.html` in your browser
-2. Start adding ingredients and recipes
-3. Plan your meals for the week
-4. Generate your shopping list
-
-### With Backend (For Multi-Device Sync)
+Requiere Node 22.9 o superior.
 
 ```bash
 cd backend
 npm install
-npm start
+cp .env.example .env      # opcional: HOST, PORT, DB_PATH
+npm start                 # http://127.0.0.1:3001
 ```
 
-Then open `frontend/index.html` and click "Sync" to backup your data.
+El server sirve la app (`frontend/public/`) y la API en el mismo puerto. La base SQLite se crea sola en `backend/db/` y el esquema se actualiza con migraciones numeradas al arrancar (tabla `schema_version`).
 
-## Project Structure
+Por defecto escucha solo en esta computadora (`127.0.0.1`). Para abrirlo a la red local hay que esperar a la Fase 9 (HTTPS y usuarios).
 
-```
-meal-prep-planner/
-├── frontend/
-│   ├── index.html              # Main HTML file
-│   ├── css/
-│   │   ├── main.css            # Base styles & variables
-│   │   ├── components.css       # UI components
-│   │   └── responsive.css      # Responsive breakpoints
-│   ├── js/
-│   │   ├── app.js              # Main entry & tab navigation
-│   │   ├── state.js            # State management (localStorage)
-│   │   ├── ui.js               # Modal, toast, print utilities
-│   │   ├── ingredients.js     # Ingredient CRUD & CSV
-│   │   ├── recipes.js          # Recipe builder
-│   │   ├── planner.js          # Weekly planner grid
-│   │   ├── shopping.js         # Shopping list generator
-│   │   └── sync.js             # Backend sync layer
-│   └── assets/
-│       └── templates/
-│           └── ingredients-template.csv
-├── backend/
-│   ├── server.js              # Express API server
-│   ├── package.json
-│   └── db/                     # SQLite database (auto-created)
-└── README.md
-```
-
-## Data Storage
-
-### localStorage Keys
-
-| Key | Description |
-|-----|-------------|
-| `mp_ingredients_v1` | User's ingredients |
-| `mp_dishes_v3` | User's recipes |
-| `mp_week_v3` | Weekly meal plan |
-| `mp_diet_v3` | Diet profile (goal, daily target) |
-
-### Backend API
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/health` | GET | Health check |
-| `/api/sync/push` | POST | Push local data to server |
-| `/api/sync/pull` | GET | Pull server data |
-| `/api/backup/export` | GET | Download full backup |
-| `/api/backup/import` | POST | Restore from backup |
-
-## Food Database (USDA FoodData Central)
-
-The backend can load ~7,900 foods from USDA FoodData Central (Foundation Foods + SR Legacy, public domain / CC0) with their full nutrient profile (246 nutrients: macros, vitamins, minerals, fatty acids, amino acids, sterols...) and household portions.
+## Desarrollo
 
 ```bash
-# 1. Download the JSON files into foods-data/usda/ (not versioned)
+cd backend
+npm run dev               # reinicia al guardar
+npm test                  # tests de la API contra una base en memoria
+```
+
+### Estructura
+
+```
+backend/
+├── server.js                  # arranque
+├── src/
+│   ├── app.js                 # seguridad, logs, archivos públicos, rutas, errores
+│   ├── db/                    # conexión, migraciones y esquema
+│   ├── repos/                 # todo el SQL, por dominio (ingredients, recipes, patients, planner, billing/*)
+│   ├── routes/                # endpoints HTTP (delgados: validan y llaman al repo)
+│   ├── validation/            # esquemas zod, mensajes en español
+│   ├── backup/serializer.js   # exportar / importar respaldo
+│   ├── lib/                   # errores, logger, helpers HTTP
+│   ├── nutrient-fields.js     # columnas de nutrientes por 100 g (única definición)
+│   └── constants.js           # valores permitidos
+├── test/                      # node:test + supertest
+├── import-usda.js · import-foods.js · seed-demo.js
+frontend/public/               # app sin compilación (HTML, CSS, JS)
+tools/                         # traducción offline de nombres USDA
+foods-data/                    # datos de alimentos y traducciones
+```
+
+Reglas del código: archivos chicos (unas 300 líneas como máximo), un archivo por dominio, el SQL solo en `repos/`.
+
+### Convenciones de la API
+
+- Respuestas `{ success: true, data }`; las listas suman `pagination`.
+- Errores `{ success: false, error, code, details? }`, con `code` en `VALIDATION_ERROR` (400), `NOT_FOUND` (404), `CONFLICT` (409) o `INTERNAL_ERROR` (500, sin detalles internos).
+- Los ids los genera siempre el server. Los totales de facturas y presupuestos se calculan en el server a partir de los ítems.
+- Cada respuesta lleva `X-Request-Id`, que aparece en el log. Los logs nunca incluyen el cuerpo de las solicitudes.
+
+## Respaldo
+
+- `GET /api/backup/export` descarga un JSON (`format: "nutri-aye-backup"`, `version: 4`) con todas las tablas del consultorio. No incluye el catálogo USDA, salvo los alimentos que usan las recetas.
+- `POST /api/backup/import` restaura un respaldo: actualiza o agrega por id dentro de una transacción. **No borra nada.** Si el archivo tiene un error, no se importa nada.
+
+## Catálogo de alimentos (USDA FoodData Central)
+
+Unos 7.900 alimentos (Foundation Foods + SR Legacy, dominio público/CC0) con su perfil completo (246 nutrientes) y porciones caseras.
+
+```bash
+# 1. Bajar los JSON a foods-data/usda/ (no se versionan)
 mkdir -p foods-data/usda && cd foods-data/usda
 curl -LO https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip
 curl -LO https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip
 unzip -o '*.zip' && cd ../..
 
-# 2. Start the server once (creates the schema), then import
+# 2. Arrancar el server una vez (crea el esquema) e importar
 cd backend && node import-usda.js
 ```
 
-Food and nutrient names are imported in Spanish (`name`), keeping the USDA original in `name_en`. Search matches both, ignoring accents ("limon" finds "Limón"). Re-running the import updates nutrient data and names, but keeps names you renamed and categories you changed.
+Los nombres se importan en español (`name`) y se conserva el original en `name_en`. La búsqueda encuentra ambos e ignora tildes ("limon" encuentra "Limón"). Volver a importar actualiza nutrientes y nombres, pero respeta los nombres y las categorías que se editaron a mano.
 
-### Spanish names (free, offline)
+### Nombres en español (gratis y sin conexión)
 
-`foods-data/translations/usda-names-es.json` is versioned, so the import works without this step. To regenerate it (e.g. after a new USDA release or glossary edits):
+`foods-data/translations/usda-names-es.json` está versionado, así que la importación funciona sin este paso. Para regenerarlo:
 
 ```bash
 python3 -m venv tools/.venv
 tools/.venv/bin/pip install ctranslate2 sentencepiece
 mkdir -p tools/models && curl -L -o /tmp/en_es.zip https://argos-net.com/v1/translate-en_es-1_0.argosmodel
 unzip -o /tmp/en_es.zip -d tools/models          # -> tools/models/en_es/
-tools/.venv/bin/python tools/translate-usda.py   # ~40 s, then re-run node import-usda.js
+tools/.venv/bin/python tools/translate-usda.py   # ~40 s; después, node import-usda.js
 ```
 
-It uses `tools/glossary-usda-es.json` (~880 frequent USDA terms in Paraguayan/Rioplatense Spanish: porotos, batata, palta, cuts of meat) and an offline OPUS-MT model (Argos Translate) for the rest. Adjectives agree with the food's gender/number. Nutrient names are hand-translated in `foods-data/translations/nutrients-es.json`. USDA foods are served through the API and are not included in sync/backup unless a recipe uses them.
+Usa `tools/glossary-usda-es.json` (~900 términos con nombres de la región: porotos, batata, palta, cortes de carne) y un modelo OPUS-MT local (Argos Translate) para el resto.
 
-| Endpoint | Description |
+| Endpoint | Descripción |
 |----------|-------------|
-| `GET /api/ingredients?source=usda` | Filter by source (`usda`, `usda_foundation`, `usda_sr_legacy`, `calories_in`, `user`) |
-| `GET /api/ingredients/:id` | Ingredient with `nutrients` (full profile per 100 g) and `portions` (grams per cup, piece...) |
-| `GET /api/nutrients?group=vitamins` | Nutrient catalog and how many ingredients have each one |
-| `GET /api/nutrients/:id/ingredients?category=vegetables&limit=20` | Ingredients richest in a nutrient |
-| `GET /api/recipes/:id` | Recipe with `nutrients` (full totals for the recipe) |
+| `GET /api/ingredients?search=&source=usda` | Búsqueda paginada (`usda`, `usda_foundation`, `usda_sr_legacy`, `calories_in`, `user`) |
+| `GET /api/ingredients/:id` | Alimento con `nutrients` (por 100 g) y `portions` |
+| `GET /api/nutrients?group=vitamins` | Catálogo de nutrientes |
+| `GET /api/nutrients/:id/ingredients?category=vegetables` | Alimentos más ricos en un nutriente |
+| `GET /api/recipes/:id` | Receta con `nutrients` (totales completos) |
 
-## Demo Data
-
-```bash
-cd backend && node seed-demo.js           # 4 fictional patients (metrics, conditions) + 9 recipes from USDA foods
-node seed-demo.js --remove                # delete it (all demo rows have ids starting with "demo-")
-```
-
-Then press **Sync** in the app to bring it into the browser.
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Alt + 1` | Go to Patients |
-| `Alt + 2` | Go to Planner |
-| `Alt + 3` | Go to Ingredients |
-| `Alt + 4` | Go to Recipes |
-| `Ctrl + S` | Create backup |
-| `Ctrl + P` | Print |
-| `Esc` | Close modal |
-
-## CSV Import Format
-
-```csv
-name,kcalPer100g,category
-Chicken Breast,165,protein
-Brown Rice,111,carbs
-Avocado,160,fats
-Broccoli,34,vegetables
-```
-
-Categories: `protein`, `carbs`, `fats`, `vegetables`, `mixed`
-
-## Browser Support
-
-- Chrome 80+
-- Firefox 75+
-- Safari 13+
-- Edge 80+
-
-## Development
-
-### Run Backend with Auto-reload
+## Datos de prueba
 
 ```bash
-cd backend
-npm run dev
+cd backend && node seed-demo.js           # 4 pacientes ficticios + 9 recetas con alimentos USDA
+node seed-demo.js --remove                # los borra (todos los ids empiezan con "demo-")
 ```
 
-### Build for Production
+## Atajos de teclado
 
-Simply copy the `frontend` folder to your web server.
+| Atajo | Acción |
+|-------|--------|
+| `Alt + 1` … `Alt + 4` | Pacientes, Planificador, Alimentos, Recetas |
+| `Ctrl + S` | Respaldo |
+| `Ctrl + P` | Imprimir |
+| `Esc` | Cerrar ventana |
 
-## License
+## Licencia
 
 MIT

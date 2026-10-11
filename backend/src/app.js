@@ -2,11 +2,33 @@
 const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const pinoHttp = require('pino-http');
 const { PUBLIC_DIR } = require('./config');
-const { serverError } = require('./lib/errors');
+const { logger } = require('./lib/logger');
+const { newId } = require('./lib/http');
+const { errorHandler } = require('./lib/errors');
+const { migrate } = require('./db/migrations');
+
+// The schema must exist before the repos prepare their statements
+migrate();
 
 const app = express();
 app.disable('x-powered-by');
+
+// Request log: method, path, status, time and a request id. No bodies (patient data).
+app.use(pinoHttp({
+    logger,
+    genReqId: (req, res) => {
+        const id = newId();
+        res.setHeader('X-Request-Id', id);
+        return id;
+    },
+    autoLogging: { ignore: (req) => !req.url.startsWith('/api') && !req.url.startsWith('/billing-api') },
+    serializers: {
+        req: (req) => ({ id: req.id, method: req.method, url: req.url.split('?')[0] }),
+        res: (res) => ({ statusCode: res.statusCode })
+    }
+}));
 
 // Same-origin app: no CORS headers, so other websites cannot read the API
 app.use(helmet({
@@ -29,8 +51,8 @@ const apiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 600, standardHeaders:
 app.use('/api', apiLimiter);
 app.use('/billing-api', apiLimiter);
 
-// Bulk ingredient import needs a bigger body; everything else 1 MB
-app.use('/api/ingredients/bulk', express.json({ limit: '10mb' }));
+// Imports need a bigger body; everything else 1 MB
+app.use(['/api/ingredients/bulk', '/api/backup/import'], express.json({ limit: '20mb' }));
 app.use(express.json({ limit: '1mb' }));
 
 // Only frontend/public is served; no-cache makes the browser revalidate after updates
@@ -39,10 +61,10 @@ app.use(express.static(PUBLIC_DIR, {
 }));
 
 const ROUTES = [
-    'health', 'ingredients', 'nutrients', 'recipes',
+    'stats', 'ingredients', 'nutrients', 'recipes',
     'patients/index', 'patients/records', 'patients/billing-link',
-    'sync', 'backup', 'planner', 'stats',
-    'billing/company', 'billing/clients', 'billing/invoices', 'billing/quotes', 'billing/payment-methods'
+    'sync', 'backup', 'planner',
+    'billing/company', 'billing/clients', 'billing/documents', 'billing/payment-methods'
 ];
 for (const route of ROUTES) {
     app.use(require(`./routes/${route}`));
@@ -52,14 +74,6 @@ app.use((req, res) => {
     res.status(404).json({ success: false, error: 'No encontrado', code: 'NOT_FOUND' });
 });
 
-app.use((err, req, res, next) => {
-    if (err.type === 'entity.parse.failed') {
-        return res.status(400).json({ success: false, error: 'El cuerpo de la solicitud no es JSON válido', code: 'INVALID_JSON' });
-    }
-    if (err.type === 'entity.too.large') {
-        return res.status(413).json({ success: false, error: 'La solicitud es demasiado grande', code: 'PAYLOAD_TOO_LARGE' });
-    }
-    return serverError(res, err);
-});
+app.use(errorHandler);
 
 module.exports = { app };

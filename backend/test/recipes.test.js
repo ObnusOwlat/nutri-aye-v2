@@ -46,3 +46,22 @@ test('recipe detail sums every nutrient', async () => {
     const iron = detail.body.data.nutrients.find(n => n.id === 1089);
     assert.equal(iron.amount, 1.35);
 });
+
+test('recipe 404s, partial update and repeated ingredients', async () => {
+    assert.equal((await api().put('/api/recipes/nope').send({ name: 'X' })).status, 404);
+    assert.equal((await api().delete('/api/recipes/nope')).status, 404);
+    const rice = await createIngredient({ name: 'Arroz 3' });
+    const recipe = await createRecipe(rice.id, { name: 'Parcial', ingredients: [{ ingredientId: rice.id, grams: 100 }, { ingredientId: rice.id, grams: 50 }] });
+    assert.deepEqual(recipe.ingredients.map(i => i.grams), [150]);
+
+    // Only notes change: name, category and ingredients stay
+    const updated = (await api().put(`/api/recipes/${recipe.id}`).send({ notes: 'Sin sal' })).body.data;
+    assert.equal(updated.name, 'Parcial');
+    assert.equal(updated.notes, 'Sin sal');
+    assert.equal(updated.ingredients.length, 1);
+
+    // A bad ingredient rejects the whole update
+    const bad = await api().put(`/api/recipes/${recipe.id}`).send({ name: 'Rota', ingredients: [{ ingredientId: 'nope', grams: 10 }] });
+    assert.equal(bad.status, 400);
+    assert.equal((await api().get(`/api/recipes/${recipe.id}`)).body.data.name, 'Parcial');
+});

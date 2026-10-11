@@ -25,12 +25,10 @@ const Sync = (function() {
         window.addEventListener('offline', handleOffline);
         document.getElementById('btn-sync')?.addEventListener('click', manualSync);
         updateSyncStatus();
-        console.log('[Sync] Initialized, online:', isOnline);
 
         // First visit (nothing stored in this browser): bring the server data
         if (isOnline && !State.getPatients().length && !State.getRecipes().length) {
             pullFromBackend()
-                .then(() => console.log('[Sync] Initial data loaded from server'))
                 .catch(e => console.warn('[Sync] Initial load failed:', e.message));
         }
     }
@@ -78,36 +76,16 @@ const Sync = (function() {
             return;
         }
 
+        // Pull only: patients and planner weeks are saved to the server when edited
+        isSyncing = true;
+        updateSyncStatus();
         try {
-            await pushToBackend();
             await pullFromBackend();
             lastSyncTime = new Date().toISOString();
             UI.toastSuccess('Sync completed');
         } catch (error) {
             console.error('[Sync] Error:', error);
             UI.toastError('Sync failed: ' + error.message);
-        }
-    }
-
-    /**
-     * Push local data to backend
-     */
-    async function pushToBackend() {
-        isSyncing = true;
-        updateSyncStatus();
-
-        try {
-            const response = await fetchWithTimeout(`${CONFIG.API_BASE}/sync/push`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(State.exportData())
-            });
-
-            if (!response.ok) throw new Error(`Server error: ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error('[Sync] Push failed:', error);
-            throw error;
         } finally {
             isSyncing = false;
             updateSyncStatus();
@@ -125,7 +103,7 @@ const Sync = (function() {
 
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
-        const data = await response.json();
+        const { data } = await response.json();
         if (data && Object.keys(data).length > 0) mergeData(data);
         return data;
     }

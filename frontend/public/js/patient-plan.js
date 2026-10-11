@@ -150,7 +150,7 @@ const PatientPlan = (function() {
                     const recipe = recipeId ? State.getRecipe(recipeId) : null;
                     return `<div class="plan-editor__meal" data-day="${day}" data-meal="${type}">
                         <span>${UI.capitalize(type)}</span>
-                        ${recipe ? `<span>${UI.escapeHtml(recipe.name)}</span><span>${UI.formatCalories(recipe.totalKcal)}</span>` : '<span>+ Add</span>'}
+                        ${recipe ? `<span>${UI.escapeHtml(recipe.name)}</span><span>${UI.formatCalories(recipe.nutrition?.calories || 0)}</span>` : '<span>+ Add</span>'}
                     </div>`;
                 }).join('')}
                 <div>Total: ${UI.formatCalories(State.getPatientDailyCalories(currentPatientId, day))} / ${plan.dailyTarget}</div>
@@ -193,7 +193,7 @@ const PatientPlan = (function() {
         if (!recipes.length) return '<p style="text-align:center;padding:20px;color:var(--color-text-light)">No recipes found</p>';
         return recipes.map(r => `<div class="ingredient-select__item ${r.id === currentId ? 'selected' : ''}" data-id="${r.id}">
             <span><span class="category-badge category-badge--${r.category}">${UI.capitalize(r.category)}</span> ${UI.escapeHtml(r.name)}</span>
-            <span>${UI.formatCalories(r.totalKcal)}</span>
+            <span>${UI.formatCalories(r.nutrition?.calories || 0)}</span>
         </div>`).join('');
     }
 

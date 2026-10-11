@@ -1,289 +1,45 @@
 // Ingredients: list/search, CRUD, bulk import
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const { db, unaccent } = require('../db/connection');
-const { serverError } = require('../lib/errors');
-const { INGREDIENT_CATEGORIES } = require('../constants');
-const { transformIngredient } = require('../transforms');
-const { getIngredientDetails } = require('../queries/ingredients');
+const ingredients = require('../repos/ingredients');
+const { validate } = require('../validation');
+const { ingredientCreate, ingredientUpdate, ingredientBulk } = require('../validation/catalog');
+const { notFound, conflict, pageParams, sendPage } = require('../lib/http');
 
 const router = express.Router();
 
-// GET /api/ingredients - List with search, filter, pagination
 router.get('/api/ingredients', (req, res) => {
-    try {
-        const { 
-            search = '', 
-            category = '',
-            source = '',
-            page = 1, 
-            limit = 50,
-            sort = 'name',
-            order = 'asc'
-        } = req.query;
-
-        const pageNum = Math.max(1, parseInt(page));
-        const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
-        const offset = (pageNum - 1) * limitNum;
-
-        let whereClause = '1=1';
-        const params = [];
-
-        // Search filter: every word must appear in the Spanish or English name,
-        // in any order, ignoring accents and case ("pollo pechuga", "limon")
-        const terms = unaccent(search).split(/\s+/).filter(Boolean);
-        for (const term of terms) {
-            whereClause += ' AND (unaccent(name) LIKE ? OR unaccent(name_en) LIKE ?)';
-            params.push(`%${term}%`, `%${term}%`);
-        }
-
-        // Category filter (uses index)
-        if (category) {
-            whereClause += ' AND category_id = ?';
-            params.push(category);
-        }
-
-        // Source filter: 'usda' matches both USDA datasets
-        if (source === 'usda') {
-            whereClause += " AND source LIKE 'usda%'";
-        } else if (source) {
-            whereClause += ' AND source = ?';
-            params.push(source);
-        }
-
-        // Sorting
-        const sortColumn = ['name', 'kcal_per_100g', 'category'].includes(sort) ? sort : 'name';
-        const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
-
-        // Searching without an explicit sort: names starting with the first word
-        // first, then shorter (more basic) names: "Limón, crudo" before drinks
-        let orderBy = `${sortColumn} ${sortOrder}`;
-        const orderParams = [];
-        if (terms.length && !req.query.sort) {
-            orderBy = 'unaccent(name) LIKE ? DESC, LENGTH(name) ASC, name ASC';
-            orderParams.push(`${terms[0]}%`);
-        }
-
-        // Get total count
-        const countStmt = db.prepare(`SELECT COUNT(*) as total FROM v_ingredient_with_category WHERE ${whereClause}`);
-        const { total } = countStmt.get(...params);
-
-        // Get paginated results
-        const query = `
-            SELECT * FROM v_ingredient_with_category 
-            WHERE ${whereClause}
-            ORDER BY ${orderBy}
-            LIMIT ? OFFSET ?
-        `;
-        
-        const stmt = db.prepare(query);
-        const ingredients = stmt.all(...params, ...orderParams, limitNum, offset);
-
-        // Transform to camelCase for frontend
-        const transformed = ingredients.map(transformIngredient);
-
-        res.json({
-            success: true,
-            data: transformed,
-            pagination: {
-                page: pageNum,
-                limit: limitNum,
-                total,
-                totalPages: Math.ceil(total / limitNum)
-            }
-        });
-    } catch (error) {
-        console.error('[Ingredients] List error:', error);
-        serverError(res, error);
-    }
+    const paging = pageParams(req.query);
+    const { search, category, source, sort, order } = req.query;
+    const { rows, total } = ingredients.search({ search, category, source, sort, order, ...paging });
+    sendPage(res, rows, paging, total);
 });
 
-// GET /api/ingredients/:id
 router.get('/api/ingredients/:id', (req, res) => {
-    try {
-        const stmt = db.prepare('SELECT * FROM v_ingredient_with_category WHERE id = ?');
-        const ingredient = stmt.get(req.params.id);
-        
-        if (!ingredient) {
-            return res.status(404).json({ success: false, error: 'Ingredient not found' });
-        }
-
-        res.json({ success: true, data: { ...transformIngredient(ingredient), ...getIngredientDetails(ingredient.id) } });
-    } catch (error) {
-        serverError(res, error);
-    }
+    const ingredient = ingredients.getDetails(req.params.id);
+    if (!ingredient) throw notFound('Alimento');
+    res.json({ success: true, data: ingredient });
 });
 
-// POST /api/ingredients - Create ingredient
-router.post('/api/ingredients', (req, res) => {
-    try {
-        const data = req.body;
-        
-        // Validation
-        if (!data.name || !data.name.trim()) {
-            return res.status(400).json({ success: false, error: 'Name is required' });
-        }
-        
-        if (data.category && !INGREDIENT_CATEGORIES.includes(data.category)) {
-            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${INGREDIENT_CATEGORIES.join(', ')}` });
-        }
-        
-        if (data.kcalPer100g !== undefined && data.kcalPer100g < 0) {
-            return res.status(400).json({ success: false, error: 'kcalPer100g cannot be negative' });
-        }
-        
-        const id = uuidv4(); // ids are always generated by the server
-        const now = new Date().toISOString();
-
-        const stmt = db.prepare(`
-            INSERT INTO ingredients (
-                id, name, category_id, unit_id, created_at, updated_at,
-                kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
-                saturated_fat_per_100g, polyunsaturated_fat_per_100g, monounsaturated_fat_per_100g,
-                sugar_per_100g, fiber_per_100g, cholesterol_per_100g, sodium_per_100g,
-                vitamin_a_per_100g, vitamin_b1_per_100g, vitamin_b2_per_100g, vitamin_b3_per_100g,
-                vitamin_b5_per_100g, vitamin_b6_per_100g, vitamin_b9_per_100g, vitamin_b12_per_100g,
-                vitamin_c_per_100g, vitamin_d_per_100g, vitamin_e_per_100g, vitamin_k_per_100g,
-                magnesium_per_100g, calcium_per_100g, phosphorus_per_100g, potassium_per_100g,
-                iron_per_100g, selenium_per_100g, zinc_per_100g, manganese_per_100g, copper_per_100g
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        stmt.run(
-            id, data.name.trim(), data.category || 'mixed', data.unit || 'gram', now, now,
-            data.kcalPer100g || 0,
-            data.proteinPer100g || 0,
-            data.carbsPer100g || 0,
-            data.fatPer100g || 0,
-            data.saturatedFatPer100g || 0,
-            data.polyunsaturatedFatPer100g || 0,
-            data.monounsaturatedFatPer100g || 0,
-            data.sugarPer100g || 0,
-            data.fiberPer100g || 0,
-            data.cholesterolPer100g || 0,
-            data.sodiumPer100g || 0,
-            data.vitaminAPer100g || 0,
-            data.vitaminB1Per100g || 0,
-            data.vitaminB2Per100g || 0,
-            data.vitaminB3Per100g || 0,
-            data.vitaminB5Per100g || 0,
-            data.vitaminB6Per100g || 0,
-            data.vitaminB9Per100g || 0,
-            data.vitaminB12Per100g || 0,
-            data.vitaminCPer100g || 0,
-            data.vitaminDPer100g || 0,
-            data.vitaminEPer100g || 0,
-            data.vitaminKPer100g || 0,
-            data.magnesiumPer100g || 0,
-            data.calciumPer100g || 0,
-            data.phosphorusPer100g || 0,
-            data.potassiumPer100g || 0,
-            data.ironPer100g || 0,
-            data.seleniumPer100g || 0,
-            data.zincPer100g || 0,
-            data.manganesePer100g || 0,
-            data.copperPer100g || 0
-        );
-
-        const created = db.prepare('SELECT * FROM v_ingredient_with_category WHERE id = ?').get(id);
-        res.json({ success: true, data: transformIngredient(created) });
-    } catch (error) {
-        console.error('[Ingredients] Create error:', error);
-        serverError(res, error);
-    }
+router.post('/api/ingredients/bulk', validate(ingredientBulk), (req, res) => {
+    const count = ingredients.bulkCreate(req.body.ingredients);
+    res.json({ success: true, data: { count } });
 });
 
-// PUT /api/ingredients/:id
-router.put('/api/ingredients/:id', (req, res) => {
-    try {
-        const data = req.body;
-        const now = new Date().toISOString();
-
-        if (data.category && !INGREDIENT_CATEGORIES.includes(data.category)) {
-            return res.status(400).json({ success: false, error: `Invalid category. Must be one of: ${INGREDIENT_CATEGORIES.join(', ')}` });
-        }
-
-        const stmt = db.prepare(`
-            UPDATE ingredients SET
-                name = COALESCE(?, name),
-                name_edited = CASE WHEN ? IS NOT NULL THEN 1 ELSE name_edited END,
-                category_id = COALESCE(?, category_id),
-                unit_id = COALESCE(?, unit_id),
-                updated_at = ?,
-                kcal_per_100g = COALESCE(?, kcal_per_100g),
-                protein_per_100g = COALESCE(?, protein_per_100g),
-                carbs_per_100g = COALESCE(?, carbs_per_100g),
-                fat_per_100g = COALESCE(?, fat_per_100g),
-                saturated_fat_per_100g = COALESCE(?, saturated_fat_per_100g),
-                polyunsaturated_fat_per_100g = COALESCE(?, polyunsaturated_fat_per_100g),
-                monounsaturated_fat_per_100g = COALESCE(?, monounsaturated_fat_per_100g),
-                sugar_per_100g = COALESCE(?, sugar_per_100g),
-                fiber_per_100g = COALESCE(?, fiber_per_100g),
-                cholesterol_per_100g = COALESCE(?, cholesterol_per_100g),
-                sodium_per_100g = COALESCE(?, sodium_per_100g)
-            WHERE id = ?
-        `);
-
-        stmt.run(
-            data.name, data.name, data.category, data.unit, now,
-            data.kcalPer100g, data.proteinPer100g, data.carbsPer100g, data.fatPer100g,
-            data.saturatedFatPer100g, data.polyunsaturatedFatPer100g, data.monounsaturatedFatPer100g,
-            data.sugarPer100g, data.fiberPer100g, data.cholesterolPer100g, data.sodiumPer100g,
-            req.params.id
-        );
-
-        const updated = db.prepare('SELECT * FROM v_ingredient_with_category WHERE id = ?').get(req.params.id);
-        res.json({ success: true, data: transformIngredient(updated) });
-    } catch (error) {
-        serverError(res, error);
-    }
+router.post('/api/ingredients', validate(ingredientCreate), (req, res) => {
+    res.status(201).json({ success: true, data: ingredients.create(req.body) });
 });
 
-// DELETE /api/ingredients/:id
+router.put('/api/ingredients/:id', validate(ingredientUpdate), (req, res) => {
+    const updated = ingredients.update(req.params.id, req.body);
+    if (!updated) throw notFound('Alimento');
+    res.json({ success: true, data: updated });
+});
+
 router.delete('/api/ingredients/:id', (req, res) => {
-    try {
-        db.prepare('DELETE FROM ingredients WHERE id = ?').run(req.params.id);
-        res.json({ success: true });
-    } catch (error) {
-        serverError(res, error);
-    }
-});
-
-// POST /api/ingredients/bulk - Bulk import
-router.post('/api/ingredients/bulk', (req, res) => {
-    try {
-        const { ingredients } = req.body;
-        if (!Array.isArray(ingredients)) {
-            return res.status(400).json({ success: false, error: 'ingredients must be an array' });
-        }
-
-        const insertStmt = db.prepare(`
-            INSERT INTO ingredients (
-                id, name, category_id, unit_id, created_at, updated_at,
-                kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g
-            ) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?, ?, ?, ?)
-        `);
-
-        const insertMany = db.transaction((items) => {
-            for (const item of items) {
-                insertStmt.run(
-                    uuidv4(),
-                    item.name,
-                    INGREDIENT_CATEGORIES.includes(item.category) ? item.category : 'mixed',
-                    item.unit || 'gram',
-                    item.kcalPer100g || 0,
-                    item.proteinPer100g || 0,
-                    item.carbsPer100g || 0,
-                    item.fatPer100g || 0
-                );
-            }
-        });
-
-        insertMany(ingredients);
-        res.json({ success: true, count: ingredients.length });
-    } catch (error) {
-        serverError(res, error);
-    }
+    const usage = ingredients.recipeUsage(req.params.id);
+    if (usage) throw conflict(`El alimento se usa en ${usage} receta(s); quitalo de ellas antes de borrarlo`);
+    if (!ingredients.remove(req.params.id)) throw notFound('Alimento');
+    res.json({ success: true });
 });
 
 module.exports = router;

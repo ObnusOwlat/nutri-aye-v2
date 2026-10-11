@@ -1,5 +1,6 @@
 // Every test file gets a fresh in-memory database
 process.env.DB_PATH = ':memory:';
+process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const { app, db } = require('../server');

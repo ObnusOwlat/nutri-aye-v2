@@ -51,7 +51,7 @@ test('bulk import generates its own ids and validates categories', async () => {
         ingredients: [{ id: 'forced-id', name: 'Bulk A', category: 'protein', kcalPer100g: 100 }, { name: 'Bulk B', category: 'nope' }]
     });
     assert.equal(res.status, 200);
-    assert.equal(res.body.count, 2);
+    assert.equal(res.body.data.count, 2);
     assert.equal(db.prepare("SELECT COUNT(*) c FROM ingredients WHERE id = 'forced-id'").get().c, 0);
     assert.equal(db.prepare("SELECT category_id FROM ingredients WHERE name = 'Bulk B'").get().category_id, 'mixed');
 });
@@ -73,4 +73,29 @@ test('nutrient catalog and richest-in-nutrient ranking', async () => {
 
     const detail = await api().get(`/api/ingredients/${a.id}`);
     assert.equal(detail.body.data.nutrients[0].name, 'Hierro');
+});
+
+test('missing ingredients return 404; ingredients used in recipes cannot be deleted', async () => {
+    assert.equal((await api().put('/api/ingredients/nope').send({ kcalPer100g: 1 })).status, 404);
+    assert.equal((await api().delete('/api/ingredients/nope')).status, 404);
+    const ing = await createIngredient({ name: 'En uso' });
+    await api().post('/api/recipes').send({ name: 'R', category: 'lunch', ingredients: [{ ingredientId: ing.id, grams: 10 }] });
+    const del = await api().delete(`/api/ingredients/${ing.id}`);
+    assert.equal(del.status, 409);
+    assert.equal(del.body.code, 'CONFLICT');
+});
+
+test('updating one vitamin keeps the rest (every nutrient column is writable)', async () => {
+    const ing = await createIngredient({ name: 'Naranja', vitaminCPer100g: 53, ironPer100g: 0.1 });
+    const updated = await api().put(`/api/ingredients/${ing.id}`).send({ vitaminCPer100g: 50 });
+    assert.equal(updated.body.data.vitaminCPer100g, 50);
+    assert.equal(updated.body.data.ironPer100g, 0.1);
+    assert.equal(updated.body.data.kcalPer100g, 130);
+});
+
+test('validation errors are in Spanish and name the field', async () => {
+    const res = await api().post('/api/ingredients').send({ name: 'X', kcalPer100g: 'mucho' });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+    assert.equal(res.body.details[0].field, 'kcalPer100g');
 });

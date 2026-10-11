@@ -48,3 +48,25 @@ test('patient to billing client link', async () => {
     const billing = await api().get(`/api/patients/${p.id}/billing`);
     assert.equal(billing.body.data.linked, true);
 });
+
+test('patient validation, partial update and 404s', async () => {
+    assert.equal((await api().post('/api/patients').send({ firstName: 'Solo' })).status, 400);
+    assert.equal((await api().post('/api/patients').send({ firstName: 'A', lastName: 'B', email: 'no-es-email' })).status, 400);
+    assert.equal((await api().post('/api/patients').send({ firstName: 'A', lastName: 'B', gender: 'x' })).status, 400);
+    const p = await createPatient({ phone: '0981 123456', email: '' });
+    assert.equal(p.email, null);
+    const updated = await api().put(`/api/patients/${p.id}`).send({ notes: 'Control mensual' });
+    assert.equal(updated.body.data.phone, '0981 123456');
+    assert.equal(updated.body.data.notes, 'Control mensual');
+    assert.equal((await api().put('/api/patients/nope').send({ notes: 'x' })).status, 404);
+    assert.equal((await api().delete('/api/patients/nope')).status, 404);
+    assert.equal((await api().post('/api/patients/nope/metrics').send({ weight: 70 })).status, 404);
+    assert.equal((await api().post(`/api/patients/${p.id}/metrics`).send({ weight: -1 })).status, 400);
+    assert.equal((await api().post(`/api/patients/${p.id}/conditions`).send({ name: 'X', severity: 'grave' })).status, 400);
+});
+
+test('patient search ignores accents', async () => {
+    await createPatient({ firstName: 'Begoña', lastName: 'Gómez' });
+    const res = await api().get('/api/patients?search=gomez');
+    assert.ok(res.body.data.some(p => p.lastName === 'Gómez'));
+});

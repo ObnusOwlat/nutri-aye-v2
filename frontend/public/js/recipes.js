@@ -57,7 +57,6 @@ const Recipes = (function() {
         // Initial render
         render();
         
-        console.log('[Recipes] Initialized');
     }
     
     // ==========================================
@@ -185,24 +184,19 @@ const Recipes = (function() {
     // ==========================================
     
     async function openModal(recipeId) {
-        console.log('[Modal] Opening modal, recipeId:', recipeId);
         
         // Load ingredients from API first
         try {
-            console.log('[Modal] Fetching ingredients from /api/ingredients...');
             const response = await fetch('/api/ingredients?limit=100');
-            console.log('[Modal] Response status:', response.status);
             
             if (!response.ok) {
                 throw new Error('API error: ' + response.status);
             }
             
             const data = await response.json();
-            console.log('[Modal] Raw response:', data);
             
             // Handle different response formats
             ingredientsCache = data.data || data.ingredients || data || [];
-            console.log('[Modal] Ingredients cache:', ingredientsCache.length);
             
         } catch (e) {
             console.error('[Modal] Failed to load ingredients:', e);
@@ -217,7 +211,6 @@ const Recipes = (function() {
         
         // Initialize form state
         const recipe = recipeId ? State.getRecipe(recipeId) : null;
-        console.log('[Modal] Recipe to edit:', recipe);
         
         formState = {
             recipeId: recipeId,
@@ -227,7 +220,6 @@ const Recipes = (function() {
             isEdit: !!recipe
         };
         
-        console.log('[Modal] Opening UI modal...');
         UI.openModal({
             title: formState.isEdit ? 'Edit Recipe' : 'Create Recipe',
             content: buildFormContent(),
@@ -241,7 +233,6 @@ const Recipes = (function() {
     
     function handleModalClose() {
         // Cleanup: reset state if needed
-        console.log('[Recipes] Modal closed');
     }
     
     // ==========================================
@@ -290,7 +281,7 @@ const Recipes = (function() {
                     <div class="ingredient-search-section">
                         <label class="ingredient-search-label">🔍 Search and add ingredients:</label>
                         <div class="ingredient-combobox">
-                            <input type="text" id="ingredient-search" class="form-input" 
+                            <input type="text" id="recipe-ingredient-search" class="form-input" 
                                    placeholder="Type to search..."
                                    autocomplete="off">
                             <div id="ingredient-dropdown" class="ingredient-dropdown"></div>
@@ -382,12 +373,12 @@ const Recipes = (function() {
         });
         
         // Search input - instant filtering
-        document.getElementById('ingredient-search')?.addEventListener('input', (e) => {
+        document.getElementById('recipe-ingredient-search')?.addEventListener('input', (e) => {
             filterIngredients(e.target.value);
         });
         
         // Keyboard navigation in dropdown
-        document.getElementById('ingredient-search')?.addEventListener('keydown', handleSearchKeydown);
+        document.getElementById('recipe-ingredient-search')?.addEventListener('keydown', handleSearchKeydown);
         
         // Close dropdown on outside click
         document.addEventListener('click', handleOutsideClick);
@@ -418,50 +409,55 @@ const Recipes = (function() {
     // INGREDIENT SEARCH (FIXED)
     // ==========================================
     
-    // ingredientsCache (declared at the top) is refreshed on modal open
+    // Empty query: the first foods (cache loaded on modal open). With text: search
+    // the server (own foods + USDA catalog) plus foods that exist only in this browser.
+    let searchTimer = null;
+    let searchSeq = 0;
+    const searchResults = new Map();
+
     function filterIngredients(query) {
+        const q = (query || '').trim();
+        clearTimeout(searchTimer);
+        if (!q) return renderDropdown(ingredientsCache);
+        searchTimer = setTimeout(() => searchIngredients(q), 200);
+    }
+
+    async function searchIngredients(q) {
+        const seq = ++searchSeq;
+        const local = State.getIngredients().filter(ing => ing.name.toLowerCase().includes(q.toLowerCase()));
+        let remote = [];
+        try {
+            const res = await fetch(`/api/ingredients?search=${encodeURIComponent(q)}&limit=30`);
+            if (res.ok) remote = (await res.json()).data || [];
+        } catch (e) {
+            console.warn('[Recipes] Ingredient search failed:', e.message);
+        }
+        if (seq !== searchSeq) return; // a newer search already ran
+        const seen = new Set();
+        renderDropdown([...local, ...remote].filter(ing => !seen.has(ing.id) && seen.add(ing.id)));
+    }
+
+    function renderDropdown(list) {
         const dropdown = document.getElementById('ingredient-dropdown');
-        if (!dropdown) {
-            console.log('[Search] Dropdown not found');
-            return;
-        }
-        
-        console.log('[Search] Query:', query, '| Cache size:', ingredientsCache.length);
-        
-        // Filter from cache (case-insensitive, includes)
-        let filtered = ingredientsCache;
-        if (query && query.trim()) {
-            const q = query.toLowerCase().trim();
-            filtered = ingredientsCache.filter(ing => 
-                ing.name.toLowerCase().includes(q)
-            );
-        }
-        
-        console.log('[Search] Filtered:', filtered.length, 'ingredients');
-        
-        // Render results
-        if (filtered.length === 0) {
+        if (!dropdown) return;
+        for (const ing of list) searchResults.set(ing.id, ing);
+
+        if (list.length === 0) {
             dropdown.innerHTML = '<div class="ingredient-dropdown__empty">No ingredients found</div>';
         } else {
-            dropdown.innerHTML = filtered.map(ing => `
-                <div class="ingredient-dropdown__item" data-id="${ing.id}">
+            dropdown.innerHTML = list.map(ing => `
+                <div class="ingredient-dropdown__item" data-id="${UI.escapeHtml(ing.id)}">
                     <span class="ingredient-dropdown__name">${UI.escapeHtml(ing.name)}</span>
-                    <span class="ingredient-dropdown__kcal">${ing.kcalPer100g} kcal/100g</span>
+                    <span class="ingredient-dropdown__kcal">${Math.round(ing.kcalPer100g || 0)} kcal/100g</span>
                 </div>
             `).join('');
-            
-            // Bind click to add ingredient
             dropdown.querySelectorAll('.ingredient-dropdown__item').forEach(item => {
-                item.addEventListener('click', () => {
-                    console.log('[Search] Clicked:', item.dataset.id);
-                    addIngredient(item.dataset.id);
-                });
+                item.addEventListener('click', () => addIngredient(item.dataset.id));
             });
         }
-        
         dropdown.style.display = 'block';
     }
-    
+
     function handleSearchKeydown(e) {
         const dropdown = document.getElementById('ingredient-dropdown');
         const items = dropdown?.querySelectorAll('.ingredient-dropdown__item');
@@ -519,11 +515,14 @@ const Recipes = (function() {
             return;
         }
         
-        // Add to state
+        // Server foods (USDA) are kept in this browser so the recipe can sum them
+        if (!State.getIngredient(ingredientId) && searchResults.has(ingredientId)) {
+            State.cacheIngredient(searchResults.get(ingredientId));
+        }
         formState.ingredients.push({ ingredientId, grams: 100 });
         
         // Clear search and close dropdown
-        const searchInput = document.getElementById('ingredient-search');
+        const searchInput = document.getElementById('recipe-ingredient-search');
         const dropdown = document.getElementById('ingredient-dropdown');
         if (searchInput) searchInput.value = '';
         if (dropdown) dropdown.style.display = 'none';
@@ -540,7 +539,7 @@ const Recipes = (function() {
     function refreshForm() {
         const ingredientList = document.getElementById('recipe-ingredient-list');
         const dropdown = document.getElementById('ingredient-dropdown');
-        const searchInput = document.getElementById('ingredient-search');
+        const searchInput = document.getElementById('recipe-ingredient-search');
         
         // Update ingredient list
         if (ingredientList) {

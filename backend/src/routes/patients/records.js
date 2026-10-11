@@ -1,87 +1,37 @@
 // Patient metrics, conditions and allergies
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const { db } = require('../../db/connection');
-const { serverError } = require('../../lib/errors');
-const { transformMetric, transformCondition } = require('../../transforms');
+const patients = require('../../repos/patients');
+const { validate } = require('../../validation');
+const { metricCreate, conditionCreate } = require('../../validation/patients');
+const { notFound } = require('../../lib/http');
 
 const router = express.Router();
 
-router.post('/api/patients/:id/metrics', (req, res) => {
-    try {
-        const id = uuidv4();
-        const d = req.body;
+// 404 for every route under a patient that does not exist
+router.param('patientId', (req, res, next, id) => {
+    next(patients.exists(id) ? undefined : notFound('Paciente'));
+});
 
-        db.prepare(`
-            INSERT INTO patient_metrics (id, patient_id, date, weight, height, bmi, bmi_category,
-                body_fat, muscle_mass, waist, chest, hips, activity_level, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-            id, req.params.id, d.date || new Date().toISOString().split('T')[0],
-            d.weight, d.height, d.bmi, d.bmiCategory,
-            d.bodyFat, d.muscleMass, d.waist, d.chest, d.hips,
-            d.activityLevel || 'moderate', d.notes || ''
-        );
-
-        const metric = db.prepare('SELECT * FROM patient_metrics WHERE id = ?').get(id);
-        res.json({ success: true, data: transformMetric(metric) });
-    } catch (error) {
-        serverError(res, error);
-    }
+router.post('/api/patients/:patientId/metrics', validate(metricCreate), (req, res) => {
+    res.status(201).json({ success: true, data: patients.addMetric(req.params.patientId, req.body) });
 });
 
 router.delete('/api/patients/:patientId/metrics/:metricId', (req, res) => {
-    try {
-        db.prepare('DELETE FROM patient_metrics WHERE id = ? AND patient_id = ?')
-            .run(req.params.metricId, req.params.patientId);
-        res.json({ success: true });
-    } catch (error) {
-        serverError(res, error);
-    }
+    if (!patients.removeMetric(req.params.patientId, req.params.metricId)) throw notFound('Medición');
+    res.json({ success: true });
 });
 
-// API ENDPOINTS - PATIENT CONDITIONS
-
-router.post('/api/patients/:id/conditions', (req, res) => {
-    try {
-        const id = uuidv4();
-        const d = req.body;
-
-        db.prepare(`
-            INSERT INTO patient_conditions (id, patient_id, type, name, severity, description, dietary_notes, medications)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(id, req.params.id, d.type || 'condition', d.name, d.severity || 'mild', d.description || '', d.dietaryNotes || '', d.medications || '');
-
-        const condition = db.prepare('SELECT * FROM patient_conditions WHERE id = ?').get(id);
-        res.json({ success: true, data: transformCondition(condition) });
-    } catch (error) {
-        serverError(res, error);
-    }
+router.post('/api/patients/:patientId/conditions', validate(conditionCreate), (req, res) => {
+    res.status(201).json({ success: true, data: patients.addCondition(req.params.patientId, req.body) });
 });
 
 router.delete('/api/patients/:patientId/conditions/:conditionId', (req, res) => {
-    try {
-        db.prepare('DELETE FROM patient_conditions WHERE id = ? AND patient_id = ?')
-            .run(req.params.conditionId, req.params.patientId);
-        res.json({ success: true });
-    } catch (error) {
-        serverError(res, error);
-    }
+    if (!patients.removeCondition(req.params.patientId, req.params.conditionId)) throw notFound('Condición');
+    res.json({ success: true });
 });
 
-// API ENDPOINTS - ALLERGIES (Special query)
-
-router.get('/api/patients/:id/allergies', (req, res) => {
-    try {
-        const allergies = db.prepare(`
-            SELECT name FROM patient_conditions 
-            WHERE patient_id = ? AND (type = 'allergy' OR type = 'intolerance')
-        `).all(req.params.id);
-
-        res.json({ success: true, data: allergies.map(a => a.name) });
-    } catch (error) {
-        serverError(res, error);
-    }
+router.get('/api/patients/:patientId/allergies', (req, res) => {
+    res.json({ success: true, data: patients.allergies(req.params.patientId) });
 });
 
 module.exports = router;

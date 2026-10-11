@@ -334,6 +334,15 @@ const State = (function() {
         return ingredient;
     };
 
+    // A food from the server catalog (USDA) used in a recipe: stored as-is, same id
+    const cacheIngredient = (ingredient) => {
+        if (!ingredient?.id || ingredientMap.has(ingredient.id)) return;
+        state.ingredients.push(ingredient);
+        ingredientMap.set(ingredient.id, ingredient);
+        saveToStorage();
+        emit('ingredients:updated', state.ingredients);
+    };
+
     const updateIngredient = (id, data) => {
         const idx = state.ingredients.findIndex(i => i.id === id);
         if (idx === -1) return null;
@@ -724,13 +733,13 @@ const State = (function() {
     const initializeEmptyWeekPlan = () => {
         const plan = {};
         for (const day of DAYS) {
-            plan[day] = { desayuno: null, media_manana: null, almuerzo: null, media_tarde: null, merienda: null, cena: null };
+            plan[day] = getEmptyDayMeals();
         }
         return plan;
     };
 
     // Get empty day meals template
-    const getEmptyDayMeals = () => ({ desayuno: null, media_manana: null, almuerzo: null, media_tarde: null, merienda: null, cena: null });
+    const getEmptyDayMeals = () => Object.fromEntries(VALID_MEAL_TYPES.map(type => [type, null]));
 
     // Get week plan for current or specific template
     const getWeekPlan = (templateId = null) => {
@@ -812,32 +821,29 @@ const State = (function() {
 
     const getWeeklyTotal = () => DAYS.reduce((sum, d) => sum + getDailyCalories(d), 0);
 
-    // Migrate week plans from old format (4 meals) to new format (6 meals)
+    // Week plans saved with the old Spanish keys (desayuno, almuerzo...) -> current keys
+    const LEGACY_MEAL_KEYS = {
+        desayuno: 'breakfast', media_manana: 'morning_snack', almuerzo: 'lunch',
+        media_tarde: 'afternoon_snack', merienda: 'snack', cena: 'dinner'
+    };
     const migrateWeekPlansToSixMeals = () => {
         let migrated = 0;
-        for (const [templateId, weekPlan] of Object.entries(state.weekPlans)) {
+        for (const weekPlan of Object.values(state.weekPlans)) {
             for (const day of DAYS) {
-                if (weekPlan[day]) {
-                    // Check if plan has old format (breakfast/lunch/snack/dinner)
-                    if ('breakfast' in weekPlan[day]) {
-                        const oldDay = weekPlan[day];
-                        weekPlan[day] = {
-                            desayuno: oldDay.breakfast || null,
-                            media_manana: null,
-                            almuerzo: oldDay.lunch || null,
-                            media_tarde: null,
-                            merienda: oldDay.snack || null,
-                            cena: oldDay.dinner || null
-                        };
-                        migrated++;
-                    }
+                const oldDay = weekPlan[day];
+                if (!oldDay || !Object.keys(oldDay).some(key => key in LEGACY_MEAL_KEYS)) continue;
+                const newDay = getEmptyDayMeals();
+                for (const [key, recipeId] of Object.entries(oldDay)) {
+                    const type = LEGACY_MEAL_KEYS[key] || key;
+                    if (type in newDay && recipeId) newDay[type] = recipeId;
                 }
+                weekPlan[day] = newDay;
+                migrated++;
             }
         }
         if (migrated > 0) {
             saveToStorage();
             emit('weekPlans:migrated', { count: migrated });
-            console.log(`[State] Migrated ${migrated} day plans to 6-meal format`);
         }
     };
 
@@ -969,36 +975,6 @@ const State = (function() {
             dailyTarget: template.dailyTarget
         });
         return true;
-    };
-
-    const generateShoppingList = (templateId = null) => {
-        const id = templateId || state.currentTemplateId;
-        const weekPlan = state.weekPlans[id];
-        if (!weekPlan) return [];
-        
-        const map = new Map();
-        for (const dayMeals of Object.values(weekPlan)) {
-            for (const id of Object.values(dayMeals)) {
-                if (!id) continue;
-                const recipe = recipeMap.get(id);
-                if (!recipe) continue;
-                for (const ri of recipe.ingredients) {
-                    const ing = ingredientMap.get(ri.ingredientId);
-                    if (!ing) continue;
-                    if (map.has(ri.ingredientId)) {
-                        map.get(ri.ingredientId).grams += ri.grams;
-                    } else {
-                        map.set(ri.ingredientId, {
-                            ingredientId: ri.ingredientId, name: ing.name,
-                            category: ing.category, grams: ri.grams, kcalPer100g: ing.kcalPer100g
-                        });
-                    }
-                }
-            }
-        }
-        return Array.from(map.values()).sort((a, b) => 
-            a.category.localeCompare(b.category) || a.name.localeCompare(b.name)
-        );
     };
 
     // ==========================================
@@ -1354,7 +1330,7 @@ const State = (function() {
         if (!plan?.weekPlan?.[day]) return 0;
         let total = 0;
         for (const id of Object.values(plan.weekPlan[day])) {
-            if (id) { const r = recipeMap.get(id); if (r) total += r.totalKcal; }
+            if (id) { const r = recipeMap.get(id); if (r) total += r.nutrition?.calories || 0; }
         }
         return Math.round(total);
     };
@@ -1585,7 +1561,6 @@ const State = (function() {
 
     const init = () => {
         loadFromStorage();
-        console.log('[State] Initialized v2.0 with Patient Module');
         emit('state:ready', state);
     };
 
@@ -1598,7 +1573,7 @@ const State = (function() {
         // Utilities
         calculateAge, calculateBMI, getBMICategory, generateId,
         // Ingredients
-        getIngredients, getIngredient, addIngredient, updateIngredient, deleteIngredient, deleteAllIngredients,
+        getIngredients, getIngredient, addIngredient, cacheIngredient, updateIngredient, deleteIngredient, deleteAllIngredients,
         importIngredients, importIngredientsFull,
         // Recipes
         getRecipes, getRecipe, getRecipesByCategory, calculateRecipeNutrition, calculateMealNutrition,
@@ -1608,7 +1583,7 @@ const State = (function() {
         getDailyCalories, getWeeklyAverage, getWeeklyTotal,
         calculateDayNutrition, calculateWeekNutrition, getEmptyNutritionObject,
         // Diet
-        getDietProfile, updateDietProfile, generateShoppingList,
+        getDietProfile, updateDietProfile,
         // Diet Templates
         getDietTemplates, getDietTemplate, addDietTemplate, updateDietTemplate, deleteDietTemplate, applyDietTemplate,
         setCurrentTemplate, getCurrentTemplateId,
