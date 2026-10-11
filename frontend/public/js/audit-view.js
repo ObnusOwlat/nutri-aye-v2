@@ -16,7 +16,7 @@ const AuditView = (function() {
         recipe: 'receta', ingredient: 'alimento', billing_client: 'cliente', invoice: 'factura', quote: 'presupuesto',
         payment_method: 'medio de pago', company: 'datos del consultorio', pdf_config: 'formato de PDF',
         user: 'usuario', session: 'sesión', backup: 'respaldo', plan: 'plan de alimentación', progress: 'seguimiento',
-        template: 'plantilla de dieta', browser_data: 'datos del navegador', targets: 'metas nutricionales'
+        template: 'plantilla de dieta', routine: 'rutina de ejercicio', browser_data: 'datos del navegador', targets: 'metas nutricionales'
     };
 
     // Field names; unknown fields are shown as they are

@@ -151,6 +151,13 @@ Object.assign(State, (function() {
         if (index === -1) a[toDay].push(item); else a[toDay].splice(index, 0, item);
     });
     const clearActivityPlan = () => changeActivity(a => { Object.assign(a, emptyActivity()); });
+    // A routine replaces the week's activity (new item ids: days never share one)
+    const replaceActivityPlan = (plan) => changeActivity(a => {
+        Object.assign(a, emptyActivity());
+        for (const [day, items] of Object.entries(plan || {})) {
+            if (S.DAYS.includes(day)) a[day] = items.map(i => ({ ...i, id: newActivityId() }));
+        }
+    });
 
     const getMode = () => mode;
     function setMode(next) {
@@ -207,6 +214,6 @@ Object.assign(State, (function() {
         getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan, setWeekPlan,
         getDailyCalories, getWeeklyTotal, getWeeklyAverage, getDietProfile, updateDietProfile,
         loadPatientWeek, savePlannerToPatient, getLoadedActivity: (patientId) => lastActivity[patientId] || null,
-        getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, getMode, setMode
+        getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, replaceActivityPlan, getMode, setMode
     };
 })());
