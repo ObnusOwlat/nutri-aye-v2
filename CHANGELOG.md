@@ -14,6 +14,24 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 - **Barra compacta:** paciente, plantilla, objetivo, promedio, modo y botones quedan en una sola fila, en lugar de dos recuadros de unos 250 px.
 - **Migración 13:** columna `activity_plan` (JSON) en `diet_templates` y `week_planner`. Validación en `src/validation/activity.js`.
 - **Tests:** de 93 a 95.
+## Metas: calorías y macros con la fórmula de la nutricionista
+
+- **Pasos del cálculo** (`src/lib/energy.js`):
+  1. Reposo por Mifflin-St Jeor.
+  2. × factor de actividad.
+  3. Objetivo en %: déficit −20 % y volumen +15 % por defecto. Antes eran −500 / +300 kcal fijos.
+  4. Proteína en g/kg: 1,6 mantenimiento, 2,0 déficit, 1,8 volumen o rendimiento. Grasa 25 % de las calorías. Carbohidratos, el resto (4 / 9 / 4 kcal por gramo).
+- **Ajuste por paciente:** en "Ajustar metas", la nutricionista cambia el % del objetivo, los g/kg de proteína y el % de grasa. Si deja un campo vacío, se usa el valor automático. Se guardan en `patient_targets`, sin migración, y quedan en el historial.
+- **Salvaguardas:**
+  - Con enfermedad renal la proteína baja a 0,8 g/kg (KDIGO).
+  - Con IMC de 30 o más los g/kg se calculan sobre el peso ajustado: ideal + 0,4 × exceso.
+  - Avisa si los carbohidratos quedan por debajo de 130 g o si la proteína y la grasa superan las calorías.
+- **`GET /api/patients/:id/targets`:**
+  - Agrega `macros`, con `protein`, `fat` y `carbs` en g, kcal y %, y `manual`.
+  - `energy.suggested` trae `ree`, `tdee` y `goalPercent`.
+  - Las metas de proteínas, grasas totales y carbohidratos salen de este cálculo.
+- **Panel del Planificador:** muestra "Macros: P … g (…%) · G … · C …". El editor explica el cálculo con los números del paciente.
+- **Tests:** 94, con los valores nuevos de déficit y proteína.
 
 ## Alimentos: filtro por grupo, origen y preparación
 

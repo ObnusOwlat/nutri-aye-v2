@@ -11,7 +11,9 @@ const targets = async (p) => (await api().get(`/api/patients/${p.id}/targets`)).
 test('energy: Mifflin-St Jeor x activity, adjusted by goal', () => {
     // man, 40 y, 80 kg, 180 cm: REE = 800 + 1125 - 200 + 5 = 1730; x1,55 = 2681,5
     assert.equal(suggestedEnergy({ sex: 'male', age: 40, weight: 80, height: 180, activityLevel: 'moderate', goal: 'maintenance' }).kcal, 2680);
-    assert.equal(suggestedEnergy({ sex: 'male', age: 40, weight: 80, height: 180, activityLevel: 'moderate', goal: 'deficit' }).kcal, 2180);
+    // deficit: -20 % of the total (2681,5 x 0,8 = 2145 -> 2150)
+    assert.equal(suggestedEnergy({ sex: 'male', age: 40, weight: 80, height: 180, activityLevel: 'moderate', goal: 'deficit' }).kcal, 2150);
+    assert.equal(suggestedEnergy({ sex: 'male', age: 40, weight: 80, height: 180, activityLevel: 'moderate', goal: 'deficit', goalPercent: -15 }).kcal, 2280);
     const missing = suggestedEnergy({ sex: 'female', age: null, weight: 60 });
     assert.equal(missing.kcal, null);
     assert.deepEqual(missing.missing, ['talla', 'fecha de nacimiento']);
@@ -31,7 +33,11 @@ test('targets of a patient: calculated energy, protein by weight, limits', async
     const t = await targets(p);
     assert.equal(t.energy.source, 'calculated');
     assert.equal(t.energy.kcal, 2680);
-    assert.equal(t.nutrients[1003].target, 64);                 // 0,8 g/kg
+    assert.equal(t.nutrients[1003].target, 128);                // 1,6 g/kg (maintenance)
+    // fat 25 % of 2680 = 74 g; carbohydrates the rest: (2680 - 512 - 666) / 4 = 376 g
+    assert.equal(t.macros.fat.g, 74);
+    assert.equal(t.macros.carbs.g, 376);
+    assert.equal(t.nutrients[1005].target, 376);
     assert.equal(t.nutrients[1093].kind, 'limit');
     assert.equal(t.nutrients[1093].max, 2300);
     assert.equal(t.nutrients[1258].max, Math.round(2680 * 0.1 / 9));
@@ -85,4 +91,31 @@ test('vitamin A: no upper level on the RAE total (carotenoids); the limit is on 
     assert.equal(d[1105].kind, 'UL');
     assert.equal(d[1105].target, 3000);
     assert.equal(driDetails({ sex: 'female', age: 16 })[1105].target, 2800);
+});
+
+test('macros: settings per patient, kidney disease limits protein', async () => {
+    const { macroTargets } = require('../src/lib/energy');
+    assert.equal(macroTargets({ kcal: 2000, weight: 70, goal: 'deficit' }).protein.g, 140);         // 2,0 g/kg
+    assert.equal(macroTargets({ kcal: 2000, weight: 70, goal: 'maintenance', kidney: true }).protein.g, 56);
+    assert.ok(macroTargets({ kcal: 1200, weight: 120, goal: 'deficit' }).notes.some(n => /superan/.test(n)));
+    // BMI 36,7 (120 kg, 1,81 m): ideal 81,9 kg, adjusted 81,9 + 0,4 x 38,1 = 97,1 kg -> 2,0 g/kg = 194 g
+    const obese = macroTargets({ kcal: 2400, weight: 120, height: 181, goal: 'deficit' });
+    assert.equal(obese.proteinWeightKg, 97.1);
+    assert.equal(obese.protein.g, 194);
+
+    const p = await createPatient({ firstName: 'Macros', gender: 'female', dateOfBirth: yearsAgo(30) });
+    await api().post(`/api/patients/${p.id}/metrics`).send({ weight: 60, height: 165 });
+    let t = (await api().put(`/api/patients/${p.id}/targets`).send({ macros: { goalPercent: -15, proteinPerKg: 2.2, fatPercent: 30 } })).body.data;
+    assert.equal(t.energy.suggested.goalPercent, -15);
+    assert.equal(t.macros.protein.g, 132);
+    assert.equal(t.macros.fatPercent, 30);
+    assert.deepEqual(t.macros.manual, { goalPercent: -15, proteinPerKg: 2.2, fatPercent: 30 });
+    t = (await api().put(`/api/patients/${p.id}/targets`).send({ macros: { proteinPerKg: null } })).body.data;
+    assert.equal(t.macros.proteinPerKg, 1.6);
+    assert.equal((await api().put(`/api/patients/${p.id}/targets`).send({ macros: { fatPercent: 80 } })).status, 400);
+
+    await api().post(`/api/patients/${p.id}/conditions`).send({ type: 'condition', name: 'Enfermedad renal crónica' });
+    t = (await api().get(`/api/patients/${p.id}/targets`)).body.data;
+    assert.equal(t.macros.protein.g, 48);   // 0,8 g/kg
+    assert.ok(t.notes.some(n => /KDIGO/.test(n)));
 });

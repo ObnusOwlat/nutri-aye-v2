@@ -11,6 +11,11 @@ const router = express.Router();
 const amount = z.coerce.number().min(0).max(100000).nullable();
 const overridesSchema = z.object({
     energy: z.coerce.number().int().min(500).max(10000).nullable().optional(),
+    macros: z.object({
+        goalPercent: z.coerce.number().min(-40).max(40).nullable().optional(),
+        proteinPerKg: z.coerce.number().min(0.5).max(3).nullable().optional(),
+        fatPercent: z.coerce.number().min(15).max(45).nullable().optional()
+    }).optional(),
     nutrients: z.record(z.string().regex(/^\d+$/), amount).optional()
 });
 
@@ -26,6 +31,7 @@ router.put('/api/patients/:patientId/targets', validate(overridesSchema), (req, 
     targets.saveOverrides(req.ctx, patientId, req.body);
     const changes = {};
     if (req.body.energy !== undefined) changes.energy = [null, req.body.energy];
+    for (const [key, value] of Object.entries(req.body.macros || {})) changes[key] = [null, value];
     for (const [id, value] of Object.entries(req.body.nutrients || {})) changes[`nutrient_${id}`] = [null, value];
     record(req.ctx, { action: 'update', entity: 'targets', entityId: patientId, patientId, changes });
     res.json({ success: true, data: targets.targetsFor(req.ctx, patientId) });
