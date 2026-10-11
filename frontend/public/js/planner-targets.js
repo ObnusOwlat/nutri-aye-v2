@@ -70,6 +70,11 @@ const PlannerTargets = (function() {
         if (!targets) return '';
         const sources = { manual: 'ajustada a mano', plan: 'del plan activo', calculated: 'calculada (Mifflin-St Jeor)', default: 'estándar' };
         const items = [`<li>Meta de energía: <strong>${UI.formatNumber(targets.energy.kcal)} kcal</strong> (${sources[targets.energy.source]})</li>`];
+        const m = targets.macros;
+        if (m) {
+            const part = (label, x) => `${label} <strong>${UI.formatNumber(x.g)} g</strong> (${x.percent} %)`;
+            items.push(`<li title="Proteína ${UI.formatDecimal(m.proteinPerKg)} g/kg · grasa ${m.fatPercent} % · carbohidratos el resto">Macros: ${part('P', m.protein)} · ${part('G', m.fat)} · ${part('C', m.carbs)}</li>`);
+        }
         for (const rule of targets.rules) items.push(`<li>★ ${UI.escapeHtml(rule.label)}: <span title="${UI.escapeHtml(rule.source)}">metas adaptadas</span></li>`);
         if (targets.avoid.length) items.push(`<li>⚠ Evitar: ${targets.avoid.map(a => UI.escapeHtml(a.label)).join(', ')}</li>`);
         for (const note of targets.notes) items.push(`<li class="text-muted">${UI.escapeHtml(note)}</li>`);
@@ -78,6 +83,28 @@ const PlannerTargets = (function() {
                 <ul>${items.join('')}</ul>
                 <button class="btn btn--secondary btn--sm" type="button" data-action="edit-targets">Ajustar metas</button>
             </div>`;
+    }
+
+    // Steps 3 and 4 of the calculation: goal %, protein g/kg, fat % (empty = automatic)
+    function macroFieldsHtml() {
+        const m = targets.macros, manual = m.manual || {}, e = targets.energy.suggested || {};
+        const field = (key, label, auto, attrs) => `
+            <div class="targets-editor__row">
+                <label for="macro-${key}">${label}</label>
+                <input type="number" class="form-input" id="macro-${key}" data-macro="${key}" ${attrs}
+                       value="${manual[key] ?? ''}" placeholder="${UI.escapeHtml(UI.formatDecimal(auto))}">
+            </div>`;
+        const ree = e.ree ? `Reposo (Mifflin-St Jeor) ${UI.formatNumber(e.ree)} kcal × ${UI.formatDecimal(e.factor, 3)} = ${UI.formatNumber(e.tdee)} kcal; ` : '';
+        return `
+            <h4>Cálculo de calorías y macros</h4>
+            <p class="text-muted">${ree}objetivo ${e.goalPercent > 0 ? '+' : ''}${UI.formatDecimal(e.goalPercent ?? 0)} % → ${UI.formatNumber(targets.energy.automatic)} kcal.
+                Proteína 4 kcal/g, grasa 9 kcal/g y los carbohidratos con el resto.</p>
+            <div class="targets-editor targets-macros">
+                ${field('goalPercent', 'Ajuste por objetivo <small>(%: déficit −15 a −25, volumen +10 a +20)</small>', e.goalPercent ?? 0, 'min="-40" max="40" step="1"')}
+                ${field('proteinPerKg', 'Proteína <small>(g por kg de peso: 1,6 a 2,2)</small>', m.proteinPerKg, 'min="0.5" max="3" step="0.1"')}
+                ${field('fatPercent', 'Grasas <small>(% de las calorías: 20 a 35)</small>', m.fatPercent, 'min="15" max="45" step="1"')}
+            </div>
+            <h4>Metas por nutriente</h4>`;
     }
 
     // Manual adjustments: empty field = automatic value
@@ -98,8 +125,9 @@ const PlannerTargets = (function() {
             size: 'large',
             content: `
                 <p class="text-muted">Dejá un campo vacío para usar el valor automático (el gris). Los cambios quedan en el historial del paciente.</p>
+                ${targets.macros ? macroFieldsHtml() : ''}
                 <div class="targets-editor__row">
-                    <label for="target-energy">Energía <small>(kcal/día)</small></label>
+                    <label for="target-energy">Energía <small>(kcal/día, reemplaza al cálculo)</small></label>
                     <input type="number" min="500" max="10000" class="form-input" id="target-energy"
                            value="${targets.energy.source === 'manual' ? targets.energy.kcal : ''}" placeholder="${UI.formatNumber(targets.energy.automatic)}">
                 </div>
@@ -109,8 +137,10 @@ const PlannerTargets = (function() {
                 const value = (el) => (el.value === '' ? null : Number(el.value));
                 const nutrients = {};
                 document.querySelectorAll('.targets-editor [data-id]').forEach(el => { nutrients[el.dataset.id] = value(el); });
+                const macros = {};
+                document.querySelectorAll('.targets-macros [data-macro]').forEach(el => { macros[el.dataset.macro] = value(el); });
                 targets = await State._api('PUT', `/api/patients/${encodeURIComponent(patientId)}/targets`,
-                    { energy: value(document.getElementById('target-energy')), nutrients });
+                    { energy: value(document.getElementById('target-energy')), macros, nutrients });
                 listeners.forEach(fn => fn());
                 UI.toastSuccess('Metas guardadas');
                 return true;
