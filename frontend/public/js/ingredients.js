@@ -436,7 +436,7 @@ const Ingredients = (function() {
             <div class="form-group">
                 <label class="form-label" for="ingredient-name">Name *</label>
                 <input type="text" id="ingredient-name" class="form-input" 
-                       value="${ingredient.name ? UI.escapeHtml(ingredient.name) : ''}" 
+                       value="${UI.escapeHtml(ingredient.name ? UI.escapeHtml(ingredient.name) : '')}" 
                        placeholder="e.g., Chicken Breast" required autocomplete="off">
             </div>
             
@@ -468,7 +468,7 @@ const Ingredients = (function() {
                     <div class="nutrition-panel__row nutrition-panel__row--main">
                         <span>Calories</span>
                         <input type="number" id="ingredient-kcal" class="nutrition-input" 
-                               value="${ingredient.kcalPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.kcalPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>kcal</span>
                     </div>
                 </div>
@@ -478,25 +478,25 @@ const Ingredients = (function() {
                     <div class="nutrition-panel__row">
                         <span>Total Fat</span>
                         <input type="number" id="ingredient-fat" class="nutrition-input" 
-                               value="${ingredient.fatPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.fatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
                         <span>Saturated Fat</span>
                         <input type="number" id="ingredient-satfat" class="nutrition-input" 
-                               value="${ingredient.saturatedFatPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.saturatedFatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
                         <span>Polyunsaturated Fat</span>
                         <input type="number" id="ingredient-polyfat" class="nutrition-input" 
-                               value="${ingredient.polyunsaturatedFatPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.polyunsaturatedFatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
                         <span>Monounsaturated Fat</span>
                         <input type="number" id="ingredient-monosatfat" class="nutrition-input" 
-                               value="${ingredient.monounsaturatedFatPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.monounsaturatedFatPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                 </div>
@@ -505,13 +505,13 @@ const Ingredients = (function() {
                     <div class="nutrition-panel__row">
                         <span>Cholesterol</span>
                         <input type="number" id="ingredient-cholesterol" class="nutrition-input" 
-                               value="${ingredient.cholesterolPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.cholesterolPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>mg</span>
                     </div>
                     <div class="nutrition-panel__row">
                         <span>Sodium</span>
                         <input type="number" id="ingredient-sodium" class="nutrition-input" 
-                               value="${ingredient.sodiumPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.sodiumPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>mg</span>
                     </div>
                 </div>
@@ -521,19 +521,19 @@ const Ingredients = (function() {
                     <div class="nutrition-panel__row">
                         <span>Total Carbs</span>
                         <input type="number" id="ingredient-carbs" class="nutrition-input" 
-                               value="${ingredient.carbsPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.carbsPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
                         <span>Sugar</span>
                         <input type="number" id="ingredient-sugar" class="nutrition-input" 
-                               value="${ingredient.sugarPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.sugarPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                     <div class="nutrition-panel__row nutrition-panel__row--sub">
                         <span>Fiber</span>
                         <input type="number" id="ingredient-fiber" class="nutrition-input" 
-                               value="${ingredient.fiberPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.fiberPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                 </div>
@@ -542,7 +542,7 @@ const Ingredients = (function() {
                     <div class="nutrition-panel__row nutrition-panel__row--main">
                         <span>Protein</span>
                         <input type="number" id="ingredient-protein" class="nutrition-input" 
-                               value="${ingredient.proteinPer100g ?? ''}" placeholder="0" min="0" step="0.1">
+                               value="${UI.escapeHtml(ingredient.proteinPer100g ?? '')}" placeholder="0" min="0" step="0.1">
                         <span>g</span>
                     </div>
                 </div>
@@ -552,47 +552,47 @@ const Ingredients = (function() {
                     <div class="nutrition-form-grid-4">
                         <div class="nutrition-mini-input">
                             <label>A (mcg)</label>
-                            <input type="number" id="ingredient-vitA" value="${ingredient.vitaminAPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-vitA" value="${UI.escapeHtml(ingredient.vitaminAPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B1 (mg)</label>
-                            <input type="number" id="ingredient-vitB1" value="${ingredient.vitaminB1Per100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitB1" value="${UI.escapeHtml(ingredient.vitaminB1Per100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B2 (mg)</label>
-                            <input type="number" id="ingredient-vitB2" value="${ingredient.vitaminB2Per100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitB2" value="${UI.escapeHtml(ingredient.vitaminB2Per100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B3 (mg)</label>
-                            <input type="number" id="ingredient-vitB3" value="${ingredient.vitaminB3Per100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitB3" value="${UI.escapeHtml(ingredient.vitaminB3Per100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B5 (mg)</label>
-                            <input type="number" id="ingredient-vitB5" value="${ingredient.vitaminB5Per100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitB5" value="${UI.escapeHtml(ingredient.vitaminB5Per100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B6 (mg)</label>
-                            <input type="number" id="ingredient-vitB6" value="${ingredient.vitaminB6Per100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitB6" value="${UI.escapeHtml(ingredient.vitaminB6Per100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B9 (mcg)</label>
-                            <input type="number" id="ingredient-vitB9" value="${ingredient.vitaminB9Per100g ?? ''}" placeholder="0" step="1">
+                            <input type="number" id="ingredient-vitB9" value="${UI.escapeHtml(ingredient.vitaminB9Per100g ?? '')}" placeholder="0" step="1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>B12 (mcg)</label>
-                            <input type="number" id="ingredient-vitB12" value="${ingredient.vitaminB12Per100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitB12" value="${UI.escapeHtml(ingredient.vitaminB12Per100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>D (mcg)</label>
-                            <input type="number" id="ingredient-vitD" value="${ingredient.vitaminDPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-vitD" value="${UI.escapeHtml(ingredient.vitaminDPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>E (mg)</label>
-                            <input type="number" id="ingredient-vitE" value="${ingredient.vitaminEPer100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-vitE" value="${UI.escapeHtml(ingredient.vitaminEPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>K (mcg)</label>
-                            <input type="number" id="ingredient-vitK" value="${ingredient.vitaminKPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-vitK" value="${UI.escapeHtml(ingredient.vitaminKPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                     </div>
                 </div>
@@ -602,39 +602,39 @@ const Ingredients = (function() {
                     <div class="nutrition-form-grid-4">
                         <div class="nutrition-mini-input">
                             <label>Magnesium (mg)</label>
-                            <input type="number" id="ingredient-magnesium" value="${ingredient.magnesiumPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-magnesium" value="${UI.escapeHtml(ingredient.magnesiumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Calcium (mg)</label>
-                            <input type="number" id="ingredient-calcium" value="${ingredient.calciumPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-calcium" value="${UI.escapeHtml(ingredient.calciumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Phosphorus (mg)</label>
-                            <input type="number" id="ingredient-phosphorus" value="${ingredient.phosphorusPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-phosphorus" value="${UI.escapeHtml(ingredient.phosphorusPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Potassium (mg)</label>
-                            <input type="number" id="ingredient-potassium" value="${ingredient.potassiumPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-potassium" value="${UI.escapeHtml(ingredient.potassiumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Iron (mg)</label>
-                            <input type="number" id="ingredient-iron" value="${ingredient.ironPer100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-iron" value="${UI.escapeHtml(ingredient.ironPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Selenium (mcg)</label>
-                            <input type="number" id="ingredient-selenium" value="${ingredient.seleniumPer100g ?? ''}" placeholder="0" step="0.1">
+                            <input type="number" id="ingredient-selenium" value="${UI.escapeHtml(ingredient.seleniumPer100g ?? '')}" placeholder="0" step="0.1">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Zinc (mg)</label>
-                            <input type="number" id="ingredient-zinc" value="${ingredient.zincPer100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-zinc" value="${UI.escapeHtml(ingredient.zincPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Manganese (mg)</label>
-                            <input type="number" id="ingredient-manganese" value="${ingredient.manganesePer100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-manganese" value="${UI.escapeHtml(ingredient.manganesePer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                         <div class="nutrition-mini-input">
                             <label>Copper (mg)</label>
-                            <input type="number" id="ingredient-copper" value="${ingredient.copperPer100g ?? ''}" placeholder="0" step="0.01">
+                            <input type="number" id="ingredient-copper" value="${UI.escapeHtml(ingredient.copperPer100g ?? '')}" placeholder="0" step="0.01">
                         </div>
                     </div>
                 </div>

@@ -112,11 +112,11 @@ const Metrics = (function() {
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label" for="metric-weight">Weight (kg)</label>
-                    <input type="number" id="metric-weight" class="form-input" value="${latest?.weight || ''}" placeholder="e.g., 75.5" min="20" max="500" step="0.1">
+                    <input type="number" id="metric-weight" class="form-input" value="${UI.escapeHtml(latest?.weight || '')}" placeholder="e.g., 75.5" min="20" max="500" step="0.1">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="metric-height">Height (cm)</label>
-                    <input type="number" id="metric-height" class="form-input" value="${latest?.height || ''}" placeholder="e.g., 175" min="50" max="300">
+                    <input type="number" id="metric-height" class="form-input" value="${UI.escapeHtml(latest?.height || '')}" placeholder="e.g., 175" min="50" max="300">
                 </div>
             </div>
             <div class="form-row">

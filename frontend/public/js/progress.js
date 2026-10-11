@@ -49,7 +49,7 @@ const Progress = (function() {
                 ${p.weight ? `<span><strong>${p.weight.toFixed(1)}</strong> kg</span>` : ''}
                 <span><strong>${p.adherence || 0}%</strong> adherence</span>
                 <span>Energy: <strong>${p.energyLevel || '-'}/10</strong></span>
-                ${p.symptoms?.length > 0 ? `<div><strong>Symptoms:</strong> ${p.symptoms.join(', ')}</div>` : ''}
+                ${p.symptoms?.length > 0 ? `<div><strong>Symptoms:</strong> ${UI.escapeHtml(p.symptoms.join(', '))}</div>` : ''}
                 ${p.notes ? `<p>${UI.escapeHtml(p.notes)}</p>` : ''}
             </div>
             <div class="progress-card__actions"><button class="btn btn--danger btn--sm btn-delete-progress" data-id="${p.id}">Delete</button></div>
@@ -70,26 +70,23 @@ const Progress = (function() {
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="progress-weight">Weight (kg)</label>
-                    <input type="number" id="progress-weight" class="form-input" value="${latest?.weight || ''}" min="20" max="500" step="0.1">
+                    <input type="number" id="progress-weight" class="form-input" value="${UI.escapeHtml(latest?.weight || '')}" min="20" max="500" step="0.1">
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Meal Adherence: <span id="adherence-value">50</span>%</label>
-                <input type="range" id="progress-adherence" class="form-range" min="0" max="100" value="50" step="5"
-                    oninput="document.getElementById('adherence-value').textContent = this.value">
+                <input type="range" id="progress-adherence" class="form-range" min="0" max="100" value="50" step="5" data-output="adherence-value">
                 <div class="form-range-labels"><span>0%</span><span>100%</span></div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Energy: <span id="energy-value">5</span>/10</label>
-                    <input type="range" id="progress-energy" class="form-range" min="1" max="10" value="5"
-                        oninput="document.getElementById('energy-value').textContent = this.value">
+                    <input type="range" id="progress-energy" class="form-range" min="1" max="10" value="5" data-output="energy-value">
                     <div class="form-range-labels"><span>Low</span><span>High</span></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Sleep: <span id="sleep-value">5</span>/10</label>
-                    <input type="range" id="progress-sleep" class="form-range" min="1" max="10" value="5"
-                        oninput="document.getElementById('sleep-value').textContent = this.value">
+                    <input type="range" id="progress-sleep" class="form-range" min="1" max="10" value="5" data-output="sleep-value">
                     <div class="form-range-labels"><span>Poor</span><span>Great</span></div>
                 </div>
             </div>

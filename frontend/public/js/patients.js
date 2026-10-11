@@ -212,13 +212,13 @@ const Patients = (function() {
                         <div class="form-group">
                             <label class="form-label" for="patient-firstName">First Name *</label>
                             <input type="text" id="patient-firstName" class="form-input" 
-                                   value="${patient.firstName ? UI.escapeHtml(patient.firstName) : ''}" 
+                                   value="${UI.escapeHtml(patient.firstName ? UI.escapeHtml(patient.firstName) : '')}" 
                                    placeholder="John" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="patient-lastName">Last Name *</label>
                             <input type="text" id="patient-lastName" class="form-input" 
-                                   value="${patient.lastName ? UI.escapeHtml(patient.lastName) : ''}" 
+                                   value="${UI.escapeHtml(patient.lastName ? UI.escapeHtml(patient.lastName) : '')}" 
                                    placeholder="Doe" required>
                         </div>
                     </div>
@@ -226,13 +226,13 @@ const Patients = (function() {
                         <div class="form-group">
                             <label class="form-label" for="patient-email">Email</label>
                             <input type="email" id="patient-email" class="form-input" 
-                                   value="${patient.email || ''}" 
+                                   value="${UI.escapeHtml(patient.email || '')}" 
                                    placeholder="john@example.com">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="patient-phone">Phone</label>
                             <input type="tel" id="patient-phone" class="form-input" 
-                                   value="${patient.phone || ''}" 
+                                   value="${UI.escapeHtml(patient.phone || '')}" 
                                    placeholder="+1234567890">
                         </div>
                     </div>
@@ -240,7 +240,7 @@ const Patients = (function() {
                         <div class="form-group">
                             <label class="form-label" for="patient-dob">Date of Birth</label>
                             <input type="date" id="patient-dob" class="form-input" 
-                                   value="${patient.dateOfBirth || ''}">
+                                   value="${UI.escapeHtml(patient.dateOfBirth || '')}">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="patient-gender">Gender</label>
@@ -259,20 +259,20 @@ const Patients = (function() {
                     <div class="form-group">
                         <label class="form-label" for="patient-street">Street Address</label>
                         <input type="text" id="patient-street" class="form-input" 
-                               value="${patient.address?.street || ''}" 
+                               value="${UI.escapeHtml(patient.address?.street || '')}" 
                                placeholder="123 Main St">
                     </div>
                     <div class="patient-form__row">
                         <div class="form-group">
                             <label class="form-label" for="patient-city">City</label>
                             <input type="text" id="patient-city" class="form-input" 
-                                   value="${patient.address?.city || ''}" 
+                                   value="${UI.escapeHtml(patient.address?.city || '')}" 
                                    placeholder="New York">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="patient-zip">ZIP Code</label>
                             <input type="text" id="patient-zip" class="form-input" 
-                                   value="${patient.address?.zipCode || ''}" 
+                                   value="${UI.escapeHtml(patient.address?.zipCode || '')}" 
                                    placeholder="10001">
                         </div>
                     </div>
@@ -284,20 +284,20 @@ const Patients = (function() {
                         <div class="form-group">
                             <label class="form-label" for="patient-ec-name">Contact Name</label>
                             <input type="text" id="patient-ec-name" class="form-input" 
-                                   value="${patient.emergencyContact?.name || ''}" 
+                                   value="${UI.escapeHtml(patient.emergencyContact?.name || '')}" 
                                    placeholder="Jane Doe">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="patient-ec-phone">Contact Phone</label>
                             <input type="tel" id="patient-ec-phone" class="form-input" 
-                                   value="${patient.emergencyContact?.phone || ''}" 
+                                   value="${UI.escapeHtml(patient.emergencyContact?.phone || '')}" 
                                    placeholder="+1234567890">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="patient-ec-relation">Relationship</label>
                         <input type="text" id="patient-ec-relation" class="form-input" 
-                               value="${patient.emergencyContact?.relation || ''}" 
+                               value="${UI.escapeHtml(patient.emergencyContact?.relation || '')}" 
                                placeholder="Spouse, Parent, etc.">
                     </div>
                 </div>
@@ -327,25 +327,25 @@ const Patients = (function() {
                             <div class="form-group">
                                 <label class="form-label" for="patient-activity-frequency">Frecuencia (días/semana)</label>
                                 <input type="number" id="patient-activity-frequency" class="form-input" 
-                                       value="${patient.physicalActivity?.frequency || ''}" min="1" max="7" placeholder="e.g., 4">
+                                       value="${UI.escapeHtml(patient.physicalActivity?.frequency || '')}" min="1" max="7" placeholder="e.g., 4">
                             </div>
                         </div>
                         <div class="patient-form__row">
                             <div class="form-group">
                                 <label class="form-label" for="patient-activity-duration">Duración (minutos/sesión)</label>
                                 <input type="number" id="patient-activity-duration" class="form-input" 
-                                       value="${patient.physicalActivity?.duration || ''}" min="1" max="300" placeholder="e.g., 45">
+                                       value="${UI.escapeHtml(patient.physicalActivity?.duration || '')}" min="1" max="300" placeholder="e.g., 45">
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="patient-activity-calories">Calorías quemadas/semana (est.)</label>
                                 <input type="number" id="patient-activity-calories" class="form-input" 
-                                       value="${patient.physicalActivity?.caloriesBurned || ''}" min="0" max="20000" placeholder="e.g., 1500">
+                                       value="${UI.escapeHtml(patient.physicalActivity?.caloriesBurned || '')}" min="0" max="20000" placeholder="e.g., 1500">
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="patient-activity-types">Tipos de ejercicio</label>
                             <input type="text" id="patient-activity-types" class="form-input" 
-                                   value="${patient.physicalActivity?.types || ''}" 
+                                   value="${UI.escapeHtml(patient.physicalActivity?.types || '')}" 
                                    placeholder="Ej: Cardio, Pesas, Natación, Yoga">
                         </div>
                     </div>
@@ -356,7 +356,7 @@ const Patients = (function() {
                     <div class="form-group">
                         <label class="form-label" for="patient-notes">General Notes</label>
                         <textarea id="patient-notes" class="form-input" rows="3" 
-                                  placeholder="Any additional notes about this patient...">${patient.notes || ''}</textarea>
+                                  placeholder="Any additional notes about this patient...">${UI.escapeHtml(patient.notes || '')}</textarea>
                     </div>
                 </div>
 

@@ -70,7 +70,7 @@ const Conditions = (function() {
             </div>
             <div class="form-group">
                 <label class="form-label" for="condition-name">Name *</label>
-                <input type="text" id="condition-name" class="form-input" value="${condition.name ? UI.escapeHtml(condition.name) : ''}" placeholder="e.g., Gluten Intolerance" required>
+                <input type="text" id="condition-name" class="form-input" value="${UI.escapeHtml(condition.name ? UI.escapeHtml(condition.name) : '')}" placeholder="e.g., Gluten Intolerance" required>
             </div>
             <div class="form-group">
                 <label class="form-label" for="condition-severity">Severity</label>
@@ -80,15 +80,15 @@ const Conditions = (function() {
             </div>
             <div class="form-group">
                 <label class="form-label" for="condition-description">Description</label>
-                <textarea id="condition-description" class="form-input" rows="2">${condition.description || ''}</textarea>
+                <textarea id="condition-description" class="form-input" rows="2">${UI.escapeHtml(condition.description || '')}</textarea>
             </div>
             <div class="form-group">
                 <label class="form-label" for="condition-dietary">Dietary Notes</label>
-                <textarea id="condition-dietary" class="form-input" rows="2">${condition.dietaryNotes || ''}</textarea>
+                <textarea id="condition-dietary" class="form-input" rows="2">${UI.escapeHtml(condition.dietaryNotes || '')}</textarea>
             </div>
             <div class="form-group">
                 <label class="form-label" for="condition-medications">Medications</label>
-                <textarea id="condition-medications" class="form-input" rows="2">${condition.medications || ''}</textarea>
+                <textarea id="condition-medications" class="form-input" rows="2">${UI.escapeHtml(condition.medications || '')}</textarea>
             </div>
         `;
     }
