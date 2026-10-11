@@ -1,5 +1,6 @@
 /* week-planner.css - Grilla semanal del planificador */
 
+/* ===========================================
    WEEK PLANNER COMPONENTS
    =========================================== */
 
@@ -223,5 +224,3 @@
     background-color: var(--color-danger);
     color: var(--color-text-inverse);
 }
-
-/* ===========================================

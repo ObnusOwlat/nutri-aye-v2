@@ -1,5 +1,6 @@
 /* ingredients.css - Lista de alimentos y paneles de nutrientes */
 
+/* ===========================================
    INGREDIENTS LIST
    =========================================== */
 
@@ -311,5 +312,3 @@
     color: var(--color-text-light);
     font-size: var(--font-size-xs);
 }
-
-/* ===========================================
