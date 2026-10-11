@@ -46,7 +46,7 @@ function authenticate(req, res, next) {
     if (!isApi) return next();
 
     req.auth = resolveSession(readCookie(req, COOKIE));
-    if (req.auth) req.ctx = { orgId: req.auth.orgId, userId: req.auth.userId, role: req.auth.role };
+    if (req.auth) req.ctx = { orgId: req.auth.orgId, userId: req.auth.userId, role: req.auth.role, ip: req.ip };
 
     if (PUBLIC.has(req.path)) return next();
     if (!req.auth) return next(new HttpError(401, 'Iniciá sesión para continuar', 'UNAUTHENTICATED'));

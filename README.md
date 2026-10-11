@@ -59,6 +59,7 @@ Reglas del código:
 - Archivos chicos (unas 300 líneas como máximo), un archivo por dominio, el SQL solo en `repos/`.
 - **Nada se borra:** "eliminar" desactiva (`deactivated_at`, `deactivated_by`). Un test falla si aparece un `DELETE FROM` sobre datos.
 - Toda consulta filtra por el consultorio de la sesión (`req.ctx.orgId`). Los permisos por rol están en `src/lib/permissions.js`.
+- **Todo cambio se registra:** las rutas que escriben envuelven la llamada al repo en `tracked(ctx, entidad, id, fn)` (`src/audit/log.js`), que guarda el antes y el después en `audit_log`, una tabla de solo agregar.
 
 ### Convenciones de la API
 
@@ -126,7 +127,7 @@ node seed-demo.js --remove                # los borra (todos los ids empiezan co
 
 | Atajo | Acción |
 |-------|--------|
-| `Alt + 1` … `Alt + 4` | Pacientes, Planificador, Alimentos, Recetas |
+| `Alt + 1` … `Alt + 5` | Pacientes, Planificador, Alimentos, Recetas, Actividad |
 | `Ctrl + S` | Respaldo |
 | `Ctrl + P` | Imprimir |
 | `Esc` | Cerrar ventana |

@@ -146,7 +146,8 @@ const PatientProfile = (function() {
             conditions: () => Conditions.render(currentPatientId),
             plans: () => PatientPlan.render(currentPatientId),
             progress: () => Progress.render(currentPatientId),
-            billing: () => PatientBilling.render(currentPatientId, patientProfile.querySelector('.patient-tab-content[data-tab="billing"]'))
+            billing: () => PatientBilling.render(currentPatientId, patientProfile.querySelector('.patient-tab-content[data-tab="billing"]')),
+            history: () => PatientHistory.render(currentPatientId, patientProfile.querySelector('.patient-tab-content[data-tab="history"]'))
         };
         renderers[tabName]?.();
     }

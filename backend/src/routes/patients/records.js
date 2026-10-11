@@ -1,6 +1,7 @@
 // Patient metrics, conditions and allergies ("delete" deactivates)
 const express = require('express');
 const patients = require('../../repos/patients');
+const { tracked } = require('../../audit/log');
 const { validate } = require('../../validation');
 const { metricCreate, conditionCreate } = require('../../validation/patients');
 const { notFound } = require('../../lib/http');
@@ -13,20 +14,20 @@ router.param('patientId', (req, res, next, id) => {
 });
 
 router.post('/api/patients/:patientId/metrics', validate(metricCreate), (req, res) => {
-    res.status(201).json({ success: true, data: patients.addMetric(req.params.patientId, req.body) });
+    res.status(201).json({ success: true, data: tracked(req.ctx, 'metric', null, () => patients.addMetric(req.params.patientId, req.body)) });
 });
 
 router.delete('/api/patients/:patientId/metrics/:metricId', (req, res) => {
-    if (!patients.deactivateMetric(req.ctx, req.params.patientId, req.params.metricId)) throw notFound('Medición');
+    if (!tracked(req.ctx, 'metric', req.params.metricId, () => patients.deactivateMetric(req.ctx, req.params.patientId, req.params.metricId))) throw notFound('Medición');
     res.json({ success: true });
 });
 
 router.post('/api/patients/:patientId/conditions', validate(conditionCreate), (req, res) => {
-    res.status(201).json({ success: true, data: patients.addCondition(req.params.patientId, req.body) });
+    res.status(201).json({ success: true, data: tracked(req.ctx, 'condition', null, () => patients.addCondition(req.params.patientId, req.body)) });
 });
 
 router.delete('/api/patients/:patientId/conditions/:conditionId', (req, res) => {
-    if (!patients.deactivateCondition(req.ctx, req.params.patientId, req.params.conditionId)) throw notFound('Condición');
+    if (!tracked(req.ctx, 'condition', req.params.conditionId, () => patients.deactivateCondition(req.ctx, req.params.patientId, req.params.conditionId))) throw notFound('Condición');
     res.json({ success: true });
 });
 

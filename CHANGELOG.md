@@ -2,6 +2,22 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Fase 3: registro de cambios
+
+- **Tabla `audit_log` (migración 5):** guarda consultorio, usuario, acción, tipo de dato, id, paciente relacionado, cambios (antes → después de los campos que cambiaron), IP y fecha.
+- **Solo agregar:** dos triggers de SQLite rechazan cualquier `UPDATE` o `DELETE`, incluso hecho directo en la base.
+- **Atomicidad:** cada cambio se registra en la misma transacción que el cambio. Si una de las dos cosas falla, no queda ninguna. Un cambio rechazado (400/404) o sin diferencias no registra nada.
+- **Qué se registra:**
+  - Alta, modificación, desactivación y reactivación de pacientes, mediciones, condiciones, semanas del Planner, recetas (con sus ingredientes), alimentos propios, clientes, facturas y presupuestos (con sus ítems), medios de pago, datos del consultorio y formato PDF.
+  - Usuarios: alta, rol, desactivación, reactivación y contraseña temporal.
+  - Sesiones: inicio, cierre, intentos fallidos, cambio de contraseña y cambio de consultorio.
+  - Respaldos exportados e importados, con la cantidad de filas por tabla.
+- **Privacidad:** la contraseña, la foto y el logo nunca se copian al registro. Un intento fallido con un email que no existe no guarda ese email.
+- **`GET /api/activity` (solo admin):** filtra por usuario, tipo de dato, acción y fechas, y muestra solo el consultorio propio.
+- **`GET /api/patients/:id/history`:** todo lo del paciente, incluidas sus mediciones, condiciones y semanas del Planner.
+- **Interfaz:** pestaña "Actividad" (solo admin) con filtros y páginas, y pestaña "Historial" en la ficha del paciente. Los cambios se ven en español ("teléfono: 0981 100100 → 0981 200200"). Alt+5 abre Actividad.
+- **Tests:** de 50 a 57.
+
 ## Frontend y CSS: archivos chicos (2)
 
 - **`planner.js`** (783 líneas) quedó en `planner.js` (grilla), `planner-templates.js`, `planner-patient.js` y `planner-recipe-picker.js`.

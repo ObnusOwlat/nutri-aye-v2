@@ -1,6 +1,7 @@
 // Patients CRUD (deactivate instead of delete)
 const express = require('express');
 const patients = require('../../repos/patients');
+const { tracked } = require('../../audit/log');
 const { validate } = require('../../validation');
 const { patientCreate, patientUpdate } = require('../../validation/patients');
 const { notFound, pageParams, sendPage } = require('../../lib/http');
@@ -20,23 +21,23 @@ router.get('/api/patients/:id', (req, res) => {
 });
 
 router.post('/api/patients', validate(patientCreate), (req, res) => {
-    res.status(201).json({ success: true, data: patients.create(req.ctx, req.body) });
+    res.status(201).json({ success: true, data: tracked(req.ctx, 'patient', null, () => patients.create(req.ctx, req.body)) });
 });
 
 router.put('/api/patients/:id', validate(patientUpdate), (req, res) => {
-    const updated = patients.update(req.ctx, req.params.id, req.body);
+    const updated = tracked(req.ctx, 'patient', req.params.id, () => patients.update(req.ctx, req.params.id, req.body));
     if (!updated) throw notFound('Paciente');
     res.json({ success: true, data: updated });
 });
 
 // "Delete" deactivates: the patient and their history stay in the database
 router.delete('/api/patients/:id', (req, res) => {
-    if (!patients.deactivate(req.ctx, req.params.id)) throw notFound('Paciente');
+    if (!tracked(req.ctx, 'patient', req.params.id, () => patients.deactivate(req.ctx, req.params.id))) throw notFound('Paciente');
     res.json({ success: true });
 });
 
 router.post('/api/patients/:id/reactivate', (req, res) => {
-    if (!patients.reactivate(req.ctx, req.params.id)) throw notFound('Paciente');
+    if (!tracked(req.ctx, 'patient', req.params.id, () => patients.reactivate(req.ctx, req.params.id))) throw notFound('Paciente');
     res.json({ success: true, data: patients.getById(req.ctx, req.params.id) });
 });
 

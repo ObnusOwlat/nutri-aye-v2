@@ -1,6 +1,7 @@
 // Weekly planner per patient
 const express = require('express');
 const planner = require('../repos/planner');
+const { tracked } = require('../audit/log');
 const patients = require('../repos/patients');
 const { validate } = require('../validation');
 const { plannerCreate, plannerUpdate } = require('../validation/planner');
@@ -18,7 +19,7 @@ router.get('/api/planner', (req, res) => {
 
 router.post('/api/planner', validate(plannerCreate), (req, res) => {
     checkPatient(req, req.body);
-    res.status(201).json({ success: true, data: planner.create(req.ctx, req.body) });
+    res.status(201).json({ success: true, data: tracked(req.ctx, 'planner', null, () => planner.create(req.ctx, req.body)) });
 });
 
 router.put('/api/planner/:id', validate(plannerUpdate), (req, res) => {
@@ -26,13 +27,13 @@ router.put('/api/planner/:id', validate(plannerUpdate), (req, res) => {
     // Recipes that exist only in a browser (until Fase 4) are skipped and reported
     const skipped = planner.missingRecipes(req.ctx, req.body.meals);
     const meals = req.body.meals?.filter(m => !skipped.includes(m.recipeId));
-    const updated = planner.update(req.ctx, req.params.id, { ...req.body, meals });
+    const updated = tracked(req.ctx, 'planner', req.params.id, () => planner.update(req.ctx, req.params.id, { ...req.body, meals }));
     if (!updated) throw notFound('Planificación');
     res.json({ success: true, data: updated, skippedMeals: skipped.length });
 });
 
 router.delete('/api/planner/:id', (req, res) => {
-    if (!planner.deactivate(req.ctx, req.params.id)) throw notFound('Planificación');
+    if (!tracked(req.ctx, 'planner', req.params.id, () => planner.deactivate(req.ctx, req.params.id))) throw notFound('Planificación');
     res.json({ success: true });
 });
 

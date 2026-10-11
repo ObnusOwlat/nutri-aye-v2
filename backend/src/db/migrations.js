@@ -12,6 +12,7 @@ const { createBillingTables } = require('./schema/billing');
 const { createViews } = require('./schema/views');
 const { createOrganizationTables } = require('./schema/organizations');
 const { rebuildDocumentTables } = require('./schema/billing-numbering');
+const { createAuditLog } = require('./schema/audit');
 
 const MIGRATIONS = [
     {
@@ -50,6 +51,11 @@ const MIGRATIONS = [
         foreignKeysOff: true,
         checkTables: ['billing_invoices', 'billing_quotes', 'billing_invoice_items', 'billing_quote_items'],
         up: rebuildDocumentTables
+    },
+    {
+        version: 5,
+        name: 'registro de cambios (solo agregar)',
+        up: createAuditLog
     }
 ];
 
