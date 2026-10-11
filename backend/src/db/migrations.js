@@ -17,6 +17,7 @@ const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
 const { addActivityPlans } = require('./schema/activity-plans');
 const { markParaguayFoods } = require('./schema/paraguay');
+const { createAllergenTables } = require('./schema/allergens');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 const { createPaymentTables } = require('./schema/payments');
@@ -109,6 +110,11 @@ const MIGRATIONS = [
         version: 14,
         name: 'alimentos que se consiguen en Paraguay y correcciones de traducción',
         up: markParaguayFoods
+    },
+    {
+        version: 15,
+        name: 'alérgenos de los alimentos (Open Food Facts + reglas) y de las alergias de los pacientes',
+        up: createAllergenTables
     },
     {
         version: 16,

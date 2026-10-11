@@ -120,6 +120,7 @@ function transformCondition(row) {
         description: row.description,
         dietaryNotes: row.dietary_notes,
         medications: row.medications,
+        allergens: row.allergens ? String(row.allergens).split(',').filter(Boolean) : [],
         createdAt: row.created_at
     };
 }

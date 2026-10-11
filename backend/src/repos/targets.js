@@ -8,7 +8,7 @@ const plans = require('./plans');
 const { driDetails, isChild } = require('../lib/dri');
 const { suggestedEnergy, macroTargets } = require('../lib/energy');
 const { rulesFor } = require('../lib/diet-rules');
-const { allergensFor } = require('../lib/allergens');
+const { patientAllergens } = require('./allergens');
 const { ageOf } = require('../lib/age');
 const { nowIso } = require('../lib/http');
 
@@ -110,7 +110,7 @@ function targetsFor(ctx, patientId) {
         } : null,
         nutrients,
         rules: rules.map(r => ({ id: r.id, label: r.label, source: r.source })),
-        avoid: allergensFor(profile.conditions).map(g => ({ id: g.id, label: g.label })),
+        avoid: patientAllergens(profile.conditions).map(a => ({ id: a.allergen, label: a.label, block: a.block, type: a.type })),
         notes
     };
 }

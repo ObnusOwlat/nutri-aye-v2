@@ -2,6 +2,15 @@
 // Nothing is deleted: "delete" deactivates the patient (or the metric/condition).
 const { db } = require('../db/connection');
 const { transformPatient, transformMetric, transformCondition } = require('../transforms');
+const { allergensInText } = require('../lib/allergen-tags');
+
+// Allergies/intolerances keep their allergens: the chosen ones, or read from the text
+function allergensParam(data, keepIfMissing = false) {
+    if (Array.isArray(data.allergens)) return data.allergens.join(',');
+    if (keepIfMissing || !['allergy', 'intolerance'].includes(data.type)) return null;
+    const found = allergensInText(`${data.name || ''} ${data.description || ''}`);
+    return found.length ? found.join(',') : null;
+}
 const { newId, nowIso } = require('../lib/http');
 
 // API field -> column (nested address/emergency contact flattened)
@@ -43,14 +52,15 @@ const stmts = {
         WHERE id = @id AND patient_id = @patientId AND deactivated_at IS NULL
     `),
     insertCondition: db.prepare(`
-        INSERT INTO patient_conditions (id, patient_id, type, name, severity, description, dietary_notes, medications)
-        VALUES (@id, @patientId, @type, @name, @severity, @description, @dietaryNotes, @medications)
+        INSERT INTO patient_conditions (id, patient_id, type, name, severity, description, dietary_notes, medications, allergens)
+        VALUES (@id, @patientId, @type, @name, @severity, @description, @dietaryNotes, @medications, @allergens)
     `),
     conditionById: db.prepare('SELECT * FROM patient_conditions WHERE id = ?'),
     updateCondition: db.prepare(`
         UPDATE patient_conditions SET type = COALESCE(@type, type), name = COALESCE(@name, name),
             severity = COALESCE(@severity, severity), description = COALESCE(@description, description),
             dietary_notes = COALESCE(@dietaryNotes, dietary_notes), medications = COALESCE(@medications, medications),
+            allergens = COALESCE(@allergens, allergens),
             updated_at = @now
         WHERE id = @id AND patient_id = @patientId AND deactivated_at IS NULL
     `),
@@ -130,7 +140,8 @@ function addCondition(patientId, data) {
     const id = newId();
     stmts.insertCondition.run({
         id, patientId, type: data.type, name: data.name, severity: data.severity,
-        description: data.description ?? '', dietaryNotes: data.dietaryNotes ?? '', medications: data.medications ?? ''
+        description: data.description ?? '', dietaryNotes: data.dietaryNotes ?? '', medications: data.medications ?? '',
+        allergens: allergensParam(data)
     });
     return transformCondition(stmts.conditionById.get(id));
 }
@@ -139,7 +150,7 @@ function addCondition(patientId, data) {
 function updateCondition(patientId, id, data) {
     const fields = ['type', 'name', 'severity', 'description', 'dietaryNotes', 'medications'];
     const params = Object.fromEntries(fields.map(f => [f, data[f] ?? null]));
-    const changed = stmts.updateCondition.run({ ...params, id, patientId, now: nowIso() }).changes;
+    const changed = stmts.updateCondition.run({ ...params, allergens: allergensParam(data, true), id, patientId, now: nowIso() }).changes;
     return changed ? transformCondition(stmts.conditionById.get(id)) : null;
 }
 

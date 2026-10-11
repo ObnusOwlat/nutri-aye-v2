@@ -2,6 +2,7 @@
 const { z, text, requiredText, optionalText, isoDate } = require('./index');
 const { GENDERS, PATIENT_STATUSES, ACTIVITY_LEVELS, CONDITION_TYPES, CONDITION_SEVERITIES } = require('../constants');
 const { activityPlan } = require('./activity');
+const { ALLERGENS } = require('../lib/allergen-tags');
 
 const emptyToNull = (schema) => z.preprocess(v => (v === '' ? null : v), schema.nullish());
 const measure = (max) => emptyToNull(z.coerce.number().min(0).max(max));
@@ -57,7 +58,9 @@ const conditionCreate = z.object({
     severity: z.enum(CONDITION_SEVERITIES).default('mild'),
     description: optionalText(2000),
     dietaryNotes: optionalText(2000),
-    medications: optionalText(2000)
+    medications: optionalText(2000),
+    // Allergens of an allergy/intolerance (Open Food Facts ids, lib/allergen-tags.js)
+    allergens: z.array(z.enum(Object.keys(ALLERGENS))).max(14).nullish()
 });
 
 const conditionUpdate = conditionCreate.partial().extend({

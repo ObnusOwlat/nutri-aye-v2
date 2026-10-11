@@ -7,6 +7,7 @@ const { NUTRIENT_FIELDS } = require('../nutrient-fields');
 const { transformIngredient } = require('../transforms');
 const { newId, nowIso } = require('../lib/http');
 const { subgroupOf, formOf } = require('../lib/food-classify');
+const allergenRepo = require('./allergens');
 
 const COLUMNS = NUTRIENT_FIELDS.map(f => f.column);
 const VISIBLE = '(org_id IS NULL OR org_id = @orgId) AND deactivated_at IS NULL';
@@ -157,16 +158,20 @@ function search(ctx, { sort, order, limit, offset, ...query }) {
         SELECT * FROM v_ingredient_with_category WHERE ${whereSql}
         ORDER BY ${orderBy} LIMIT ? OFFSET ?
     `).all(...params, ...orderParams, limit, offset);
-    return { rows: rows.map(transformIngredient), total };
+    return { rows: allergenRepo.attach(ctx, rows.map(transformIngredient)), total };
 }
 
-const getById = (ctx, id) => transformIngredient(stmts.byId.get({ id, orgId: ctx.orgId }));
+const getById = (ctx, id) => {
+    const ingredient = transformIngredient(stmts.byId.get({ id, orgId: ctx.orgId }));
+    return ingredient ? allergenRepo.attach(ctx, [ingredient])[0] : null;
+};
 const isOwn = (ctx, id) => !!stmts.own.get({ id, orgId: ctx.orgId });
 
 function create(ctx, data) {
     const id = newId();
     const params = toParams(data, 0);
     stmts.insert.run({ ...params, ...groupsOf({ ...data, category: params.category }), id, orgId: ctx.orgId, now: nowIso() });
+    allergenRepo.retag([id]);
     return getById(ctx, id);
 }
 
@@ -175,6 +180,7 @@ function update(ctx, id, data) {
     if (!isOwn(ctx, id)) return null;
     stmts.update.run({ ...toParams(data, null), id, orgId: ctx.orgId, now: nowIso() });
     if (data.name != null || data.category != null) reclassify(id);
+    if (data.name != null) allergenRepo.retag([id]);
     return getById(ctx, id);
 }
 
@@ -186,7 +192,9 @@ const bulkCreate = db.transaction((ctx, items) => {
     const now = nowIso();
     for (const item of items) {
         const params = toParams(item, 0);
-        stmts.insert.run({ ...params, ...groupsOf({ ...item, category: params.category }), id: newId(), orgId: ctx.orgId, now });
+        const id = newId();
+        stmts.insert.run({ ...params, ...groupsOf({ ...item, category: params.category }), id, orgId: ctx.orgId, now });
+        allergenRepo.retag([id]);
     }
     return items.length;
 });
@@ -198,6 +206,6 @@ const LIBRARY_SQL = `
     WHERE (deactivated_at IS NULL AND source NOT LIKE 'usda%' AND (org_id IS NULL OR org_id = @orgId))
        OR id IN (SELECT ri.ingredient_id FROM recipe_ingredients ri JOIN recipes r ON r.id = ri.recipe_id WHERE r.org_id = @orgId)
 `;
-const listLibrary = (ctx) => db.prepare(LIBRARY_SQL).all({ orgId: ctx.orgId }).map(transformIngredient);
+const listLibrary = (ctx) => allergenRepo.attach(ctx, db.prepare(LIBRARY_SQL).all({ orgId: ctx.orgId }).map(transformIngredient));
 
 module.exports = { search, facets, getById, isOwn, create, update, deactivate, reactivate, bulkCreate, listLibrary };

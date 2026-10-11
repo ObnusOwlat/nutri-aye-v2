@@ -1,17 +1,16 @@
 // Recipe suggestions for a patient: the consultorio's recipes ranked by the
-// patient's conditions (lib/diet-rules.js), allergies (lib/allergens.js) and
+// patient's conditions (lib/diet-rules.js), allergies (repos/allergens.js) and
 // daily needs by sex and age (lib/dri.js). Read only; guidance for the nutritionist.
 const patients = require('./patients');
 const recipes = require('./recipes');
 const nutrition = require('./nutrition');
 const { rulesFor } = require('../lib/diet-rules');
-const { allergensFor, conflicts } = require('../lib/allergens');
+const allergenRepo = require('./allergens');
 const { driFor, DRI_NAMES } = require('../lib/dri');
 const { ageOf } = require('../lib/age');
 
 // Planner meal slot -> recipe category
 const CATEGORY_OF_MEAL = { morning_snack: 'snack' };
-const ALLERGY_TYPES = ['allergy', 'intolerance'];
 
 
 const fmt = (amount) => amount.toLocaleString('es-PY', { maximumFractionDigits: amount >= 100 ? 0 : 1 });
@@ -63,13 +62,16 @@ function scoreRecipe(recipe, amounts, units, ctx) {
     covered.sort((a, b) => b[1] - a[1]).slice(0, 2)
         .forEach(([id, share]) => reasons.push(`Aporta ${Math.round(share * 100)} % de ${DRI_NAMES[id]} del día`));
 
-    const found = conflicts(ctx.allergens, recipe.ingredients.map(i => i.ingredientName));
-    for (const { group, ingredient } of found) warnings.unshift(`Contiene ${group.label}: ${ingredient}`);
+    const found = allergenRepo.conflicts(ctx.repoCtx, ctx.allergens, recipe.ingredients);
+    for (const { label, ingredient, block, type } of found) {
+        warnings.unshift(`Contiene ${label.toLowerCase()}: ${ingredient}${block ? ' — alergia grave' : type === 'intolerance' ? ' — intolerancia' : ''}`);
+    }
 
     return {
         recipeId: recipe.id, name: recipe.name, category: recipe.category,
         calories: recipe.nutrition?.calories ?? null,
-        score: Math.round(score * 10) / 10, excluded: found.length > 0, reasons, warnings
+        score: Math.round(score * 10) / 10, excluded: found.length > 0, blocked: found.some(f => f.block), reasons, warnings,
+        allergens: [...new Set(found.map(f => f.allergen))]
     };
 }
 
@@ -83,7 +85,7 @@ function forPatient(ctx, patientId, { mealType = '', limit = 50, weekRecipeIds =
 
     const conditions = patient.conditions || [];
     const rules = rulesFor(conditions);
-    const allergens = allergensFor(conditions.filter(c => ALLERGY_TYPES.includes(c.type)));
+    const allergens = allergenRepo.patientAllergens(conditions);
     const age = ageOf(patient.dateOfBirth);
     const dri = driFor({ sex: patient.gender, age, pregnant: rules.some(r => r.id === 'pregnancy') });
 
@@ -94,14 +96,15 @@ function forPatient(ctx, patientId, { mealType = '', limit = 50, weekRecipeIds =
     const weights = needWeights(dri, analysis.recipes, weekRecipeIds.filter(id => analysis.recipes[id]), days);
 
     const ranked = list
-        .map(r => scoreRecipe(r, analysis.recipes[r.id] || {}, units, { rules, allergens, dri, weights }))
+        .map(r => scoreRecipe(r, analysis.recipes[r.id] || {}, units, { rules, allergens, dri, weights, repoCtx: ctx }))
         .sort((a, b) => (a.excluded - b.excluded) || (b.score - a.score));
 
     return {
         patient: {
             id: patient.id, sex: patient.gender || null, age,
             rules: rules.map(r => ({ id: r.id, label: r.label, source: r.source })),
-            allergens: allergens.map(a => a.label)
+            allergens: allergens.map(a => a.label),
+            avoid: allergens
         },
         data: ranked.slice(0, limit)
     };
