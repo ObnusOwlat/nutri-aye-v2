@@ -20,13 +20,13 @@ const hasAny = (text, keywords = []) => keywords.some(k => matcher(k).test(text)
 function subgroupOf({ category, sourceCategory, name, nameEn }) {
     const rules = SUBGROUPS[category];
     if (!rules) return null;
-    const es = plain(name), en = plain(nameEn);
-    for (const [id, rule] of rules) {
-        if (hasAny(en, rule.en) || hasAny(es, rule.es)) return id;
-    }
-    // No keyword: the USDA food group, when it maps to one subgroup
-    const byGroup = rules.find(([, rule]) => rule.usda?.includes(sourceCategory));
-    return byGroup ? byGroup[0] : 'other';
+    // The English USDA name is the most regular, then the USDA food group;
+    // the Spanish name decides for basic-catalog and own foods
+    const en = plain(nameEn), es = plain(name);
+    const found = (en && rules.find(([, rule]) => hasAny(en, rule.en)))
+        || rules.find(([, rule]) => rule.usda?.includes(sourceCategory))
+        || rules.find(([, rule]) => hasAny(es, rule.es));
+    return found ? found[0] : 'other';
 }
 
 // Preparation form, or null when the name does not say
