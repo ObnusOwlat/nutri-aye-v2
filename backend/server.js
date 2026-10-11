@@ -14,65 +14,82 @@
  */
 
 const express = require('express');
-const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const Database = require('better-sqlite3');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 
+// ==========================================
+// CONFIG (environment, see .env.example)
+// ==========================================
+
+const PORT = Number(process.env.PORT) || 3001;
+const HOST = process.env.HOST || '127.0.0.1';   // only this machine unless configured
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db', 'database.sqlite');
+const PUBLIC_DIR = path.join(__dirname, '..', 'frontend', 'public');
+
 // Initialize Express
 const app = express();
-const PORT = process.env.PORT || 3001;
+app.disable('x-powered-by');
 
 // Ingredients are grouped by food group; recipes by meal type
 const INGREDIENT_CATEGORIES = ['protein', 'carbs', 'fats', 'vegetables', 'fruits', 'dairy', 'mixed'];
 const MEAL_CATEGORIES = ['breakfast', 'lunch', 'dinner', 'afternoon_snack', 'snack'];
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
 // ==========================================
-// BILLING API ENDPOINTS (Unified - same database)
+// SECURITY MIDDLEWARE
 // ==========================================
 
-// Redirect /billing to main app with billing tab
-app.get('/billing', (req, res) => {
-    res.redirect('/?tab=billing');
-});
-
-// Redirect /billing/* to main app with billing tab
-app.get('/billing/*', (req, res) => {
-    res.redirect('/?tab=billing');
-});
-
-// ==========================================
-// SERVE FRONTEND
-// ==========================================
-
-// Serve static frontend files
-// no-cache: the browser revalidates (ETag) instead of running stale JS after an update
-app.use(express.static(path.join(__dirname, '..', 'frontend'), {
-    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+// Same-origin app: no CORS headers, so other websites cannot read the API
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+            fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+            imgSrc: ["'self'", 'data:'],
+            connectSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            frameAncestors: ["'none'"],
+            upgradeInsecureRequests: null
+        }
+    }
 }));
 
-// Serve index.html for root
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
+app.use('/api', rateLimit({ windowMs: 60 * 1000, limit: 600, standardHeaders: 'draft-7', legacyHeaders: false }));
+app.use('/billing-api', rateLimit({ windowMs: 60 * 1000, limit: 600, standardHeaders: 'draft-7', legacyHeaders: false }));
+
+// Bulk ingredient import needs a bigger body; everything else 1 MB
+app.use('/api/ingredients/bulk', express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
+
+// Log the real error on the server, return a generic message to the client
+function serverError(res, error, status = 500) {
+    console.error('[Server] Error:', error);
+    return res.status(status).json({ success: false, error: 'Error interno del servidor', code: 'INTERNAL_ERROR' });
+}
+
+// ==========================================
+// SERVE FRONTEND (only frontend/public)
+// ==========================================
+
+// no-cache: the browser revalidates (ETag) instead of running stale JS after an update
+app.use(express.static(PUBLIC_DIR, {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+}));
 
 // ==========================================
 // DATABASE INITIALIZATION (3NF Normalized)
 // ==========================================
 
-const dbPath = path.join(__dirname, 'db', 'database.sqlite');
-const dbDir = path.dirname(dbPath);
-
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+if (DB_PATH !== ':memory:') {
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 }
 
-const db = new Database(dbPath);
+const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
@@ -709,7 +726,7 @@ app.get('/api/ingredients', (req, res) => {
         });
     } catch (error) {
         console.error('[Ingredients] List error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -725,7 +742,7 @@ app.get('/api/ingredients/:id', (req, res) => {
 
         res.json({ success: true, data: { ...transformIngredient(ingredient), ...getIngredientDetails(ingredient.id) } });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -747,7 +764,7 @@ app.post('/api/ingredients', (req, res) => {
             return res.status(400).json({ success: false, error: 'kcalPer100g cannot be negative' });
         }
         
-        const id = data.id || uuidv4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
 
         const stmt = db.prepare(`
@@ -804,7 +821,7 @@ app.post('/api/ingredients', (req, res) => {
         res.json({ success: true, data: transformIngredient(created) });
     } catch (error) {
         console.error('[Ingredients] Create error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -850,7 +867,7 @@ app.put('/api/ingredients/:id', (req, res) => {
         const updated = db.prepare('SELECT * FROM v_ingredient_with_category WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: transformIngredient(updated) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -860,7 +877,7 @@ app.delete('/api/ingredients/:id', (req, res) => {
         db.prepare('DELETE FROM ingredients WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -873,7 +890,7 @@ app.post('/api/ingredients/bulk', (req, res) => {
         }
 
         const insertStmt = db.prepare(`
-            INSERT OR REPLACE INTO ingredients (
+            INSERT INTO ingredients (
                 id, name, category_id, unit_id, created_at, updated_at,
                 kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g
             ) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?, ?, ?, ?)
@@ -882,7 +899,7 @@ app.post('/api/ingredients/bulk', (req, res) => {
         const insertMany = db.transaction((items) => {
             for (const item of items) {
                 insertStmt.run(
-                    item.id || uuidv4(),
+                    uuidv4(),
                     item.name,
                     INGREDIENT_CATEGORIES.includes(item.category) ? item.category : 'mixed',
                     item.unit || 'gram',
@@ -897,7 +914,7 @@ app.post('/api/ingredients/bulk', (req, res) => {
         insertMany(ingredients);
         res.json({ success: true, count: ingredients.length });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -918,7 +935,7 @@ app.get('/api/nutrients', (req, res) => {
         `).all(group, group);
         res.json({ success: true, data: nutrients });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -947,7 +964,7 @@ app.get('/api/nutrients/:id/ingredients', (req, res) => {
             data: rows.map(r => ({ ...transformIngredient(r), amountPer100g: r.nutrient_amount }))
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1037,7 +1054,7 @@ app.get('/api/recipes', (req, res) => {
         });
     } catch (error) {
         console.error('[Recipes] List error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1090,7 +1107,7 @@ app.get('/api/recipes/:id', (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1098,7 +1115,7 @@ app.get('/api/recipes/:id', (req, res) => {
 app.post('/api/recipes', (req, res) => {
     try {
         const { name, category, instructions, notes, ingredients = [] } = req.body;
-        const id = req.body.id || uuidv4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
 
         // Validation: Recipe must have a name
@@ -1157,7 +1174,7 @@ app.post('/api/recipes', (req, res) => {
         res.json({ success: true, data: transformRecipe(recipe) });
     } catch (error) {
         console.error('[Recipes] Create error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1234,7 +1251,7 @@ app.put('/api/recipes/:id', (req, res) => {
 
         res.json({ success: true, data: transformRecipe(recipe) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1244,7 +1261,7 @@ app.delete('/api/recipes/:id', (req, res) => {
         db.prepare('DELETE FROM recipes WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1283,7 +1300,7 @@ app.get('/api/patients', (req, res) => {
             pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1307,14 +1324,14 @@ app.get('/api/patients/:id', (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
 // POST /api/patients
 app.post('/api/patients', (req, res) => {
     try {
-        const id = req.body.id || uuidv4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
         const d = req.body;
 
@@ -1333,7 +1350,7 @@ app.post('/api/patients', (req, res) => {
         const patient = db.prepare('SELECT * FROM patients WHERE id = ?').get(id);
         res.json({ success: true, data: transformPatient(patient) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1371,7 +1388,7 @@ app.put('/api/patients/:id', (req, res) => {
         const patient = db.prepare('SELECT * FROM patients WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: transformPatient(patient) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1381,7 +1398,7 @@ app.delete('/api/patients/:id', (req, res) => {
         db.prepare('DELETE FROM patients WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1408,7 +1425,7 @@ app.post('/api/patients/:id/metrics', (req, res) => {
         const metric = db.prepare('SELECT * FROM patient_metrics WHERE id = ?').get(id);
         res.json({ success: true, data: transformMetric(metric) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1418,7 +1435,7 @@ app.delete('/api/patients/:patientId/metrics/:metricId', (req, res) => {
             .run(req.params.metricId, req.params.patientId);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1439,7 +1456,7 @@ app.post('/api/patients/:id/conditions', (req, res) => {
         const condition = db.prepare('SELECT * FROM patient_conditions WHERE id = ?').get(id);
         res.json({ success: true, data: transformCondition(condition) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1449,7 +1466,7 @@ app.delete('/api/patients/:patientId/conditions/:conditionId', (req, res) => {
             .run(req.params.conditionId, req.params.patientId);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1466,7 +1483,7 @@ app.get('/api/patients/:id/allergies', (req, res) => {
 
         res.json({ success: true, data: allergies.map(a => a.name) });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1511,7 +1528,7 @@ app.post('/api/patients/:id/sync-to-billing', (req, res) => {
 
         res.json({ success: true, data: newClient, alreadyLinked: false });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1542,7 +1559,7 @@ app.get('/api/patients/:id/billing', (req, res) => {
             } 
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1606,7 +1623,7 @@ app.get('/api/sync/init', (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1617,7 +1634,7 @@ app.post('/api/sync/push', (req, res) => {
         // For now, just acknowledge receipt (full bidirectional sync would be more complex)
         res.json({ success: true, message: 'Data received', timestamp: new Date().toISOString() });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1666,7 +1683,7 @@ app.get('/api/sync/pull', (req, res) => {
             patientConditions
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1699,67 +1716,14 @@ app.get('/api/backup/export', (req, res) => {
         res.setHeader('Content-Disposition', 'attachment; filename=meal-prep-backup.json');
         res.json(backup);
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
+// POST /api/backup/import - disabled: the previous implementation could wipe
+// tables and lost data on round trip. Rebuilt with validation in Fase 1.
 app.post('/api/backup/import', (req, res) => {
-    try {
-        const { ingredients, recipes, patients } = req.body;
-        const now = new Date().toISOString();
-
-        const importTransaction = db.transaction(() => {
-            if (ingredients?.length) {
-                db.prepare('DELETE FROM recipe_ingredients');
-                db.prepare('DELETE FROM ingredients').run();
-                
-                const insertIng = db.prepare(`
-                    INSERT INTO ingredients (id, name, category_id, unit_id, created_at, updated_at, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `);
-                for (const ing of ingredients) {
-                    insertIng.run(ing.id, ing.name, ing.category || 'lunch', 'gram', now, now, ing.kcalPer100g || 0, ing.proteinPer100g || 0, ing.carbsPer100g || 0, ing.fatPer100g || 0);
-                }
-            }
-
-            if (recipes?.length) {
-                db.prepare('DELETE FROM recipes').run();
-                
-                const insertRec = db.prepare(`INSERT INTO recipes (id, name, category_id, instructions, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-                const insertRecIng = db.prepare(`INSERT INTO recipe_ingredients (id, recipe_id, ingredient_id, grams) VALUES (?, ?, ?, ?)`);
-                
-                for (const rec of recipes) {
-                    insertRec.run(rec.id, rec.name, rec.category || 'lunch', rec.instructions || '', rec.notes || '', now, now);
-                    for (const ing of (rec.ingredients || [])) {
-                        insertRecIng.run(uuidv4(), rec.id, ing.ingredientId, ing.grams || 100);
-                    }
-                }
-            }
-
-            if (patients?.length) {
-                db.prepare('DELETE FROM patient_progress');
-                db.prepare('DELETE FROM patient_plan_meals');
-                db.prepare('DELETE FROM patient_plans');
-                db.prepare('DELETE FROM patient_conditions');
-                db.prepare('DELETE FROM patient_metrics');
-                db.prepare('DELETE FROM patients').run();
-                
-                // Simplified patient import
-                const insertPat = db.prepare(`
-                    INSERT INTO patients (id, first_name, last_name, email, phone, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                `);
-                for (const pat of patients) {
-                    insertPat.run(pat.id, pat.firstName, pat.lastName, pat.email || '', pat.phone || '', now, now);
-                }
-            }
-        });
-
-        importTransaction();
-        res.json({ success: true, message: 'Import completed' });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
+    res.status(503).json({ success: false, error: 'La importación de respaldos está deshabilitada temporalmente', code: 'IMPORT_DISABLED' });
 });
 
 // ==========================================
@@ -1805,7 +1769,7 @@ app.get('/api/planner', (req, res) => {
         
         res.json({ success: true, data: result });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1825,7 +1789,7 @@ app.post('/api/planner', (req, res) => {
             return res.status(400).json({ success: false, error: 'Patient not found' });
         }
         
-        const id = req.body.id || require('uuid').v4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
         
         db.prepare(`
@@ -1836,7 +1800,7 @@ app.post('/api/planner', (req, res) => {
         const planner = db.prepare('SELECT * FROM week_planner WHERE id = ?').get(id);
         res.json({ success: true, data: planner });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1888,14 +1852,14 @@ app.put('/api/planner/:id', (req, res) => {
                     const recipe = db.prepare('SELECT id FROM recipes WHERE id = ?').get(meal.recipeId);
                     if (!recipe) continue;
                 }
-                insertMeal.run(require('uuid').v4(), req.params.id, meal.day, meal.mealType, meal.recipeId || null, now);
+                insertMeal.run(uuidv4(), req.params.id, meal.day, meal.mealType, meal.recipeId || null, now);
             }
         }
         
         const planner = db.prepare('SELECT * FROM week_planner WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: planner });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1912,7 +1876,7 @@ app.delete('/api/planner/:id', (req, res) => {
         
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -1933,7 +1897,7 @@ app.get('/api/stats', (req, res) => {
         };
         res.json({ success: true, stats });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2123,7 +2087,7 @@ app.get('/billing-api/dashboard/stats', (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2136,7 +2100,7 @@ app.get('/billing-api/company', (req, res) => {
         const company = db.prepare('SELECT * FROM billing_company LIMIT 1').get();
         res.json({ success: true, data: company });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2158,7 +2122,7 @@ app.put('/billing-api/company', (req, res) => {
             const company = db.prepare('SELECT * FROM billing_company WHERE id = ?').get(existing.id);
             res.json({ success: true, data: company });
         } else {
-            const id = d.id || uuidv4();
+            const id = uuidv4(); // ids are always generated by the server
             db.prepare(`
                 INSERT INTO billing_company (id, name, email, phone, address, city, country, currency, vat_id, website, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -2167,7 +2131,7 @@ app.put('/billing-api/company', (req, res) => {
             res.json({ success: true, data: company });
         }
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2181,7 +2145,7 @@ app.get('/billing-api/pdf-config', (req, res) => {
         `).get();
         res.json({ success: true, data: config || null });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2211,7 +2175,7 @@ app.put('/billing-api/pdf-config', (req, res) => {
         const config = db.prepare('SELECT * FROM billing_pdf_config WHERE company_id = ?').get(company.id);
         res.json({ success: true, data: config });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2245,7 +2209,7 @@ app.get('/billing-api/clients', (req, res) => {
             pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total / parseInt(limit)) }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2255,14 +2219,14 @@ app.get('/billing-api/clients/:id', (req, res) => {
         if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
         res.json({ success: true, data: client });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
 app.post('/billing-api/clients', (req, res) => {
     try {
         const d = req.body;
-        const id = d.id || uuidv4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
         const company = db.prepare('SELECT id FROM billing_company LIMIT 1').get();
         
@@ -2274,7 +2238,7 @@ app.post('/billing-api/clients', (req, res) => {
         const client = db.prepare('SELECT * FROM billing_clients WHERE id = ?').get(id);
         res.json({ success: true, data: client });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2293,7 +2257,7 @@ app.put('/billing-api/clients/:id', (req, res) => {
         const client = db.prepare('SELECT * FROM billing_clients WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: client });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2302,7 +2266,7 @@ app.delete('/billing-api/clients/:id', (req, res) => {
         db.prepare('DELETE FROM billing_clients WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2322,7 +2286,7 @@ app.post('/billing-api/clients/from-patient', (req, res) => {
         const client = db.prepare('SELECT * FROM billing_clients WHERE id = ?').get(id);
         res.json({ success: true, data: client });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2362,7 +2326,7 @@ app.get('/billing-api/invoices', (req, res) => {
             pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total / parseInt(limit)) }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2383,14 +2347,14 @@ app.get('/billing-api/invoices/:id', (req, res) => {
         
         res.json({ success: true, data: { ...invoice, items, company, pdfConfig } });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
 app.post('/billing-api/invoices', (req, res) => {
     try {
         const d = req.body;
-        const id = d.id || uuidv4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
         const company = db.prepare('SELECT id FROM billing_company LIMIT 1').get();
         
@@ -2415,7 +2379,7 @@ app.post('/billing-api/invoices', (req, res) => {
         const invoice = db.prepare('SELECT * FROM billing_invoices WHERE id = ?').get(id);
         res.json({ success: true, data: invoice });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2445,7 +2409,7 @@ app.put('/billing-api/invoices/:id', (req, res) => {
         const invoice = db.prepare('SELECT * FROM billing_invoices WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: invoice });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2454,7 +2418,7 @@ app.delete('/billing-api/invoices/:id', (req, res) => {
         db.prepare('DELETE FROM billing_invoices WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2494,7 +2458,7 @@ app.get('/billing-api/quotes', (req, res) => {
             pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total / parseInt(limit)) }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2515,14 +2479,14 @@ app.get('/billing-api/quotes/:id', (req, res) => {
         
         res.json({ success: true, data: { ...quote, items, company, pdfConfig } });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
 app.post('/billing-api/quotes', (req, res) => {
     try {
         const d = req.body;
-        const id = d.id || uuidv4();
+        const id = uuidv4(); // ids are always generated by the server
         const now = new Date().toISOString();
         const company = db.prepare('SELECT id FROM billing_company LIMIT 1').get();
         
@@ -2547,7 +2511,7 @@ app.post('/billing-api/quotes', (req, res) => {
         const quote = db.prepare('SELECT * FROM billing_quotes WHERE id = ?').get(id);
         res.json({ success: true, data: quote });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2577,7 +2541,7 @@ app.put('/billing-api/quotes/:id', (req, res) => {
         const quote = db.prepare('SELECT * FROM billing_quotes WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: quote });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2586,7 +2550,7 @@ app.delete('/billing-api/quotes/:id', (req, res) => {
         db.prepare('DELETE FROM billing_quotes WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2599,7 +2563,7 @@ app.get('/billing-api/payment-methods', (req, res) => {
         const methods = db.prepare('SELECT * FROM billing_payment_methods ORDER BY is_default DESC, name').all();
         res.json({ success: true, data: methods });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2617,7 +2581,7 @@ app.post('/billing-api/payment-methods', (req, res) => {
         const method = db.prepare('SELECT * FROM billing_payment_methods WHERE id = ?').get(id);
         res.json({ success: true, data: method });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2633,7 +2597,7 @@ app.put('/billing-api/payment-methods/:id', (req, res) => {
         const method = db.prepare('SELECT * FROM billing_payment_methods WHERE id = ?').get(req.params.id);
         res.json({ success: true, data: method });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2642,7 +2606,7 @@ app.delete('/billing-api/payment-methods/:id', (req, res) => {
         db.prepare('DELETE FROM billing_payment_methods WHERE id = ?').run(req.params.id);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        serverError(res, error);
     }
 });
 
@@ -2659,88 +2623,29 @@ app.get('/billing-api/health', (req, res) => {
 // ==========================================
 
 app.use((req, res) => {
-    res.status(404).json({ success: false, error: 'Endpoint not found' });
+    res.status(404).json({ success: false, error: 'No encontrado', code: 'NOT_FOUND' });
 });
 
 app.use((err, req, res, next) => {
-    console.error('[Server] Error:', err);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    if (err.type === 'entity.parse.failed') {
+        return res.status(400).json({ success: false, error: 'El cuerpo de la solicitud no es JSON válido', code: 'INVALID_JSON' });
+    }
+    if (err.type === 'entity.too.large') {
+        return res.status(413).json({ success: false, error: 'La solicitud es demasiado grande', code: 'PAYLOAD_TOO_LARGE' });
+    }
+    return serverError(res, err);
 });
 
 // ==========================================
 // START SERVER
 // ==========================================
 
+// Schema is created/migrated as soon as the module loads, so tests can import `app`
+initializeDatabase();
+
 function startServer() {
-    initializeDatabase();
-    
-    app.listen(PORT, () => {
-        console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║         Meal Prep Planner - Unified Backend                   ║
-╠══════════════════════════════════════════════════════════════╣
-║  Status:    Running                                           ║
-║  Port:      ${PORT}                                               ║
-║  Database:  SQLite (Unified - Meal Prep + Billing)            ║
-║  URL:       http://localhost:${PORT}                            ║
-╚══════════════════════════════════════════════════════════════╝
-
-API Endpoints:
-  MEAL PREP:
-    GET    /api/ingredients          - List ingredients
-    GET    /api/ingredients/:id      - Get ingredient
-    POST   /api/ingredients          - Create ingredient
-    PUT    /api/ingredients/:id      - Update ingredient
-    DELETE /api/ingredients/:id      - Delete ingredient
-    POST   /api/ingredients/bulk     - Bulk import
-
-    GET    /api/recipes              - List recipes
-    GET    /api/recipes/:id          - Get recipe with ingredients
-    POST   /api/recipes              - Create recipe
-    PUT    /api/recipes/:id          - Update recipe
-    DELETE /api/recipes/:id          - Delete recipe
-
-    GET    /api/patients             - List patients
-    GET    /api/patients/:id         - Get patient details
-    POST   /api/patients             - Create patient
-    PUT    /api/patients/:id         - Update patient
-    DELETE /api/patients/:id         - Delete patient
-
-  BILLING (Integrated):
-    GET    /billing-api/company          - Get company info
-    PUT    /billing-api/company          - Update company
-    GET    /billing-api/pdf-config       - Get PDF config
-    PUT    /billing-api/pdf-config       - Update PDF config
-    
-    GET    /billing-api/clients          - List clients
-    GET    /billing-api/clients/:id      - Get client
-    POST   /billing-api/clients          - Create client
-    PUT    /billing-api/clients/:id      - Update client
-    DELETE /billing-api/clients/:id      - Delete client
-    
-    GET    /billing-api/invoices         - List invoices
-    GET    /billing-api/invoices/:id     - Get invoice with items
-    POST   /billing-api/invoices         - Create invoice
-    PUT    /billing-api/invoices/:id     - Update invoice
-    DELETE /billing-api/invoices/:id     - Delete invoice
-    
-    GET    /billing-api/quotes           - List quotes
-    GET    /billing-api/quotes/:id       - Get quote with items
-    POST   /billing-api/quotes           - Create quote
-    PUT    /billing-api/quotes/:id       - Update quote
-    DELETE /billing-api/quotes/:id       - Delete quote
-    
-    GET    /billing-api/payment-methods  - List payment methods
-    POST   /billing-api/payment-methods  - Create payment method
-    PUT    /billing-api/payment-methods/:id - Update
-    DELETE /billing-api/payment-methods/:id - Delete
-
-  UTILITY:
-    GET    /api/backup/export             - Full export
-    POST   /api/backup/import            - Full import
-    GET    /api/stats                    - Database stats
-    GET    /api/sync/init                - Initialize sync
-        `);
+    return app.listen(PORT, HOST, () => {
+        console.log(`[Nutri Aye] http://${HOST}:${PORT}  (base de datos: ${DB_PATH})`);
     });
 }
 
@@ -2761,4 +2666,4 @@ if (require.main === module) {
     startServer();
 }
 
-module.exports = { app, startServer };
+module.exports = { app, db, startServer };
