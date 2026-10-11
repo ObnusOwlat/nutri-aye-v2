@@ -65,3 +65,4 @@
 .recipe-allergens { background: #fee2e2; color: var(--color-danger-dark); border-radius: 8px; padding: 6px 10px; margin: 0 0 var(--space-sm); font-size: var(--font-size-sm); }
 .recipe-allergens small { color: var(--color-text-light); }
 .ingredient-item__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; font-size: var(--font-size-xs); font-weight: 600; }
+.food-row__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; margin-left: 4px; font-size: var(--font-size-xs); font-weight: 600; }

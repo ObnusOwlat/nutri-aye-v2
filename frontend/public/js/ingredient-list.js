@@ -11,7 +11,7 @@ const IngredientList = (function() {
             <li class="food-row" data-id="${UI.escapeHtml(ing.id)}">
                 <button class="food-row__main" type="button" data-action="detail">
                     <span class="category-badge category-badge--${UI.escapeHtml(ing.category)}">${UI.escapeHtml(UI.label('ingredientCategory', ing.category))}</span>
-                    <span class="food-row__name">${ing.availablePy ? '<span class="food-py" title="Se consigue en Paraguay">⭐</span> ' : ''}${UI.escapeHtml(ing.name)}${source}</span>
+                    <span class="food-row__name">${ing.availablePy ? '<span class="food-py" title="Se consigue en Paraguay">⭐</span> ' : ''}${UI.escapeHtml(ing.name)}${source}${(ing.allergens || []).map(a => ` <span class="allergen-chip" title="Alérgeno">${UI.escapeHtml(a.label)}</span>`).join('')}</span>
                     <span class="food-row__kcal">${UI.formatNumber(Math.round(ing.kcalPer100g || 0))} kcal</span>
                     <span class="food-row__macros">P ${round(ing.proteinPer100g)} · C ${round(ing.carbsPer100g)} · G ${round(ing.fatPer100g)} g</span>
                 </button>
