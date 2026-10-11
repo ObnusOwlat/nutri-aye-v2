@@ -38,7 +38,12 @@ function load() {
     return catalog;
 }
 
-const publicExercise = ({ search, ...e }) => e;
+// Without the internal search text
+function publicExercise(exercise) {
+    const copy = { ...exercise };
+    delete copy.search;
+    return copy;
+}
 
 function listExercises({ search = '', category = '', muscle = '', equipment = '', limit, offset }) {
     const { exercises } = load();
