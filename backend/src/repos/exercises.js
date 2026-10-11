@@ -17,7 +17,8 @@ function load() {
     if (catalog) return catalog;
     const wger = JSON.parse(fs.readFileSync(path.join(DIR, 'wger-exercises.json'), 'utf8'));
     const met = JSON.parse(fs.readFileSync(path.join(DIR, 'met-compendium.json'), 'utf8'));
-    const exercises = wger.exercises.map(e => ({
+    // Spanish names first, then the ones still in English
+    const exercises = [...wger.exercises].sort((a, b) => b.translated - a.translated).map(e => ({
         ...e,
         activityId: ACTIVITY_OF_CATEGORY[e.categoryId] || DEFAULT_ACTIVITY,
         search: unaccent(`${e.name} ${e.nameEn || ''}`)
@@ -37,7 +38,12 @@ function load() {
     return catalog;
 }
 
-const publicExercise = ({ search, ...e }) => e;
+// Without the internal search text
+function publicExercise(exercise) {
+    const copy = { ...exercise };
+    delete copy.search;
+    return copy;
+}
 
 function listExercises({ search = '', category = '', muscle = '', equipment = '', limit, offset }) {
     const { exercises } = load();

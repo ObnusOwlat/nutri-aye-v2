@@ -1,0 +1,219 @@
+/* planner-sidebar.css - Planificador a todo el ancho y columna izquierda (paciente, recetas, actividad) */
+
+/* ===========================================
+   FULL WIDTH: sidebar | week | nutrients
+   =========================================== */
+
+/* Below the sticky header and tabs */
+:root {
+    --planner-sticky-top: 136px;
+}
+
+body[data-tab="planner"] .nutrients-panel {
+    top: var(--planner-sticky-top);
+    max-height: calc(100vh - var(--planner-sticky-top) - var(--space-md));
+}
+
+body[data-tab="planner"] .main {
+    max-width: none;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+}
+
+.planner__body {
+    grid-template-columns: 300px minmax(0, 1fr) 300px;
+}
+
+.planner-sidebar {
+    background-color: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    position: sticky;
+    top: var(--planner-sticky-top);
+    max-height: calc(100vh - var(--planner-sticky-top) - var(--space-md));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.planner-sidebar__tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.planner-sidebar__tab {
+    flex: 1;
+    padding: var(--space-sm) var(--space-xs);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-light);
+    cursor: pointer;
+}
+
+.planner-sidebar__tab.active {
+    color: var(--color-primary-dark);
+    border-bottom-color: var(--color-primary);
+}
+
+.planner-sidebar__panel {
+    padding: var(--space-md);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.planner-sidebar__panel[hidden] {
+    display: none;
+}
+
+.planner-sidebar__filters {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.planner-sidebar__filters > * {
+    flex: 1;
+    min-width: 0;
+}
+
+.planner-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* ===========================================
+   PATIENT SHEET
+   =========================================== */
+
+.sidebar-title {
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-lg);
+    margin: 0;
+}
+
+.sidebar-subtitle {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-primary-dark);
+    margin: var(--space-sm) 0 0;
+}
+
+.sidebar-fact {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    border-bottom: 1px dashed var(--color-border);
+    padding: 2px 0;
+}
+
+.sidebar-fact span {
+    color: var(--color-text-light);
+}
+
+.sidebar-list {
+    margin: 0;
+    padding-left: var(--space-md);
+    font-size: var(--font-size-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.sidebar-list small {
+    color: var(--color-text-light);
+}
+
+.sidebar-list--tags {
+    list-style: none;
+    padding: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.sidebar-list--tags li {
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: var(--font-size-xs);
+    cursor: help;
+}
+
+.sidebar-list--alerts li small {
+    color: var(--color-danger-dark);
+}
+
+.sidebar-allergens {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-danger-dark);
+}
+
+.sidebar-note {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+}
+
+.sidebar-note--small {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.sidebar-tag {
+    background: var(--color-border);
+    border-radius: 4px;
+    padding: 0 4px;
+}
+
+/* ===========================================
+   NARROWER SCREENS
+   =========================================== */
+
+@media (max-width: 1700px) {
+    .planner__body {
+        grid-template-columns: 260px minmax(0, 1fr) 260px;
+    }
+}
+
+/* Medium screens: nutrients go under the week, the sidebar stays */
+@media (max-width: 1500px) {
+    .planner__body {
+        grid-template-columns: 260px minmax(0, 1fr);
+    }
+
+    .planner__body .nutrients-panel {
+        grid-column: 2;
+        position: static;
+        max-height: none;
+    }
+}
+
+/* Under 1280 px everything stacks: the week first */
+@media (max-width: 1280px) {
+    .planner__body {
+        grid-template-columns: 1fr;
+    }
+
+    .planner__body .nutrients-panel {
+        grid-column: auto;
+    }
+
+    .week-grid {
+        order: -1;
+    }
+
+    .planner-sidebar {
+        position: static;
+        max-height: none;
+    }
+}

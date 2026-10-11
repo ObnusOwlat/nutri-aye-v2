@@ -7,6 +7,14 @@ const RecipePicker = (function() {
     /**
      * Show recipe selection modal
      */
+    // Allergens of the selected patient in a recipe: the server's check (ingredient
+    // names vs. allergy groups); falls back to the local name match while it loads
+    function allergensOf(recipeId) {
+        const found = PlannerSidebar.warningsFor(recipeId).filter(t => t.startsWith('Contiene '));
+        if (PlannerSidebar.getSuggestions()) return { hasAllergens: found.length > 0, allergens: found.map(t => t.slice('Contiene '.length)) };
+        return State.checkRecipeAllergens(recipeId, PlannerPatient.getSelectedId());
+    }
+
     function open(day, mealType) {
         const recipes = State.getRecipes();
 
@@ -65,7 +73,7 @@ const RecipePicker = (function() {
             let allergenWarning = '';
             let hasAllergens = false;
             if (PlannerPatient.getSelectedId()) {
-                const check = State.checkRecipeAllergens(recipe.id, PlannerPatient.getSelectedId());
+                const check = allergensOf(recipe.id);
                 hasAllergens = check.hasAllergens;
                 if (check.hasAllergens) {
                     allergenWarning = `<span class="allergen-badge" title="Contiene: ${UI.escapeHtml(check.allergens.join(', '))}">⚠ Alérgeno</span>`;
@@ -98,7 +106,7 @@ const RecipePicker = (function() {
             item.addEventListener('click', () => {
                 // Check allergens before adding
                 if (PlannerPatient.getSelectedId()) {
-                    const check = State.checkRecipeAllergens(item.dataset.id, PlannerPatient.getSelectedId());
+                    const check = allergensOf(item.dataset.id);
                     if (check.hasAllergens) {
                         UI.confirm(
                             `Esta receta tiene alérgenos del paciente: ${check.allergens.join(', ')}. ¿Agregarla igual?`,

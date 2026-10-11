@@ -2,6 +2,27 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Planificador a todo el ancho: columna izquierda con paciente, recetas y actividad
+
+- **Ancho completo solo en el Planificador:** la semana queda en el centro, con Nutrientes pegado a la derecha y una columna nueva a la izquierda.
+  - Debajo de 1500 px, Nutrientes pasa abajo de la semana.
+  - Debajo de 1280 px se apila todo, con la semana primero.
+  - Las columnas quedan fijas al desplazar, debajo de la barra de pestañas.
+- **Pestaña Paciente** (`js/planner-sidebar.js`):
+  - Muestra edad, sexo, peso, IMC, objetivo, meta, condiciones con sus notas, las reglas que se aplican y qué evitar.
+  - "Alertas de la semana" lista las recetas planificadas que chocan con el paciente y por qué.
+  - Reemplaza la barra de datos de arriba: el selector de paciente sigue en su lugar.
+- **Pestaña Recetas** (`js/planner-sidebar-recipes.js`):
+  - Buscador por nombre o ingrediente, filtro por comida y orden "Sugeridas para el paciente", con motivos y advertencias de `/api/patients/:id/recipe-suggestions`.
+  - Se arrastran a un hueco de la semana, o se tocan para elegir el día y la comida.
+- **Pestaña Actividad** (`js/planner-sidebar-activity.js`):
+  - Calcula las kcal por sesión, por semana y por día con el peso y la edad del paciente (MET 2024, tabla 60+ cuando corresponde).
+  - Buscador de ejercicios de wger por zona y músculo, con foto, licencia y autor. "Estimar kcal" lleva el ejercicio a la calculadora.
+  - Todavía no se guarda en el plan.
+- **Advertiencias ⚠ de la grilla y del selector de recetas:** ahora usan el chequeo del server (alérgenos por grupo, por ejemplo "Intolerancia a la lactosa" → lácteos). Antes buscaban el nombre de la condición dentro del nombre del ingrediente y casi nunca avisaban.
+- **CSP:** se permiten imágenes de `https://wger.de`, solo para las fotos de los ejercicios.
+- **Catálogo de ejercicios:** primero los que tienen nombre en español.
+
 ## Sugerencias de recetas y ejercicios (parte del server)
 
 - **`GET /api/patients/:id/recipe-suggestions?mealType=&limit=&week=&days=`:** ordena las recetas del consultorio para un paciente. Devuelve `score`, `reasons` ("Bajo en sodio (164 mg)", "Aporta 101 % de folato del día") y `warnings`. Son una guía; decide la nutricionista.

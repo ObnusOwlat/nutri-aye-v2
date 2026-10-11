@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="css/planner-bar.css">
     <link rel="stylesheet" href="css/week-planner.css">
     <link rel="stylesheet" href="css/planner-nutrients.css">
+    <link rel="stylesheet" href="css/planner-sidebar.css">
+    <link rel="stylesheet" href="css/planner-sidebar-items.css">
     <link rel="stylesheet" href="css/ingredients.css">
     <link rel="stylesheet" href="css/recipes.css">
     <link rel="stylesheet" href="css/misc.css">
@@ -91,12 +93,6 @@
                             <option value="">-- Sin paciente --</option>
                         </select>
                     </div>
-                    <div class="planner__patient-info" id="planner-patient-info" style="display:none;">
-                        <span class="planner__patient-goal" id="planner-patient-goal"></span>
-                        <span class="planner__patient-target" id="planner-patient-target"></span>
-                        <span class="planner__patient-restrictions" id="planner-patient-restrictions"></span>
-                        <span class="planner__patient-metrics" id="planner-patient-metrics"></span>
-                    </div>
                 </div>
 
                 <div class="planner__header">
@@ -131,6 +127,47 @@
                     </div>
                 </div>
                 <div class="planner__body">
+                    <aside class="planner-sidebar" id="planner-sidebar" aria-label="Paciente, recetas y actividad">
+                        <div class="planner-sidebar__tabs" role="tablist">
+                            <button class="planner-sidebar__tab active" data-sidebar-tab="patient" role="tab">Paciente</button>
+                            <button class="planner-sidebar__tab" data-sidebar-tab="recipes" role="tab">Recetas</button>
+                            <button class="planner-sidebar__tab" data-sidebar-tab="activity" role="tab">Actividad</button>
+                        </div>
+                        <div class="planner-sidebar__panel" data-sidebar-panel="patient" id="planner-sidebar-patient"></div>
+                        <div class="planner-sidebar__panel" data-sidebar-panel="recipes" hidden>
+                            <input type="search" class="form-input" id="sidebar-recipe-search" placeholder="Buscar receta o ingrediente…" aria-label="Buscar receta">
+                            <div class="planner-sidebar__filters">
+                                <select class="form-select" id="sidebar-recipe-meal" aria-label="Comida"></select>
+                                <select class="form-select" id="sidebar-recipe-sort" aria-label="Orden">
+                                    <option value="suggested">Sugeridas para el paciente</option>
+                                    <option value="name">Nombre</option>
+                                    <option value="kcal">Menos kcal primero</option>
+                                </select>
+                            </div>
+                            <p class="sidebar-note sidebar-note--small">Arrastrá una receta a un hueco de la semana, o tocala para elegir día y comida.</p>
+                            <div class="planner-sidebar__list" id="sidebar-recipe-list"></div>
+                        </div>
+                        <div class="planner-sidebar__panel" data-sidebar-panel="activity" hidden>
+                            <div class="sidebar-activity__calc">
+                                <h5 class="sidebar-subtitle">Gasto estimado</h5>
+                                <select class="form-select" id="sidebar-activity" aria-label="Actividad"></select>
+                                <div class="planner-sidebar__filters">
+                                    <label class="sidebar-field">Minutos<input type="number" class="form-input" id="sidebar-activity-minutes" value="30" min="1" max="600"></label>
+                                    <label class="sidebar-field">Veces/sem.<input type="number" class="form-input" id="sidebar-activity-times" value="3" min="1" max="14"></label>
+                                    <label class="sidebar-field">Peso (kg)<input type="number" class="form-input" id="sidebar-activity-weight" placeholder="auto" min="10" max="400" step="0.1"></label>
+                                </div>
+                                <div id="sidebar-activity-result"></div>
+                            </div>
+                            <h5 class="sidebar-subtitle">Ejercicios</h5>
+                            <input type="search" class="form-input" id="sidebar-exercise-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio">
+                            <div class="planner-sidebar__filters">
+                                <select class="form-select" id="sidebar-exercise-category" aria-label="Zona"></select>
+                                <select class="form-select" id="sidebar-exercise-muscle" aria-label="Músculo"></select>
+                            </div>
+                            <div class="planner-sidebar__list" id="sidebar-exercise-list"></div>
+                            <p class="sidebar-note sidebar-note--small">Ejercicios: wger.de (CC-BY-SA). MET: Compendio de Actividades Físicas 2024 (adultos y 60+).</p>
+                        </div>
+                    </aside>
                     <div class="week-grid" id="week-grid"></div>
                     <aside class="nutrients-panel" id="planner-nutrients" aria-label="Nutrientes de lo planificado">
                         <div class="nutrients-panel__header">
@@ -298,6 +335,9 @@
     <script src="js/planner-recipe-picker.js"></script>
     <script src="js/planner.js"></script>
     <script src="js/planner-nutrients.js"></script>
+    <script src="js/planner-sidebar.js"></script>
+    <script src="js/planner-sidebar-recipes.js"></script>
+    <script src="js/planner-sidebar-activity.js"></script>
     <script src="js/patient-form.js"></script>
     <script src="js/patient-profile.js"></script>
     <script src="js/patient-billing.js"></script>
