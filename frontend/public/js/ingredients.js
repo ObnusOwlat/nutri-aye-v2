@@ -31,7 +31,6 @@ const Ingredients = (function() {
         State.subscribe('ingredients:updated', renderIngredients);
         renderIngredients();
 
-        console.log('[Ingredients] Initialized');
     }
 
     /**

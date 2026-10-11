@@ -41,7 +41,6 @@ const Planner = (function() {
         renderWeekPlan();
         updateDietDisplay();
 
-        console.log('[Planner] Initialized');
     }
 
     /**
@@ -245,6 +244,9 @@ const Planner = (function() {
      * Handle template modal actions
      */
     document.addEventListener('click', (e) => {
+        if (e.target.closest('[data-action="add-template"]')) {
+            showAddTemplateModal();
+        }
         if (e.target.closest('.btn-edit-template')) {
             const id = e.target.closest('.btn-edit-template').dataset.id;
             showEditTemplateModal(id);
@@ -311,8 +313,8 @@ const Planner = (function() {
 
             const week = {};
             for (const meal of planner.meals) {
-                if (!meal.recipe_id || !State.getRecipe(meal.recipe_id)) continue;
-                (week[meal.day] = week[meal.day] || {})[meal.meal_type] = meal.recipe_id;
+                if (!meal.recipeId || !State.getRecipe(meal.recipeId)) continue;
+                (week[meal.day] = week[meal.day] || {})[meal.mealType] = meal.recipeId;
             }
             State.setWeekPlan(week);
             UI.toastInfo(`Loaded ${State.getPatient(patientId)?.firstName}'s week`);
@@ -349,6 +351,7 @@ const Planner = (function() {
             body: JSON.stringify({ meals })
         });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        return (await res.json()).skippedMeals || 0;
     }
 
     /**
@@ -430,6 +433,7 @@ const Planner = (function() {
             
             UI.toastSuccess(`Plan saved for ${State.getPatient(selectedPatientId)?.firstName}`);
             savePatientWeekToServer(selectedPatientId, weekPlan)
+                .then(skipped => skipped && UI.toastWarning(`${skipped} comida(s) usan recetas que solo están en este navegador y no se guardaron en el servidor`))
                 .catch(e => UI.toastWarning('Saved in this browser only: ' + e.message));
             
             // Refresh patient plans if viewing a patient

@@ -13,12 +13,27 @@ test('weekly planner per patient with all six meal types', async () => {
     const planner = (await api().post('/api/planner').send({ patientId: p.id })).body.data;
     const meals = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'snack', 'dinner']
         .map(mealType => ({ day: 'monday', mealType, recipeId: recipe.id }));
-    meals.push({ day: 'funday', mealType: 'lunch', recipeId: recipe.id });
     assert.equal((await api().put(`/api/planner/${planner.id}`).send({ meals })).status, 200);
 
     const list = await api().get(`/api/planner?patientId=${p.id}`);
     assert.equal(list.body.data[0].meals.length, 6);
-    assert.equal(list.body.data[0].meals[0].recipe_name, 'Arroz P');
+    assert.equal(list.body.data[0].meals[0].recipeName, 'Arroz P');
+    assert.equal(list.body.data[0].meals[0].mealType, 'breakfast');
+    assert.equal(list.body.data[0].patientId, p.id);
+
+    // Invalid day: 400 and the saved week is untouched
+    const badDay = await api().put(`/api/planner/${planner.id}`).send({ meals: [{ day: 'funday', mealType: 'lunch' }] });
+    assert.equal(badDay.status, 400);
+    assert.equal((await api().get(`/api/planner?patientId=${p.id}`)).body.data[0].meals.length, 6);
+
+    // Unknown recipe (only in a browser): skipped and reported, the rest is saved
+    const partial = await api().put(`/api/planner/${planner.id}`).send({
+        meals: [{ day: 'monday', mealType: 'lunch', recipeId: 'solo-local' }, { day: 'tuesday', mealType: 'lunch', recipeId: recipe.id }]
+    });
+    assert.equal(partial.status, 200);
+    assert.equal(partial.body.skippedMeals, 1);
+    assert.equal(partial.body.data.meals.length, 1);
+    assert.equal((await api().put('/api/planner/nope').send({ meals: [] })).status, 404);
 
     assert.equal((await api().delete(`/api/planner/${planner.id}`)).status, 200);
     assert.equal((await api().get(`/api/planner?patientId=${p.id}`)).body.data.length, 0);
@@ -33,7 +48,7 @@ test('sync pull: library ingredients plus USDA foods used in recipes, patients w
     const p = await createPatient({ firstName: 'Sync' });
     await api().post(`/api/patients/${p.id}/metrics`).send({ weight: 60, height: 160 });
 
-    const pull = (await api().get('/api/sync/pull')).body;
+    const pull = (await api().get('/api/sync/pull')).body.data;
     const ids = pull.ingredients.map(i => i.id);
     assert.ok(ids.includes(own.id));
     assert.ok(ids.includes(usdaUsed.id));
@@ -45,11 +60,8 @@ test('sync pull: library ingredients plus USDA foods used in recipes, patients w
     assert.ok(recipe.nutrition.calories > 0);
 });
 
-test('backup export and stats', async () => {
-    const backup = await api().get('/api/backup/export');
-    assert.equal(backup.status, 200);
-    assert.ok(Array.isArray(backup.body.patients));
+test('stats', async () => {
     const stats = await api().get('/api/stats');
     assert.equal(stats.body.success, true);
-    assert.equal(typeof stats.body.stats.ingredients, 'number');
+    assert.equal(typeof stats.body.data.ingredients, 'number');
 });

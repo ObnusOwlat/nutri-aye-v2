@@ -32,7 +32,6 @@ const UI = (function() {
         // Bind events
         bindEvents();
 
-        console.log('[UI] Initialized');
     }
 
     /**
@@ -55,7 +54,6 @@ const UI = (function() {
 
         // Print buttons
         document.getElementById('btn-print')?.addEventListener('click', () => printPage());
-        document.getElementById('btn-print-shopping')?.addEventListener('click', () => printShoppingList());
 
         // Toast delegation (single listener)
         toastContainer.addEventListener('click', handleToastClose);
@@ -79,7 +77,6 @@ const UI = (function() {
      * @param {Object} config - Modal configuration
      */
     function openModal(config) {
-        console.log('[UI] openModal called with:', config.title, 'onConfirm:', typeof config.onConfirm);
         currentModalConfig = config;
 
         // Set title
@@ -124,10 +121,8 @@ const UI = (function() {
         // Bind confirm handler
         if (config.onConfirm) {
             modalConfirmBtn.onclick = () => {
-                console.log('[UI] Confirm clicked, onConfirm:', typeof config.onConfirm);
                 try {
                     const result = config.onConfirm();
-                    console.log('[UI] onConfirm result:', result);
                     if (result !== false) {
                         closeModal();
                     }
@@ -178,19 +173,14 @@ const UI = (function() {
      * Handle confirm button click (called directly from HTML onclick)
      */
     function handleConfirmClick() {
-        console.log('[UI] handleConfirmClick called');
-        console.log('[UI] currentModalConfig:', currentModalConfig);
         
         if (!currentModalConfig) {
-            console.log('[UI] No config!');
             return;
         }
         
         if (currentModalConfig.onConfirm) {
-            console.log('[UI] Calling onConfirm...');
             try {
                 const result = currentModalConfig.onConfirm();
-                console.log('[UI] Result:', result);
                 if (result !== false) {
                     closeModal();
                 }
@@ -305,30 +295,6 @@ const UI = (function() {
      */
     function printPage() {
         window.print();
-    }
-
-    /**
-     * Print shopping list only
-     */
-    function printShoppingList() {
-        // Show only shopping tab content
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            if (tab.id !== 'tab-shopping') {
-                tab.style.display = 'none';
-            }
-        });
-
-        // Print
-        window.print();
-
-        // Restore tabs after print
-        setTimeout(() => {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                if (tab.classList.contains('active')) {
-                    tab.style.display = 'block';
-                }
-            });
-        }, 100);
     }
 
     // ==========================================
@@ -526,7 +492,6 @@ const UI = (function() {
 
         // Print
         printPage,
-        printShoppingList,
 
         // Form helpers
         createFormGroup,

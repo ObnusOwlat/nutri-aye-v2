@@ -1,26 +1,21 @@
-// Database stats
+// Health check and database stats
 const express = require('express');
 const { db } = require('../db/connection');
-const { serverError } = require('../lib/errors');
 
 const router = express.Router();
 
+const health = (req, res) => res.json({ success: true, status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+router.get('/api/health', health);
+router.get('/billing-api/health', health);
+
+const TABLES = {
+    ingredients: 'ingredients', recipes: 'recipes', patients: 'patients', categories: 'categories',
+    billingClients: 'billing_clients', billingInvoices: 'billing_invoices', billingQuotes: 'billing_quotes'
+};
+
 router.get('/api/stats', (req, res) => {
-    try {
-        const stats = {
-            ingredients: db.prepare('SELECT COUNT(*) as count FROM ingredients').get().count,
-            recipes: db.prepare('SELECT COUNT(*) as count FROM recipes').get().count,
-            patients: db.prepare('SELECT COUNT(*) as count FROM patients').get().count,
-            categories: db.prepare('SELECT COUNT(*) as count FROM categories').get().count,
-            // Billing stats
-            billingClients: db.prepare('SELECT COUNT(*) as count FROM billing_clients').get().count,
-            billingInvoices: db.prepare('SELECT COUNT(*) as count FROM billing_invoices').get().count,
-            billingQuotes: db.prepare('SELECT COUNT(*) as count FROM billing_quotes').get().count
-        };
-        res.json({ success: true, stats });
-    } catch (error) {
-        serverError(res, error);
-    }
+    const data = Object.fromEntries(Object.entries(TABLES).map(([key, table]) => [key, db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n]));
+    res.json({ success: true, data });
 });
 
 module.exports = router;

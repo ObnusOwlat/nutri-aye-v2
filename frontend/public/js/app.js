@@ -16,7 +16,6 @@ const App = (function() {
      * Initialize application
      */
     function init() {
-        console.log('[App] Starting Nutri Aye...');
 
         // Cache DOM elements
         tabs = document.querySelectorAll('.tabs__tab');
@@ -44,7 +43,6 @@ const App = (function() {
         }
 
         // Log initialization complete
-        console.log('[App] Initialization complete');
 
         return {
             version: '1.0.0',
@@ -107,7 +105,6 @@ const App = (function() {
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        console.log('[App] Tab switched to:', tabId);
     }
 
     /**
@@ -139,10 +136,8 @@ const App = (function() {
      */
     function handleVisibilityChange() {
         if (document.hidden) {
-            console.log('[App] Page hidden');
             // Could pause non-essential processes here
         } else {
-            console.log('[App] Page visible');
             // Resume processes, check for updates
             State.emit('state:resumed');
         }
@@ -215,5 +210,4 @@ const App = (function() {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
-    // Note: event-handlers.js is disabled - events are bound in individual modules
 });

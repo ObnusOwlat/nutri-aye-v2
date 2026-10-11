@@ -1,11 +1,16 @@
 // Database rows (snake_case) -> API objects (camelCase)
+const { NUTRIENT_FIELDS } = require('./nutrient-fields');
 
-// DATA TRANSFORMATIONS (snake_case → camelCase)
-// ==========================================
+// Generic row -> camelCase keys (billing, planner); integer flags stay numbers
+const camelKey = (k) => k.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+function camelizeRow(row) {
+    if (!row) return null;
+    return Object.fromEntries(Object.entries(row).map(([k, v]) => [camelKey(k), v]));
+}
 
 function transformIngredient(row) {
     if (!row) return null;
-    return {
+    const ingredient = {
         id: row.id,
         name: row.name,
         category: row.category || row.category_id,
@@ -13,46 +18,14 @@ function transformIngredient(row) {
         unit: row.unit_id,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        kcalPer100g: row.kcal_per_100g,
-        proteinPer100g: row.protein_per_100g,
-        carbsPer100g: row.carbs_per_100g,
-        fatPer100g: row.fat_per_100g,
-        saturatedFatPer100g: row.saturated_fat_per_100g,
-        polyunsaturatedFatPer100g: row.polyunsaturated_fat_per_100g,
-        monounsaturatedFatPer100g: row.monounsaturated_fat_per_100g,
-        sugarPer100g: row.sugar_per_100g,
-        fiberPer100g: row.fiber_per_100g,
-        cholesterolPer100g: row.cholesterol_per_100g,
-        sodiumPer100g: row.sodium_per_100g,
-        vitaminAPer100g: row.vitamin_a_per_100g,
-        vitaminB1Per100g: row.vitamin_b1_per_100g,
-        vitaminB2Per100g: row.vitamin_b2_per_100g,
-        vitaminB3Per100g: row.vitamin_b3_per_100g,
-        vitaminB5Per100g: row.vitamin_b5_per_100g,
-        vitaminB6Per100g: row.vitamin_b6_per_100g,
-        vitaminB9Per100g: row.vitamin_b9_per_100g,
-        vitaminB12Per100g: row.vitamin_b12_per_100g,
-        vitaminCPer100g: row.vitamin_c_per_100g,
-        vitaminDPer100g: row.vitamin_d_per_100g,
-        vitaminEPer100g: row.vitamin_e_per_100g,
-        vitaminKPer100g: row.vitamin_k_per_100g,
-        magnesiumPer100g: row.magnesium_per_100g,
-        calciumPer100g: row.calcium_per_100g,
-        phosphorusPer100g: row.phosphorus_per_100g,
-        potassiumPer100g: row.potassium_per_100g,
-        ironPer100g: row.iron_per_100g,
-        seleniumPer100g: row.selenium_per_100g,
-        zincPer100g: row.zinc_per_100g,
-        manganesePer100g: row.manganese_per_100g,
-        copperPer100g: row.copper_per_100g,
         nameEn: row.name_en,
         source: row.source,
         fdcId: row.fdc_id,
         sourceCategory: row.source_category
     };
+    for (const { column, key } of NUTRIENT_FIELDS) ingredient[key] = row[column];
+    return ingredient;
 }
-
-
 
 function transformRecipe(row) {
     if (!row) return null;
@@ -139,4 +112,4 @@ function transformCondition(row) {
     };
 }
 
-module.exports = { transformIngredient, transformRecipe, transformPatient, transformMetric, transformCondition };
+module.exports = { camelizeRow, transformIngredient, transformRecipe, transformPatient, transformMetric, transformCondition };
