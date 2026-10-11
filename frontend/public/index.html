@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/modal-toast.css">
     <link rel="stylesheet" href="css/planner-bar.css">
     <link rel="stylesheet" href="css/week-planner.css">
+    <link rel="stylesheet" href="css/planner-nutrients.css">
     <link rel="stylesheet" href="css/ingredients.css">
     <link rel="stylesheet" href="css/recipes.css">
     <link rel="stylesheet" href="css/misc.css">
@@ -129,7 +130,16 @@
                         <button class="btn btn--danger" id="btn-clear-week">Clear Week</button>
                     </div>
                 </div>
-                <div class="week-grid" id="week-grid"></div>
+                <div class="planner__body">
+                    <div class="week-grid" id="week-grid"></div>
+                    <aside class="nutrients-panel" id="planner-nutrients" aria-label="Nutrientes de lo planificado">
+                        <div class="nutrients-panel__header">
+                            <h3 class="nutrients-panel__title">Nutrientes</h3>
+                            <select id="planner-nutrients-day" class="form-select" aria-label="Día"></select>
+                        </div>
+                        <div class="nutrients-panel__body" id="planner-nutrients-body"></div>
+                    </aside>
+                </div>
             </div>
         </section>
 
@@ -287,6 +297,7 @@
     <script src="js/planner-patient.js"></script>
     <script src="js/planner-recipe-picker.js"></script>
     <script src="js/planner.js"></script>
+    <script src="js/planner-nutrients.js"></script>
     <script src="js/patient-form.js"></script>
     <script src="js/patient-profile.js"></script>
     <script src="js/patient-billing.js"></script>
