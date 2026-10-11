@@ -66,7 +66,7 @@ const Ingredients = (function() {
         UI.confirmDanger('Delete ALL ingredients? This cannot be undone!', () => {
             State.deleteAllIngredients();
             UI.toastSuccess('All ingredients deleted');
-        });
+        }, 'Borrar del navegador');
     }
 
     /**

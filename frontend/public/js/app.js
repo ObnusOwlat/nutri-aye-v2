@@ -171,27 +171,6 @@ const App = (function() {
         };
     }
 
-    /**
-     * Reset application data
-     */
-    function reset() {
-        UI.confirmDanger(
-            'This will delete ALL your data including ingredients, recipes, meal plans, and patients. This cannot be undone!',
-            () => {
-                // Clear all localStorage keys
-                const keys = [
-                    'mp_ingredients_v1', 'mp_dishes_v3', 'mp_week_v3', 'mp_diet_v3',
-                    'mp_patients_v1', 'mp_patient_metrics_v1', 'mp_patient_conditions_v1',
-                    'mp_patient_plans_v1', 'mp_patient_progress_v1'
-                ];
-                keys.forEach(key => localStorage.removeItem(key));
-
-                // Reload page
-                window.location.reload();
-            }
-        );
-    }
-
     // ==========================================
     // PUBLIC API
     // ==========================================
@@ -200,7 +179,6 @@ const App = (function() {
         init,
         switchTab,
         getInfo,
-        reset,
         get currentTab() {
             return currentTab;
         }

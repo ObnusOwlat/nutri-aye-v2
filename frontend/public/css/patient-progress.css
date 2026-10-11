@@ -1,0 +1,242 @@
+/* patient-progress.css - Seguimiento, mejoras de formularios y responsive de pacientes */
+
+   PROGRESS
+   =========================================== */
+
+.progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.progress-section__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.progress-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-md);
+}
+
+.progress-summary__card {
+    padding: var(--space-lg);
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-md);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+}
+
+.progress-summary__card.positive {
+    border-left: 4px solid var(--color-success);
+}
+
+.progress-summary__card.negative {
+    border-left: 4px solid var(--color-danger);
+}
+
+.progress-summary__value {
+    display: block;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.progress-summary__label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    margin-top: var(--space-xs);
+}
+
+.progress-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.progress-card {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+}
+
+.progress-card__date {
+    text-align: center;
+    min-width: 60px;
+    padding: var(--space-sm);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+}
+
+.progress-card__day {
+    display: block;
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+}
+
+.progress-card__full-date {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+}
+
+.progress-card__content {
+    flex: 1;
+}
+
+.progress-card__metrics {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-sm);
+}
+
+.progress-card__metric {
+    font-size: var(--font-size-sm);
+}
+
+.progress-card__symptoms {
+    font-size: var(--font-size-sm);
+    color: var(--color-warning);
+    margin-bottom: var(--space-sm);
+}
+
+.progress-card__notes {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+.progress-card__actions {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+/* ===========================================
+   FORM ENHANCEMENTS
+   =========================================== */
+
+.form-range {
+    width: 100%;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-border);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+}
+
+.form-range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    margin-top: var(--space-xs);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+.symptoms-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+}
+
+.symptoms-checkboxes .form-checkbox {
+    font-size: var(--font-size-sm);
+}
+
+.dietary-considerations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@media (max-width: 1024px) {
+    .plan-editor__grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .patient-profile__header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .patient-profile__stats {
+        justify-content: center;
+    }
+
+    .patient-profile__actions {
+        width: 100%;
+        flex-direction: row;
+    }
+
+    .patient-profile__actions .btn {
+        flex: 1;
+    }
+
+    .patient-form__row,
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .plan-editor__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .symptoms-checkboxes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .patient-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .patient-card__actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .progress-card {
+        flex-direction: column;
+    }
+
+    .progress-card__date {
+        display: flex;
+        gap: var(--space-sm);
+        justify-content: center;
+    }
+
+    .progress-card__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
