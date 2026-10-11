@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="css/planner-sidebar-items.css">
     <link rel="stylesheet" href="css/ingredients.css">
     <link rel="stylesheet" href="css/catalog.css">
+    <link rel="stylesheet" href="css/catalog-filters.css">
     <link rel="stylesheet" href="css/recipes.css">
     <link rel="stylesheet" href="css/misc.css">
     <link rel="stylesheet" href="css/responsive.css">
@@ -206,26 +207,22 @@
                     <button class="catalog-views__btn active" data-view="own" type="button">Mis alimentos</button>
                     <button class="catalog-views__btn" data-view="catalog" type="button">Catálogo (USDA y básico)</button>
                 </div>
-                <div class="catalog-search">
-                    <input type="text" id="ingredient-search" class="form-input" placeholder="Buscar en mis alimentos..." autocomplete="off">
-                    <select id="ingredient-source" class="form-select hidden" aria-label="Origen">
-                        <option value="">Todo el catálogo</option>
-                        <option value="usda">USDA</option>
-                        <option value="calories_in">Catálogo básico</option>
-                    </select>
+                <div class="catalog-layout">
+                    <aside class="food-filters" id="ingredient-filters" aria-label="Filtros de alimentos"></aside>
+                    <div class="catalog-main">
+                        <div class="catalog-search">
+                            <input type="text" id="ingredient-search" class="form-input" placeholder="Buscar en mis alimentos..." autocomplete="off">
+                            <select id="ingredient-source" class="form-select hidden" aria-label="Fuente de los datos">
+                                <option value="">Todo el catálogo</option>
+                                <option value="usda">USDA</option>
+                                <option value="calories_in">Catálogo básico</option>
+                            </select>
+                        </div>
+                        <div class="food-filters__chips" id="ingredient-filter-chips"></div>
+                        <div class="ingredients__list" id="ingredients-list"></div>
+                        <div class="catalog-pager" id="ingredients-pager"></div>
+                    </div>
                 </div>
-                <div class="category-filter">
-                    <button class="category-filter__btn active" data-category="all">Todas</button>
-                    <button class="category-filter__btn" data-category="protein">Proteínas</button>
-                    <button class="category-filter__btn" data-category="carbs">Carbohidratos</button>
-                    <button class="category-filter__btn" data-category="fats">Grasas</button>
-                    <button class="category-filter__btn" data-category="vegetables">Verduras</button>
-                    <button class="category-filter__btn" data-category="fruits">Frutas</button>
-                    <button class="category-filter__btn" data-category="dairy">Lácteos</button>
-                    <button class="category-filter__btn" data-category="mixed">Mixtos</button>
-                </div>
-                <div class="ingredients__list" id="ingredients-list"></div>
-                <div class="catalog-pager" id="ingredients-pager"></div>
             </div>
         </section>
 
@@ -342,6 +339,7 @@
     <script src="js/ingredient-detail.js"></script>
     <script src="js/ingredient-list.js"></script>
     <script src="js/ingredient-import.js"></script>
+    <script src="js/ingredient-filters.js"></script>
     <script src="js/ingredients.js"></script>
     <script src="js/recipe-ingredient-search.js"></script>
     <script src="js/recipe-lines.js"></script>

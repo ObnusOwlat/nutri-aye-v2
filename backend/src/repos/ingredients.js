@@ -6,6 +6,7 @@ const { db, unaccent } = require('../db/connection');
 const { NUTRIENT_FIELDS } = require('../nutrient-fields');
 const { transformIngredient } = require('../transforms');
 const { newId, nowIso } = require('../lib/http');
+const { subgroupOf, formOf } = require('../lib/food-classify');
 
 const COLUMNS = NUTRIENT_FIELDS.map(f => f.column);
 const VISIBLE = '(org_id IS NULL OR org_id = @orgId) AND deactivated_at IS NULL';
@@ -15,8 +16,8 @@ const stmts = {
     byId: db.prepare(`SELECT * FROM v_ingredient_with_category WHERE id = @id AND ${VISIBLE}`),
     own: db.prepare('SELECT 1 FROM ingredients WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL'),
     insert: db.prepare(`
-        INSERT INTO ingredients (id, org_id, source, name, category_id, unit_id, created_at, updated_at, ${COLUMNS.join(', ')})
-        VALUES (@id, @orgId, 'user', @name, @category, @unit, @now, @now, ${COLUMNS.map(c => `@${c}`).join(', ')})
+        INSERT INTO ingredients (id, org_id, source, name, category_id, unit_id, subgroup, food_form, created_at, updated_at, ${COLUMNS.join(', ')})
+        VALUES (@id, @orgId, 'user', @name, @category, @unit, @subgroup, @foodForm, @now, @now, ${COLUMNS.map(c => `@${c}`).join(', ')})
     `),
     update: db.prepare(`
         UPDATE ingredients SET
@@ -33,7 +34,21 @@ const stmts = {
         WHERE id = @id AND org_id = @orgId AND deactivated_at IS NULL
     `),
     reactivate: db.prepare('UPDATE ingredients SET deactivated_at = NULL, deactivated_by = NULL WHERE id = @id AND org_id = @orgId'),
+    setGroups: db.prepare('UPDATE ingredients SET subgroup = @subgroup, food_form = @foodForm WHERE id = @id'),
+    groupSource: db.prepare('SELECT i.name, i.name_en, i.source_category, i.category_id FROM ingredients i WHERE i.id = ?')
 };
+
+// Subgroup ("origen") and form from the names: own foods are classified like the catalog
+function groupsOf({ name, nameEn = null, category, sourceCategory = null }) {
+    const food = { name, nameEn, category, sourceCategory };
+    return { subgroup: subgroupOf(food), foodForm: formOf(food) };
+}
+
+function reclassify(id) {
+    const row = stmts.groupSource.get(id);
+    if (row) stmts.setGroups.run({ id, ...groupsOf({ name: row.name, nameEn: row.name_en, category: row.category_id, sourceCategory: row.source_category }) });
+}
+
 
 
 // API object -> named statement params (missing nutrients: null on update, 0 on insert)
@@ -43,8 +58,16 @@ function toParams(data, missing) {
     return params;
 }
 
-// scope: 'own' (the consultorio's foods), 'catalog' (shared foods) or both
-function search(ctx, { search = '', category = '', source = '', scope = '', sort, order, limit, offset }) {
+const list = (value) => (Array.isArray(value) ? value : String(value || '').split(',')).map(v => String(v).trim()).filter(Boolean);
+const inList = (column, values, where, params) => {
+    if (!values.length) return;
+    where.push(`${column} IN (${values.map(() => '?').join(',')})`);
+    params.push(...values);
+};
+
+// Conditions shared by the list and the counts. Skipping a filter counts every
+// value of it: the tree shows how many foods each option would give.
+function filters(ctx, { search = '', category = '', subgroup = '', form = '', source = '', scope = '' }, skip = []) {
     const where = ['(org_id IS NULL OR org_id = ?)', 'deactivated_at IS NULL'];
     const params = [ctx.orgId];
     if (scope === 'own') where.push('org_id IS NOT NULL');
@@ -57,9 +80,28 @@ function search(ctx, { search = '', category = '', source = '', scope = '', sort
         where.push('(unaccent(name) LIKE ? OR unaccent(name_en) LIKE ?)');
         params.push(`%${term}%`, `%${term}%`);
     }
-    if (category) {
-        where.push('category_id = ?');
-        params.push(category);
+    // Whole categories OR chosen subgroups ("category.subgroup"): "Verduras" + "Vaca"
+    // gives every vegetable and the beef, not the foods that are both
+    if (!skip.includes('category')) {
+        const categories = list(category), subgroups = list(subgroup).filter(s => s.includes('.'));
+        const parts = [];
+        if (categories.length) {
+            parts.push(`category_id IN (${categories.map(() => '?').join(',')})`);
+            params.push(...categories);
+        }
+        if (subgroups.length) {
+            parts.push(`(category_id || '.' || COALESCE(subgroup, 'other')) IN (${subgroups.map(() => '?').join(',')})`);
+            params.push(...subgroups);
+        }
+        if (parts.length) where.push(`(${parts.join(' OR ')})`);
+    }
+    if (!skip.includes('form')) {
+        const forms = list(form);
+        const known = forms.filter(f => f !== 'none');
+        if (forms.includes('none')) {
+            where.push(`(food_form IS NULL${known.length ? ` OR food_form IN (${known.map(() => '?').join(',')})` : ''})`);
+            params.push(...known);
+        } else inList('food_form', known, where, params);
     }
     if (source === 'usda') {
         where.push("source LIKE 'usda%'"); // both USDA datasets
@@ -67,6 +109,34 @@ function search(ctx, { search = '', category = '', source = '', scope = '', sort
         where.push('source = ?');
         params.push(source);
     }
+    return { whereSql: where.join(' AND '), params, terms };
+}
+
+// Counts for the filter tree: per category and subgroup (with the chosen
+// forms) and per form (with the chosen categories/subgroups)
+function facets(ctx, query) {
+    const tree = filters(ctx, query, ['category']);
+    const byGroup = db.prepare(`
+        SELECT category_id AS category, COALESCE(subgroup, 'other') AS subgroup, COUNT(*) AS n
+        FROM ingredients WHERE ${tree.whereSql} GROUP BY 1, 2
+    `).all(...tree.params);
+    const byForm = filters(ctx, query, ['form']);
+    const forms = db.prepare(`
+        SELECT COALESCE(food_form, 'none') AS form, COUNT(*) AS n FROM ingredients WHERE ${byForm.whereSql} GROUP BY 1
+    `).all(...byForm.params);
+
+    const categories = {};
+    for (const { category, subgroup, n } of byGroup) {
+        const entry = categories[category] || (categories[category] = { total: 0, subgroups: {} });
+        entry.total += n;
+        entry.subgroups[subgroup] = n;
+    }
+    return { categories, forms: Object.fromEntries(forms.map(f => [f.form, f.n])) };
+}
+
+// scope: 'own' (the consultorio's foods), 'catalog' (shared foods) or both
+function search(ctx, { sort, order, limit, offset, ...query }) {
+    const { whereSql, params, terms } = filters(ctx, query);
 
     // Searching without an explicit sort: names starting with the first word
     // first, then shorter (more basic) names: "Limón, crudo" before drinks
@@ -78,7 +148,6 @@ function search(ctx, { search = '', category = '', source = '', scope = '', sort
         orderParams.push(`${terms[0]}%`);
     }
 
-    const whereSql = where.join(' AND ');
     const { total } = db.prepare(`SELECT COUNT(*) AS total FROM v_ingredient_with_category WHERE ${whereSql}`).get(...params);
     const rows = db.prepare(`
         SELECT * FROM v_ingredient_with_category WHERE ${whereSql}
@@ -92,7 +161,8 @@ const isOwn = (ctx, id) => !!stmts.own.get({ id, orgId: ctx.orgId });
 
 function create(ctx, data) {
     const id = newId();
-    stmts.insert.run({ ...toParams(data, 0), id, orgId: ctx.orgId, now: nowIso() });
+    const params = toParams(data, 0);
+    stmts.insert.run({ ...params, ...groupsOf({ ...data, category: params.category }), id, orgId: ctx.orgId, now: nowIso() });
     return getById(ctx, id);
 }
 
@@ -100,6 +170,7 @@ function create(ctx, data) {
 function update(ctx, id, data) {
     if (!isOwn(ctx, id)) return null;
     stmts.update.run({ ...toParams(data, null), id, orgId: ctx.orgId, now: nowIso() });
+    if (data.name != null || data.category != null) reclassify(id);
     return getById(ctx, id);
 }
 
@@ -109,7 +180,10 @@ const reactivate = (ctx, id) => stmts.reactivate.run({ id, orgId: ctx.orgId }).c
 
 const bulkCreate = db.transaction((ctx, items) => {
     const now = nowIso();
-    for (const item of items) stmts.insert.run({ ...toParams(item, 0), id: newId(), orgId: ctx.orgId, now });
+    for (const item of items) {
+        const params = toParams(item, 0);
+        stmts.insert.run({ ...params, ...groupsOf({ ...item, category: params.category }), id: newId(), orgId: ctx.orgId, now });
+    }
     return items.length;
 });
 
@@ -122,4 +196,4 @@ const LIBRARY_SQL = `
 `;
 const listLibrary = (ctx) => db.prepare(LIBRARY_SQL).all({ orgId: ctx.orgId }).map(transformIngredient);
 
-module.exports = { search, getById, isOwn, create, update, deactivate, reactivate, bulkCreate, listLibrary };
+module.exports = { search, facets, getById, isOwn, create, update, deactivate, reactivate, bulkCreate, listLibrary };

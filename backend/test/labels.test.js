@@ -9,6 +9,7 @@ const C = require('../src/constants');
 const { ROLES } = require('../src/lib/permissions');
 const { NUTRIENT_FIELDS } = require('../src/nutrient-fields');
 const { LABELS, fieldLabel } = require('../src/labels');
+const { SUBGROUPS, FORMS } = require('../src/lib/food-groups');
 
 test('every allowed value has a Spanish label', () => {
     const groups = {
@@ -16,7 +17,8 @@ test('every allowed value has a Spanish label', () => {
         unit: C.UNITS, gender: C.GENDERS, patientStatus: C.PATIENT_STATUSES, activityLevel: C.ACTIVITY_LEVELS,
         conditionType: C.CONDITION_TYPES, severity: C.CONDITION_SEVERITIES, invoiceStatus: C.INVOICE_STATUSES,
         quoteStatus: C.QUOTE_STATUSES, itemType: C.ITEM_TYPES, paymentType: C.PAYMENT_TYPES, clientType: C.CLIENT_TYPES,
-        role: ROLES, nutrient: NUTRIENT_FIELDS.map(f => f.key.replace(/Per100g$/, ''))
+        role: ROLES, nutrient: NUTRIENT_FIELDS.map(f => f.key.replace(/Per100g$/, '')),
+        foodSubgroup: [...new Set(Object.values(SUBGROUPS).flat().map(([id]) => id)), 'other'], foodForm: FORMS.map(([id]) => id)
     };
     for (const [group, values] of Object.entries(groups)) {
         for (const value of values) assert.ok(LABELS[group]?.[value], `${group}.${value} sin etiqueta`);

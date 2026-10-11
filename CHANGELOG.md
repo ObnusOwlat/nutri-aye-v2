@@ -2,6 +2,30 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Alimentos: filtro por grupo, origen y preparación
+
+- **Columna de filtros a la izquierda** (`js/ingredient-filters.js`, `css/catalog-filters.css`).
+  - Árbol de categorías con sus orígenes:
+    - Proteínas: Vaca, Cerdo, Pollo y aves, Pescados, Mariscos, Cordero, ternera y caza, Embutidos y fiambres, Legumbres y soja.
+    - Verduras: Hojas verdes, Crucíferas, Raíces y tubérculos, Cebolla y ajo, Tomate, zapallo y otros frutos, Hongos, Brotes, Vainas, arvejas y choclo.
+    - El resto de las categorías también tiene los suyos.
+  - Debajo, la forma de preparación: crudo, cocido, congelado, enlatado, seco o en polvo, sin especificar.
+  - Cada opción muestra cuántos alimentos daría y se pueden marcar varias. Una categoría entera y orígenes de otra se suman. Los filtros activos aparecen como etiquetas sobre la lista y se quitan con ×.
+  - Reemplaza la fila de botones de categoría. Funciona en "Mis alimentos" y en el catálogo.
+  - Formato elegido según Baymard (2024): con varios niveles, una columna lateral siempre visible funciona mejor que botones horizontales o menús desplegables.
+- **Clasificación** (`src/lib/food-groups.js` y `food-classify.js`):
+  - Sale del nombre en inglés de USDA, después del grupo de alimentos USDA y por último del nombre en español. Las palabras de 4 letras o menos se comparan enteras: "pan" no marca "panceta".
+  - Los alimentos propios se clasifican al crearlos o al renombrarlos.
+- **Server:**
+  - `GET /api/ingredients?category=&subgroup=protein.beef,protein.pork&form=raw,cooked` filtra.
+  - `GET /api/ingredients/facets` da las cantidades del árbol. Cada filtro cuenta sin aplicarse a sí mismo.
+- **Migración 12:**
+  - Agrega las columnas `subgroup` y `food_form` y clasifica los 8.200 alimentos.
+  - Corrige la categoría del catálogo básico: 181 alimentos de calories-in estaban mal, sobre todo en "Mixtos" (verduras, frutas, carnes, aceites) y 18 granos o harinas que figuraban como "Proteínas". No cambia los alimentos editados a mano.
+  - `import-usda.js` e `import-foods.js` también clasifican al importar.
+- **`migrate()`:** aplica toda versión que falte, no solo las mayores a la última. Una migración con número más bajo mergeada después (de otra rama) ya no se saltea.
+- **Tests:** de 90 a 93.
+
 ## Planificador a todo el ancho: columna izquierda con paciente, recetas y actividad
 
 - **Ancho completo solo en el Planificador:** la semana queda en el centro, con Nutrientes pegado a la derecha y una columna nueva a la izquierda.
