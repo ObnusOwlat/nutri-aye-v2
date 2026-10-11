@@ -172,3 +172,18 @@
 @media print {
     .planner-bar, .planner-sidebar, .act-drop, .act-item__remove { display: none; }
 }
+
+/* Rutinas de ejercicio (planner-routines.js) */
+#btn-routines[hidden] { display: none; }
+.routines__save { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin: var(--space-sm) 0 var(--space-md); }
+.routines__list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-sm); }
+.routines__item {
+    display: flex; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap;
+    border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md);
+}
+.routines__info h4 { margin: 0 0 2px; display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.routines__info p { margin: 0 0 2px; color: var(--color-text-light); font-size: var(--font-size-sm); }
+.routines__actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; align-items: center; }
+.routines__level { font-size: var(--font-size-xs); font-weight: 600; padding: 2px 8px; border-radius: var(--radius-full); background: #e0f2fe; color: #075985; }
+.routines__level--intermediate { background: #fef3c7; color: #92400e; }
+.routines__level--advanced { background: #fee2e2; color: #991b1b; }

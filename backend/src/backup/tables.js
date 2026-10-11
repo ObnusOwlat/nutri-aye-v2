@@ -24,7 +24,8 @@ const TABLES = [
     { name: 'billing_quote_items', parent: ['quote_id', 'billing_quotes'] },
     { name: 'billing_payment_methods', org: true },
     { name: 'billing_payments', org: true },
-    { name: 'diet_templates', org: true }
+    { name: 'diet_templates', org: true },
+    { name: 'activity_templates', org: true }
 ];
 const BY_NAME = Object.fromEntries(TABLES.map(t => [t.name, t]));
 

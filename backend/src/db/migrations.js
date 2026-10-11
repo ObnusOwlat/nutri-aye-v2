@@ -20,6 +20,7 @@ const { markParaguayFoods } = require('./schema/paraguay');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 const { createPaymentTables } = require('./schema/payments');
+const { createActivityTemplates } = require('./schema/activity-templates');
 
 const MIGRATIONS = [
     {
@@ -108,6 +109,11 @@ const MIGRATIONS = [
         version: 14,
         name: 'alimentos que se consiguen en Paraguay y correcciones de traducción',
         up: markParaguayFoods
+    },
+    {
+        version: 16,
+        name: 'rutinas de ejercicio (plantillas de actividad)',
+        up: createActivityTemplates
     }
 ];
 

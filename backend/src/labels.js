@@ -29,6 +29,7 @@ const LABELS = {
     invoiceStatus: { UNPAID: 'Pendiente', PAID: 'Pagada', OVERDUE: 'Vencida', CANCELLED: 'Anulada' },
     quoteStatus: { DRAFT: 'Borrador', SENT: 'Enviado', ACCEPTED: 'Aceptado', REJECTED: 'Rechazado', EXPIRED: 'Vencido' },
     itemType: { SERVICE: 'Servicio', PRODUCT: 'Producto' },
+    routineLevel: { beginner: 'Principiante', intermediate: 'Intermedio', advanced: 'Avanzado' },
     paymentType: { BANK_TRANSFER: 'Transferencia', CASH: 'Efectivo', CARD: 'Tarjeta', OTHER: 'Otro' },
     clientType: { INDIVIDUAL: 'Persona', COMPANY: 'Empresa' },
     // Food subgroups ("origen") inside each category and preparation forms (lib/food-groups.js)
