@@ -67,7 +67,7 @@ app.use(sameOrigin);
 app.use(authenticate);
 
 const ROUTES = [
-    'auth', 'users', 'activity', 'stats', 'ingredients', 'nutrients', 'recipes',
+    'auth', 'users', 'activity', 'stats', 'ingredients', 'nutrients', 'nutrition', 'recipes',
     'patients/index', 'patients/records', 'patients/billing-link',
     'sync', 'backup', 'planner',
     'billing/company', 'billing/clients', 'billing/documents', 'billing/payment-methods'
