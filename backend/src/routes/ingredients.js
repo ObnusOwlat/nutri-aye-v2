@@ -1,6 +1,7 @@
 // Ingredients: list/search, CRUD, bulk import. "Delete" deactivates.
 const express = require('express');
 const ingredients = require('../repos/ingredients');
+const details = require('../repos/ingredient-details');
 const { tracked, record } = require('../audit/log');
 const { validate } = require('../validation');
 const { ingredientCreate, ingredientUpdate, ingredientBulk } = require('../validation/catalog');
@@ -19,13 +20,13 @@ function ownOrThrow(req) {
 
 router.get('/api/ingredients', (req, res) => {
     const paging = pageParams(req.query);
-    const { search, category, source, sort, order } = req.query;
-    const { rows, total } = ingredients.search(req.ctx, { search, category, source, sort, order, ...paging });
+    const { search, category, source, scope, sort, order } = req.query;
+    const { rows, total } = ingredients.search(req.ctx, { search, category, source, scope, sort, order, ...paging });
     sendPage(res, rows, paging, total);
 });
 
 router.get('/api/ingredients/:id', (req, res) => {
-    const ingredient = ingredients.getDetails(req.ctx, req.params.id);
+    const ingredient = details.getDetails(req.ctx, req.params.id);
     if (!ingredient) throw notFound('Alimento');
     res.json({ success: true, data: ingredient });
 });
@@ -49,6 +50,14 @@ router.delete('/api/ingredients/:id', (req, res) => {
     ownOrThrow(req);
     tracked(req.ctx, 'ingredient', req.params.id, () => ingredients.deactivate(req.ctx, req.params.id));
     res.json({ success: true });
+});
+
+// "Duplicate and edit": an own copy of a catalog food, with every nutrient and portion
+router.post('/api/ingredients/:id/duplicate', (req, res) => {
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim().slice(0, 200) : '';
+    const copy = tracked(req.ctx, 'ingredient', null, () => details.duplicate(req.ctx, req.params.id, name));
+    if (!copy) throw notFound('Alimento');
+    res.status(201).json({ success: true, data: copy });
 });
 
 router.post('/api/ingredients/:id/reactivate', (req, res) => {

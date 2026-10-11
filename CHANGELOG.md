@@ -59,6 +59,26 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 - El panel del Planner en pantalla llega después de la Fase 4.
 - **Tests:** de 57 a 60.
 
+## Fase 6: catálogo de alimentos en pantalla y porciones caseras
+
+- **Pestaña Alimentos, dos vistas:**
+  - "Mis alimentos": los propios del consultorio, en memoria.
+  - "Catálogo (USDA y básico)": búsqueda paginada en el server (`scope=catalog`), sin tildes y en español o inglés, con filtros por grupo y origen.
+- **Ficha de cada alimento** (`GET /api/ingredients/:id`):
+  - Nutrientes principales por 100 g.
+  - Porciones caseras en español con su peso ("1 taza, picado — 128 g").
+  - "Ver los N nutrientes", agrupados (vitaminas, minerales, aminoácidos…).
+  - Los alimentos propios sin datos USDA muestran sus valores cargados.
+- **Duplicar y editar** (`POST /api/ingredients/:id/duplicate`): el catálogo no se modifica, así que se crea una copia propia con todos sus nutrientes y porciones, y se abre el formulario. Queda en el registro de cambios.
+- **Porciones en español:** las 1.817 descripciones de USDA se tradujeron con el traductor local gratuito (`tools/translate-portions.py`), con glosario y correcciones. El resultado está versionado en `foods-data/translations/portions-es.json`.
+- **Editor de recetas:** cada alimento se carga en gramos o en porción casera ("2 × 1 taza (198 g)"). Se guarda en gramos (`recipe-lines.js`).
+- **`ingredients.js` (1.015 líneas):** quedó en `ingredients.js`, `ingredient-list.js`, `ingredient-detail.js`, `ingredient-form.js` e `ingredient-import.js` (el más grande tiene 305 líneas). El formulario ahora arma sus 32 campos a partir de una lista.
+- **Arreglos:**
+  - Crear un alimento propio desde la pantalla fallaba, porque la unidad se mandaba como "g" y el server espera "gram".
+  - La vitamina C del formulario nunca se guardaba.
+  - El registro de cambios mostraba los nombres de columna de los nutrientes ("vitamin_a_per_100g").
+- **Tests:** de 79 a 83.
+
 ## Fase 5 (frontend): toda la interfaz en español y formato paraguayo
 
 - **Interfaz en español:** pestañas, formularios, ventanas, avisos, confirmaciones, estados vacíos y placeholders con ejemplos locales (0981…, Asunción). `lang="es"`.
