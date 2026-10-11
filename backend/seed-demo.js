@@ -1,20 +1,18 @@
 /**
  * Demo data: fictional patients (metrics, conditions) and recipes built
- * from USDA foods. Every row id starts with "demo-".
+ * from USDA foods, in the first consultorio. Every row id starts with "demo-".
  *
  * Usage:
- *   node seed-demo.js           # (re)create the demo data
- *   node seed-demo.js --remove  # delete it
+ *   node seed-demo.js           # create the demo data (or reactivate it)
+ *   node seed-demo.js --remove  # deactivate it (nothing is deleted)
  *
  * Needs the USDA import (node import-usda.js) for the recipe ingredients.
- * Then press "Sync" in the app to bring it into the browser.
  */
 
-const Database = require('better-sqlite3');
-const path = require('path');
-
-const db = new Database(path.join(__dirname, 'db', 'database.sqlite'));
-db.pragma('foreign_keys = ON');
+const { migrate } = require('./src/db/migrations');
+migrate();
+const { db } = require('./src/db/connection');
+const auth = require('./src/repos/auth');
 
 const PATIENTS = [
     {
@@ -90,11 +88,13 @@ const WEEKS = {
     'demo-p4': { breakfast: [1, 2], morning_snack: [9], lunch: [3, 8, 4], afternoon_snack: [7], dinner: [5, 6] }
 };
 
+// Demo rows are deactivated, never deleted (same rule as the app)
+const DEMO_TABLES = ['patients', 'recipes', 'week_planner'];
 const remove = db.transaction(() => {
-    db.prepare("DELETE FROM week_planner WHERE id LIKE 'demo-%'").run(); // meals cascade
-    db.prepare("DELETE FROM recipe_ingredients WHERE recipe_id LIKE 'demo-%'").run();
-    db.prepare("DELETE FROM recipes WHERE id LIKE 'demo-%'").run();
-    db.prepare("DELETE FROM patients WHERE id LIKE 'demo-%'").run(); // metrics/conditions cascade
+    const now = new Date().toISOString();
+    for (const table of DEMO_TABLES) {
+        db.prepare(`UPDATE ${table} SET deactivated_at = ? WHERE id LIKE 'demo-%' AND deactivated_at IS NULL`).run(now);
+    }
 });
 
 function bmiCategory(bmi) {
@@ -104,13 +104,19 @@ function bmiCategory(bmi) {
     return 'obese';
 }
 
-const seed = db.transaction(() => {
-    remove();
+const seed = db.transaction((orgId) => {
     const now = new Date().toISOString();
+    // Already loaded once: reactivate it and stop
+    if (db.prepare("SELECT COUNT(*) AS n FROM patients WHERE id LIKE 'demo-%'").get().n) {
+        for (const table of DEMO_TABLES) db.prepare(`UPDATE ${table} SET deactivated_at = NULL, deactivated_by = NULL WHERE id LIKE 'demo-%'`).run();
+        db.prepare("UPDATE patients SET org_id = ? WHERE id LIKE 'demo-%'").run(orgId);
+        db.prepare("UPDATE recipes SET org_id = ? WHERE id LIKE 'demo-%'").run(orgId);
+        return;
+    }
 
     const insPatient = db.prepare(`
-        INSERT INTO patients (id, first_name, last_name, email, phone, date_of_birth, gender, city, notes, status, created_at, updated_at)
-        VALUES (@id, @first_name, @last_name, @email, @phone, @date_of_birth, @gender, @city, @notes, 'active', @now, @now)
+        INSERT INTO patients (id, org_id, first_name, last_name, email, phone, date_of_birth, gender, city, notes, status, created_at, updated_at)
+        VALUES (@id, @orgId, @first_name, @last_name, @email, @phone, @date_of_birth, @gender, @city, @notes, 'active', @now, @now)
     `);
     const insMetric = db.prepare(`
         INSERT INTO patient_metrics (id, patient_id, date, weight, height, bmi, bmi_category, body_fat, muscle_mass, waist, hips, activity_level, created_at)
@@ -122,7 +128,7 @@ const seed = db.transaction(() => {
     `);
 
     for (const p of PATIENTS) {
-        insPatient.run({ ...p, now });
+        insPatient.run({ ...p, orgId, now });
         p.metrics.forEach((m, i) => {
             const bmi = Math.round((m.weight / (m.height / 100) ** 2) * 10) / 10;
             insMetric.run({
@@ -137,16 +143,16 @@ const seed = db.transaction(() => {
 
     const exists = db.prepare('SELECT 1 FROM ingredients WHERE id = ?');
     const insRecipe = db.prepare(`
-        INSERT INTO recipes (id, name, category_id, instructions, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO recipes (id, org_id, name, category_id, instructions, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     const insRecipeIng = db.prepare('INSERT INTO recipe_ingredients (id, recipe_id, ingredient_id, grams) VALUES (?, ?, ?, ?)');
 
     RECIPES.forEach(([name, category, items, instructions], i) => {
         const missing = items.filter(([id]) => !exists.get(id)).map(([id]) => id);
-        if (missing.length) throw new Error(`"${name}": missing ingredients ${missing.join(', ')} (run node import-usda.js first)`);
+        if (missing.length) throw new Error(`"${name}": faltan alimentos ${missing.join(', ')} (corré antes node import-usda.js)`);
         const id = `demo-r${i + 1}`;
-        insRecipe.run(id, name, category, instructions, now, now);
+        insRecipe.run(id, orgId, name, category, instructions, now, now);
         items.forEach(([ingId, grams], j) => insRecipeIng.run(`${id}-i${j + 1}`, id, ingId, grams));
     });
 
@@ -165,14 +171,16 @@ const seed = db.transaction(() => {
 
 if (process.argv.includes('--remove')) {
     remove();
-    console.log('Demo data removed.');
+    console.log('Datos de prueba desactivados (siguen en la base; se reactivan corriendo node seed-demo.js).');
 } else {
-    seed();
+    const org = auth.firstOrganization() || auth.createOrganization('Consultorio principal');
+    seed(org.id);
     const count = (sql) => db.prepare(sql).get().c;
-    console.log(`Demo data loaded: ${count("SELECT COUNT(*) c FROM patients WHERE id LIKE 'demo-%'")} patients, `
-        + `${count("SELECT COUNT(*) c FROM patient_metrics WHERE id LIKE 'demo-%'")} metrics, `
-        + `${count("SELECT COUNT(*) c FROM patient_conditions WHERE id LIKE 'demo-%'")} conditions, `
-        + `${count("SELECT COUNT(*) c FROM recipes WHERE id LIKE 'demo-%'")} recipes, `
-        + `${count("SELECT COUNT(*) c FROM week_planner WHERE id LIKE 'demo-%'")} weekly plans.`);
+    const active = "id LIKE 'demo-%' AND deactivated_at IS NULL";
+    console.log(`Datos de prueba en "${org.name}": ${count(`SELECT COUNT(*) c FROM patients WHERE ${active}`)} pacientes, `
+        + `${count("SELECT COUNT(*) c FROM patient_metrics WHERE id LIKE 'demo-%'")} mediciones, `
+        + `${count("SELECT COUNT(*) c FROM patient_conditions WHERE id LIKE 'demo-%'")} condiciones, `
+        + `${count(`SELECT COUNT(*) c FROM recipes WHERE ${active}`)} recetas, `
+        + `${count(`SELECT COUNT(*) c FROM week_planner WHERE ${active}`)} semanas del planificador.`);
 }
 db.close();

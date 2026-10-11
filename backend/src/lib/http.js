@@ -10,7 +10,8 @@ class HttpError extends Error {
     }
 }
 
-const notFound = (what = 'Recurso') => new HttpError(404, `${what} no encontrado`, 'NOT_FOUND');
+// "Receta no encontrada", "Paciente no encontrado": feminine nouns end in -a or -ión
+const notFound = (what = 'Recurso') => new HttpError(404, `${what} no ${/(a|ión)$/i.test(what) ? 'encontrada' : 'encontrado'}`, 'NOT_FOUND');
 const badRequest = (message, details) => new HttpError(400, message, 'VALIDATION_ERROR', details);
 const conflict = (message) => new HttpError(409, message, 'CONFLICT');
 

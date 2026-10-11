@@ -69,6 +69,7 @@ Reglas del código:
 - Errores `{ success: false, error, code, details? }`, con `code` en `VALIDATION_ERROR` (400), `UNAUTHENTICATED` (401), `FORBIDDEN` / `PASSWORD_CHANGE_REQUIRED` / `CATALOG_READONLY` (403), `NOT_FOUND` (404), `CONFLICT` (409) o `INTERNAL_ERROR` (500, sin detalles internos).
 - Todo requiere sesión salvo `/api/health`, `/api/auth/status`, `/api/auth/login` y `/api/auth/setup`.
 - `DELETE` desactiva; `POST /…/:id/reactivate` reactiva.
+- **Textos en español:** los valores se guardan en inglés (`breakfast`, `male`, `UNPAID`…). Sus nombres en español están en `src/labels.js` y se sirven en `GET /api/labels`. Los mensajes de error y de validación están en español y nombran los campos en español.
 - Los ids los genera siempre el server. Los totales de facturas y presupuestos se calculan en el server a partir de los ítems.
 - Cada respuesta lleva `X-Request-Id`, que aparece en el log. Los logs nunca incluyen el cuerpo de las solicitudes.
 
@@ -121,8 +122,8 @@ Usa `tools/glossary-usda-es.json` (~900 términos con nombres de la región: por
 ## Datos de prueba
 
 ```bash
-cd backend && node seed-demo.js           # 4 pacientes ficticios + 9 recetas con alimentos USDA
-node seed-demo.js --remove                # los borra (todos los ids empiezan con "demo-")
+cd backend && node seed-demo.js           # 4 pacientes ficticios + 9 recetas con alimentos USDA, en el primer consultorio
+node seed-demo.js --remove                # los desactiva (no se borra nada; todos los ids empiezan con "demo-")
 ```
 
 ## Atajos de teclado
