@@ -121,6 +121,8 @@ Usa `tools/glossary-usda-es.json` (~900 términos con nombres de la región: por
 | `GET /api/ingredients?search=&source=usda` | Búsqueda paginada (`usda`, `usda_foundation`, `usda_sr_legacy`, `calories_in`, `user`) |
 | `GET /api/ingredients?scope=own\|catalog` | Alimentos propios o del catálogo compartido |
 | `GET /api/ingredients/:id` | Alimento con `keyNutrients`, todos los `nutrients` (por 100 g) y `portions` en español |
+| `GET /api/patients/:id/targets` | Metas diarias del paciente: energía (Mifflin-St Jeor / plan / manual), ingestas de referencia NASEM, límites por condición |
+| `PUT /api/patients/:id/targets` | Ajustes manuales de las metas (`null` vuelve al valor automático) |
 | `POST /api/ingredients/:id/duplicate` | Copia propia de un alimento del catálogo, con nutrientes y porciones |
 | `GET /api/nutrients?group=vitamins` | Catálogo de nutrientes |
 | `GET /api/nutrients/:id/ingredients?category=vegetables` | Alimentos más ricos en un nutriente |

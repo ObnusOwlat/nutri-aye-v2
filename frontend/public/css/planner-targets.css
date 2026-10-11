@@ -1,0 +1,23 @@
+/* planner-targets.css - Targets inside the planner's nutrients panel */
+
+.targets-summary { background: var(--color-bg); border-radius: 10px; padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); font-size: var(--font-size-sm); }
+.targets-summary ul { margin: 0 0 var(--space-sm); padding-left: var(--space-md); }
+.targets-summary li { margin: 2px 0; }
+
+.nutrients-panel__row { flex-wrap: wrap; }
+.target-bar { flex-basis: 100%; display: flex; align-items: center; gap: var(--space-sm); margin: 2px 0 4px; }
+.target-bar__track { flex: 1; height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden; }
+.target-bar__fill { height: 100%; border-radius: 3px; background: var(--color-text-muted); }
+.target-bar__text { font-size: var(--font-size-xs); color: var(--color-text-light); white-space: nowrap; }
+.target-bar--ok .target-bar__fill { background: var(--color-primary); }
+.target-bar--ok .target-bar__text { color: var(--color-primary-dark); }
+.target-bar--over .target-bar__fill { background: var(--color-danger); }
+.target-bar--over .target-bar__text { color: var(--color-danger-dark); font-weight: 600; }
+.target-tag { color: var(--color-warning); }
+
+.targets-editor { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xs) var(--space-lg); margin-top: var(--space-sm); }
+.targets-editor__row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.targets-editor__row label { font-size: var(--font-size-sm); }
+.targets-editor__row small { color: var(--color-text-muted); }
+.targets-editor__row .form-input { width: 110px; }
+@media (max-width: 768px) { .targets-editor { grid-template-columns: 1fr; } }

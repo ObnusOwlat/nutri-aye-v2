@@ -59,6 +59,27 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 - El panel del Planner en pantalla llega después de la Fase 4.
 - **Tests:** de 57 a 60.
 
+## Fase 7: metas nutricionales por paciente
+
+- **`lib/dri.js` ampliado:** ingestas de referencia NASEM de 23 nutrientes, para adolescentes (14-18) y adultos (19-30, 31-50, 51-70, 71+), embarazo y lactancia.
+  - Incluye los niveles máximos tolerables (UL) y los límites de sodio (2.300 mg) y colesterol (300 mg).
+  - El máximo tolerable de vitamina A se compara contra el retinol preformado y no contra la vitamina A total, porque los carotenos de verduras como la zanahoria o la batata no tienen máximo.
+  - A los menores de 14 se les aplican los valores de adolescentes, con aviso.
+  - `driFor()` mantiene su forma para las sugerencias de recetas.
+- **`lib/energy.js`:** calorías sugeridas con Mifflin-St Jeor (peso, talla, edad, sexo), multiplicadas por el factor de actividad y ajustadas por el objetivo del plan (déficit −500, aumento de masa +300, rendimiento +200).
+- **`GET /api/patients/:id/targets`:** metas diarias del paciente.
+  - Energía, por orden de prioridad: la ajustada a mano, la del plan activo o la calculada.
+  - Proteínas a 0,8 g/kg cuando se conoce el peso, y grasas saturadas por debajo del 10 % de las calorías.
+  - Límites y nutrientes a destacar según sus condiciones (reglas de `lib/diet-rules.js`, con el valor diario igual a 4 veces el de cada comida).
+  - Alérgenos a evitar y avisos de datos faltantes.
+- **`PUT /api/patients/:id/targets`:** ajustes manuales (migración 9, tabla `patient_targets`). Un valor vacío vuelve al automático; nunca se borra nada y el cambio queda en el historial. Recepción las ve pero no las ajusta.
+- **Panel de nutrientes del Planificador** (`planner-targets.js`):
+  - Arriba, un resumen del paciente: meta de energía y de dónde sale, condiciones y qué evitar.
+  - En cada nutriente, el % de su meta con una barra: gris si está bajo, verde si está en rango, rojo si supera el límite o el máximo tolerable.
+  - ★ marca lo que destacan sus condiciones y ✎ lo ajustado a mano.
+  - Ventana "Ajustar metas".
+- **Tests:** de 83 a 90.
+
 ## Fase 6: catálogo de alimentos en pantalla y porciones caseras
 
 - **Pestaña Alimentos, dos vistas:**
