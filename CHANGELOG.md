@@ -2,6 +2,11 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Arreglo: kcal de los ejercicios según la intensidad
+
+- En calistenia, "moderada" e "intensa" daban las mismas kcal: el circuito y la calistenia intensa valen los dos 7,5 MET. Ahora los niveles quedan así: suave = calistenia moderada (3,8), moderada = calistenia intensa (7,5) e intensa = HIIT intenso (11). Con la intensidad moderada, que es la que viene por defecto, el valor no cambia.
+- En pacientes de 60 años o más, las pesas en "moderada" daban menos kcal que en "suave" (los valores MET60 de esas filas no suben con la intensidad). Además, "intensa" pasaba a la tabla de adultos. Ahora se toma el MET60 del ejercicio y se escala igual que los valores de adultos, así que siempre suave < moderada < intensa (`planner-energy.js`).
+
 ## Alergias: alérgenos estructurados y control cruzado con los alimentos
 
 - **Alérgenos de cada alimento** (`src/lib/allergen-tags.js`):
