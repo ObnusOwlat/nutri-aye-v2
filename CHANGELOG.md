@@ -2,6 +2,10 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Arreglo: la carne importada ya no figura como de Paraguay
+
+- 290 cortes de carne vacuna de Nueva Zelanda y Australia (USDA, «importada») tenían la ⭐ porque el nombre empieza con «Carne vacuna». Por eso aparecían aunque estuviera marcado «Ocultar importados». Ahora la regla (`lib/paraguay.js`) excluye lo que el USDA marca como importado, de Nueva Zelanda o australiano. La migración 17 vuelve a calcular la ⭐ en la base. Ninguna receta usaba esos alimentos.
+
 ## Cabecera en una sola línea
 
 - El título, las pestañas, Imprimir y el usuario quedan en una sola barra, que antes eran dos. También hay menos espacio arriba del contenido: la barra del planificador sube unos 80 px.
