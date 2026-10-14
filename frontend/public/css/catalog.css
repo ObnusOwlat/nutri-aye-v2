@@ -47,9 +47,6 @@
     .food-detail__columns { grid-template-columns: 1fr; }
 }
 
-/* Recipe editor: quantity + unit (grams or household portion) */
-.ingredient-item__unit { max-width: 240px; padding: 4px 6px; border: 1px solid var(--color-border); border-radius: 6px; font: inherit; font-size: var(--font-size-sm); background: var(--color-bg-card); }
-
 /* Recipe editor: group / origin / ⭐ Paraguay filters of the food search */
 .recipe-food-filters { display: flex; gap: var(--space-xs); align-items: center; margin-bottom: var(--space-xs); flex-wrap: wrap; }
 .recipe-food-filters .form-select { flex: 1; min-width: 140px; padding-top: 6px; padding-bottom: 6px; }
@@ -64,5 +61,4 @@
 .food-allergen--on { background: #fee2e2; border-color: var(--color-danger); color: var(--color-danger-dark); font-weight: 600; }
 .recipe-allergens { background: #fee2e2; color: var(--color-danger-dark); border-radius: 8px; padding: 6px 10px; margin: 0 0 var(--space-sm); font-size: var(--font-size-sm); }
 .recipe-allergens small { color: var(--color-text-light); }
-.ingredient-item__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; font-size: var(--font-size-xs); font-weight: 600; }
 .food-row__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; margin-left: 4px; font-size: var(--font-size-xs); font-weight: 600; }

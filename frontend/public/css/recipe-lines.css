@@ -1,0 +1,22 @@
+/* Recipe editor: one card per food — name and allergens, then quantity, unit, kcal and macros */
+.recipe-ingredient-list { display: grid; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.recipe-line { padding: var(--space-sm) var(--space-md); background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.recipe-line--error { color: var(--color-danger-dark); }
+.recipe-line__head { display: flex; align-items: center; gap: 6px; margin-bottom: var(--space-xs); }
+.recipe-line__name { font-weight: 600; color: var(--color-text); min-width: 0; }
+.recipe-line .allergen-chip { flex-shrink: 0; background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 8px; font-size: var(--font-size-xs); font-weight: 600; }
+.recipe-line__remove { margin-left: auto; flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: 50%; background: transparent; color: var(--color-text-muted); font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.recipe-line__remove:hover { background: #fee2e2; color: var(--color-danger-dark); }
+
+.recipe-line__body { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+.recipe-line__qty, .recipe-line__unit { height: 34px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm, 6px); font: inherit; font-size: var(--font-size-sm); background: var(--color-bg-card); color: var(--color-text); }
+.recipe-line__qty { width: 80px; text-align: right; }
+.recipe-line__unit { flex: 0 1 220px; min-width: 70px; }
+.recipe-line__qty:focus, .recipe-line__unit:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(34, 197, 94, .2); }
+.recipe-line__kcal { font-size: var(--font-size-sm); color: var(--color-text); white-space: nowrap; }
+.recipe-line__macros { display: flex; gap: var(--space-sm); margin-left: auto; font-size: var(--font-size-xs); color: var(--color-text-light); white-space: nowrap; }
+.recipe-line__macros strong { color: var(--color-text); font-weight: 600; }
+
+@media (max-width: 520px) {
+    .recipe-line__unit { flex: 1 1 120px; }
+}
