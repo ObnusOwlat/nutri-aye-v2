@@ -13,6 +13,9 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
   - Las plantillas ya no muestran «(2000 kcal)».
   - En pantallas de menos de 1400 px, Comidas y Actividad muestran solo el ícono.
   - Con eso entra en una línea también a 1280 px.
+## Colesterol sin tope general
+
+- El colesterol ya no tiene un máximo fijo de 300 mg/día: las Guías Alimentarias de EE.UU. lo sacaron en 2015. En el Planificador se ve como dato, sin barra. El tope de 300 mg/día queda solo para pacientes con colesterol alto, dislipemia o enfermedad cardiovascular (regla `cholesterol` de `diet-rules.js`).
 ## Recetas a pantalla completa
 
 - **Recetario con la forma de Alimentos:** filtros a la izquierda (Comida y «Sin alérgeno», con cuántas recetas hay de cada uno), un buscador que encuentra por nombre de la receta o por alimento («palta») y una fila por receta en lugar de tarjetas. En el celular los filtros quedan detrás del botón «Filtros».

@@ -41,7 +41,7 @@ const DIET_RULES = [
         id: 'cholesterol',
         label: 'Colesterol / dislipemia',
         keywords: ['colesterol', 'dislipem', 'hipercolest', 'triglicer', 'cardio', 'coronar'],
-        source: 'OMS/AHA: grasas saturadas < 10 % de la energía, colesterol < 300 mg/día',
+        source: 'OMS/AHA: grasas saturadas < 10 % de la energía, colesterol < 300 mg/día en dislipemia',
         limit: [
             { nutrient: N.saturatedFat, max: 5, text: 'grasas saturadas' },
             { nutrient: N.cholesterol, max: 75, text: 'colesterol' }
