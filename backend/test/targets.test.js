@@ -25,6 +25,7 @@ test('reference intakes change with sex, age and pregnancy', () => {
     assert.equal(driDetails({ sex: 'female', age: 30, pregnant: true })[1089].target, 27);
     assert.equal(driDetails({ sex: 'male', age: 16 })[1087].target, 1300);
     assert.equal(driDetails({ sex: 'male', age: 40 })[1093].kind, 'CDRR');
+    assert.equal(driDetails({ sex: 'male', age: 40 })[1253], undefined);      // cholesterol: no general limit
 });
 
 test('targets of a patient: calculated energy, protein by weight, limits', async () => {
@@ -52,6 +53,7 @@ test('conditions add limits and emphasis; allergies list what to avoid; plan ene
     await api().post(`/api/patients/${p.id}/plans`).send({ name: 'Plan', dailyTarget: 1700, dietGoal: 'deficit' });
     const t = await targets(p);
     assert.equal(t.nutrients[1093].max, 2000);                 // 4 x 500 mg
+    assert.equal(t.nutrients[1253], undefined);                // no cholesterol limit without dyslipidemia
     assert.equal(t.nutrients[1089].emphasis, 'Anemia');
     assert.deepEqual(t.rules.map(r => r.id).sort(), ['anemia', 'hypertension']);
     assert.ok(t.avoid.some(a => a.id === 'gluten'));
@@ -118,4 +120,12 @@ test('macros: settings per patient, kidney disease limits protein', async () => 
     t = (await api().get(`/api/patients/${p.id}/targets`)).body.data;
     assert.equal(t.macros.protein.g, 48);   // 0,8 g/kg
     assert.ok(t.notes.some(n => /KDIGO/.test(n)));
+});
+
+test('cholesterol is capped only with dyslipidemia', async () => {
+    const p = await createPatient({ firstName: 'Colesterol', gender: 'male', dateOfBirth: yearsAgo(45) });
+    await api().post(`/api/patients/${p.id}/conditions`).send({ type: 'condition', name: 'Colesterol alto' });
+    const t = await targets(p);
+    assert.equal(t.nutrients[1253].kind, 'limit');
+    assert.equal(t.nutrients[1253].max, 300);                  // 4 x 75 mg
 });

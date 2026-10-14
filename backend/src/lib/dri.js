@@ -1,7 +1,8 @@
 // Daily reference intakes by sex and life stage.
 // Source: NASEM Dietary Reference Intakes (RDA/AI, UL; sodium CDRR 2019) as
-// summarized by the NIH Office of Dietary Supplements; limits for saturated fat
-// and cholesterol from WHO / Dietary Guidelines. Keys are USDA nutrient ids.
+// summarized by the NIH Office of Dietary Supplements; saturated fat limit from
+// WHO. Cholesterol has no general limit (Dietary Guidelines dropped 300 mg in
+// 2015): only the dyslipidemia rule in diet-rules.js caps it. Keys are USDA nutrient ids.
 // Ages: 14-18 (adolescents), 19-30, 31-50, 51-70, 71+. Under 14 the 14-18 values
 // are used and flagged, since children need a pediatric assessment.
 //
@@ -40,8 +41,7 @@ const TABLE = [
     [1167, 'RDA', [16, 16, 16, 16, 16], [14, 14, 14, 14, 14]],                      // niacin mg
     [1175, 'RDA', [1.3, 1.3, 1.3, 1.7, 1.7], [1.2, 1.3, 1.3, 1.5, 1.5], 100, 80],   // vitamin B6 mg
     [1178, 'RDA', [2.4, 2.4, 2.4, 2.4, 2.4], [2.4, 2.4, 2.4, 2.4, 2.4]],            // vitamin B12 µg
-    [1190, 'RDA', [400, 400, 400, 400, 400], [400, 400, 400, 400, 400]],            // folate µg DFE
-    [1253, 'CDRR', [300, 300, 300, 300, 300], [300, 300, 300, 300, 300]]            // cholesterol mg: limit
+    [1190, 'RDA', [400, 400, 400, 400, 400], [400, 400, 400, 400, 400]]             // folate µg DFE
 ];
 
 // Pregnancy / lactation (adults; replaces the female value)
