@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="css/catalog-filters.css">
     <link rel="stylesheet" href="css/recipes.css">
     <link rel="stylesheet" href="css/recipe-lines.css">
+    <link rel="stylesheet" href="css/recipe-editor.css">
     <link rel="stylesheet" href="css/misc.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/print-a11y.css">
@@ -217,22 +218,45 @@
 
         <!-- Recipes Tab -->
         <section class="tab-content" id="tab-recipes">
-            <div class="recipes">
+            <!-- Recetario: filters at the left, rows like Alimentos (recipes.js) -->
+            <div class="recipes" id="recipes-list-view">
                 <div class="recipes__header">
                     <h2 class="section-title">Recetario</h2>
                     <button class="btn btn--primary" id="btn-add-recipe">
                         <span class="btn__icon">+</span> Crear receta
                     </button>
                 </div>
-                <div class="category-filter">
-                    <button class="category-filter__btn active" data-category="all">Todas</button>
-                    <button class="category-filter__btn" data-category="breakfast">Desayuno</button>
-                    <button class="category-filter__btn" data-category="lunch">Almuerzo</button>
-                    <button class="category-filter__btn" data-category="dinner">Cena</button>
-                    <button class="category-filter__btn" data-category="afternoon_snack">Merienda</button>
-                    <button class="category-filter__btn" data-category="snack">Colación</button>
+                <div class="catalog-layout">
+                    <aside class="food-filters" id="recipe-filters" aria-label="Filtros de recetas"></aside>
+                    <div class="catalog-main">
+                        <div class="catalog-search">
+                            <input type="search" id="recipe-search" class="form-input" placeholder="Buscar receta o alimento (ej.: palta)..." autocomplete="off" aria-label="Buscar receta">
+                            <button type="button" class="btn btn--secondary recipes__filters-toggle" id="recipe-filters-toggle" aria-expanded="false">Filtros</button>
+                        </div>
+                        <div class="food-filters__chips" id="recipe-filter-chips"></div>
+                        <div id="recipes-list"></div>
+                        <div class="catalog-pager" id="recipes-count"></div>
+                    </div>
                 </div>
-                <div class="recipes__grid" id="recipes-grid"></div>
+            </div>
+
+            <!-- Editor: full width, the recipe at the left and the food search at the right (recipe-editor.js) -->
+            <div class="recipe-editor" id="recipe-editor-view" hidden>
+                <div class="recipe-editor__bar">
+                    <button type="button" class="btn btn--secondary btn--sm" id="recipe-editor-back">← Volver al recetario</button>
+                    <h2 class="section-title" id="recipe-editor-title">Editar receta</h2>
+                    <div class="recipe-editor__actions">
+                        <button type="button" class="btn btn--secondary" id="recipe-editor-cancel">Cancelar</button>
+                        <button type="button" class="btn btn--primary" id="recipe-editor-save">Guardar</button>
+                    </div>
+                </div>
+                <div class="recipe-editor__columns">
+                    <div class="recipe-editor__recipe" id="recipe-editor-form"></div>
+                    <div class="recipe-editor__picker">
+                        <h3 class="recipe-editor__heading">Agregar alimentos</h3>
+                        <div id="recipe-food-picker"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -334,7 +358,7 @@
     <script src="js/ingredient-import.js"></script>
     <script src="js/ingredient-filters.js"></script>
     <script src="js/ingredients.js"></script>
-    <script src="js/recipe-ingredient-search.js"></script>
+    <script src="js/recipe-food-picker.js"></script>
     <script src="js/recipe-lines.js"></script>
     <script src="js/recipe-editor.js"></script>
     <script src="js/recipes.js"></script>
