@@ -145,19 +145,12 @@
                             <div class="planner-sidebar__list" id="sidebar-recipe-list"></div>
                         </div>
                         <div class="planner-sidebar__panel" data-sidebar-panel="activity" hidden>
-                            <p class="sidebar-note sidebar-note--small">Arrastrá una rutina, una actividad o un ejercicio a un día de la semana (modo Actividad), o tocalo para elegir el día.</p>
+                            <p class="sidebar-note sidebar-note--small">Arrastrá una rutina o una actividad a un día de la semana, o tocala para elegir el día. Los ejercicios están a la derecha.</p>
                             <h5 class="sidebar-subtitle">Rutinas</h5>
                             <div id="sidebar-routine-list"></div>
                             <h5 class="sidebar-subtitle">Actividades</h5>
                             <div id="sidebar-activity-list"></div>
-                            <h5 class="sidebar-subtitle">Ejercicios</h5>
-                            <input type="search" class="form-input" id="sidebar-exercise-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio">
-                            <div class="planner-sidebar__filters">
-                                <select class="form-select" id="sidebar-exercise-category" aria-label="Zona"></select>
-                                <select class="form-select" id="sidebar-exercise-muscle" aria-label="Músculo"></select>
-                            </div>
-                            <div class="planner-sidebar__list" id="sidebar-exercise-list"></div>
-                            <p class="sidebar-note sidebar-note--small">Ejercicios: wger.de (CC-BY-SA). MET: Compendio de Actividades Físicas 2024 (adultos y 60+).</p>
+                            <p class="sidebar-note sidebar-note--small">MET: Compendio de Actividades Físicas 2024 (adultos y 60+).</p>
                         </div>
                     </aside>
                     <div class="week-grid" id="week-grid"></div>
@@ -167,6 +160,22 @@
                             <select id="planner-nutrients-day" class="form-select" aria-label="Día"></select>
                         </div>
                         <div class="nutrients-panel__body" id="planner-nutrients-body"></div>
+                    </aside>
+                    <!-- Activity mode: exercises on the right, instead of the nutrients -->
+                    <aside class="nutrients-panel exercises-panel" id="planner-exercises" aria-label="Ejercicios">
+                        <div class="nutrients-panel__header">
+                            <h3 class="nutrients-panel__title">Ejercicios</h3>
+                            <input type="search" class="form-input" id="sidebar-exercise-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio">
+                            <div class="planner-sidebar__filters">
+                                <select class="form-select" id="sidebar-exercise-category" aria-label="Zona"></select>
+                                <select class="form-select" id="sidebar-exercise-muscle" aria-label="Músculo"></select>
+                            </div>
+                        </div>
+                        <div class="nutrients-panel__body">
+                            <p class="sidebar-note sidebar-note--small">Arrastrá un ejercicio a un día, o tocalo para elegir el día.</p>
+                            <div class="planner-sidebar__list" id="sidebar-exercise-list"></div>
+                            <p class="sidebar-note sidebar-note--small">Ejercicios: wger.de (CC-BY-SA).</p>
+                        </div>
                     </aside>
                 </div>
             </div>

@@ -2,6 +2,12 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Planificador: Comidas y Actividad separados
+
+- **Comidas:** a la izquierda, Paciente y Recetas; a la derecha, Nutrientes.
+- **Actividad:** a la izquierda, Paciente y Actividad (rutinas y actividades); a la derecha, el panel **Ejercicios** (catálogo wger con buscador, zona y músculo), en lugar de Nutrientes.
+- Al cambiar de modo se abre la pestaña que corresponde. Los paneles fijos quedan justo debajo de la cabecera nueva (`--planner-sticky-top` pasa de 136 px a 60 px).
+
 ## Cabecera en una sola línea
 
 - El título, las pestañas, Imprimir y el usuario quedan en una sola barra, que antes eran dos. También hay menos espacio arriba del contenido: la barra del planificador sube unos 80 px.
