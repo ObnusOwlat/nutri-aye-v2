@@ -25,7 +25,7 @@ const RecipeLines = (function() {
 
     function lineHtml(line, idx) {
         const ing = State.getIngredient(line.ingredientId);
-        if (!ing) return '<div class="ingredient-item ingredient-item--error">Alimento desconocido</div>';
+        if (!ing) return '<div class="recipe-line recipe-line--error">Alimento desconocido</div>';
         if (line.qty === undefined) { line.qty = line.grams; line.portion = -1; }
 
         const factor = line.grams / 100;
@@ -34,21 +34,25 @@ const RecipeLines = (function() {
         const options = [`<option value="-1" ${line.portion < 0 ? 'selected' : ''}>g</option>`]
             .concat(portions.map((p, i) => `<option value="${i}" ${line.portion === i ? 'selected' : ''}>× ${UI.escapeHtml(p.label)} (${UI.formatNumber(p.gramWeight, 0)} g)</option>`));
 
+        const allergens = (ing.allergens || []).map(a =>
+            `<span class="allergen-chip" title="Alérgeno (${a.source === 'manual' ? 'marcado a mano' : a.source === 'off' ? 'Open Food Facts' : 'reglas'})">${UI.escapeHtml(a.label)}</span>`).join('');
+
         return `
-            <div class="ingredient-item" data-index="${idx}">
-                <div class="ingredient-item__main">
-                    <span class="ingredient-item__name">${UI.escapeHtml(ing.name)}${(ing.allergens || []).map(a =>
-                        ` <span class="allergen-chip" title="Alérgeno (${a.source === 'manual' ? 'marcado a mano' : a.source === 'off' ? 'Open Food Facts' : 'reglas'})">${UI.escapeHtml(a.label)}</span>`).join('')}</span>
-                    <input type="number" class="ingredient-item__grams" value="${UI.escapeHtml(line.qty)}" min="0" step="any"
-                           data-qty-idx="${idx}" aria-label="Cantidad">
-                    <select class="ingredient-item__unit" data-unit-idx="${idx}" aria-label="Unidad">${options.join('')}</select>
-                    <span class="ingredient-item__kcal">${line.portion >= 0 ? `${UI.formatNumber(line.grams)} g · ` : ''}${UI.formatNumber(Math.round((ing.kcalPer100g || 0) * factor))} kcal</span>
-                    <button class="ingredient-item__remove" data-remove-idx="${idx}" type="button" aria-label="Quitar">×</button>
+            <div class="recipe-line" data-index="${idx}">
+                <div class="recipe-line__head">
+                    <span class="recipe-line__name">${UI.escapeHtml(ing.name)}</span>${allergens}
+                    <button class="recipe-line__remove" data-remove-idx="${idx}" type="button" aria-label="Quitar" title="Quitar">×</button>
                 </div>
-                <div class="ingredient-item__macros">
-                    <span>P: ${macro(ing.proteinPer100g)}g</span>
-                    <span>C: ${macro(ing.carbsPer100g)}g</span>
-                    <span>G: ${macro(ing.fatPer100g)}g</span>
+                <div class="recipe-line__body">
+                    <input type="number" class="recipe-line__qty" value="${UI.escapeHtml(line.qty)}" min="0" step="any"
+                           data-qty-idx="${idx}" aria-label="Cantidad">
+                    <select class="recipe-line__unit" data-unit-idx="${idx}" aria-label="Unidad">${options.join('')}</select>
+                    <span class="recipe-line__kcal"><strong>${UI.formatNumber(Math.round((ing.kcalPer100g || 0) * factor))}</strong> kcal${line.portion >= 0 ? ` · ${UI.formatNumber(line.grams)} g` : ''}</span>
+                    <span class="recipe-line__macros">
+                        <span>P <strong>${macro(ing.proteinPer100g)}</strong> g</span>
+                        <span>C <strong>${macro(ing.carbsPer100g)}</strong> g</span>
+                        <span>G <strong>${macro(ing.fatPer100g)}</strong> g</span>
+                    </span>
                 </div>
             </div>`;
     }
