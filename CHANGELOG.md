@@ -2,6 +2,10 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Colesterol sin tope general
+
+- El colesterol ya no tiene un máximo fijo de 300 mg/día: las Guías Alimentarias de EE.UU. lo sacaron en 2015. En el Planificador se ve como dato, sin barra. El tope de 300 mg/día queda solo para pacientes con colesterol alto, dislipemia o enfermedad cardiovascular (regla `cholesterol` de `diet-rules.js`).
+
 ## Rutinas que se apilan
 
 - **Sumar una semana:** en 🏋 Rutinas, «+ Sumar a la semana» agrega los ejercicios de la rutina después de lo que cada día ya tiene. «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).
