@@ -27,7 +27,7 @@ const PlannerPatient = (function() {
         const patients = State.getPatients();
         const currentValue = patientSelect.value;
 
-        patientSelect.innerHTML = '<option value="">-- Sin paciente --</option>' +
+        patientSelect.innerHTML = '<option value="">Sin paciente</option>' +
             patients.map(p => `<option value="${UI.escapeHtml(p.id)}">${UI.escapeHtml(p.firstName)} ${UI.escapeHtml(p.lastName)}</option>`).join('');
 
         // Restore selection (the patient's week is not reloaded: unsaved changes stay)

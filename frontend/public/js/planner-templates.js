@@ -38,7 +38,7 @@ const PlannerTemplates = (function() {
         const currentTemplateId = State.getCurrentTemplateId();
 
         templateSelect.innerHTML = templates.map(t => 
-            `<option value="${UI.escapeHtml(t.id)}">${UI.escapeHtml(t.name)} (${t.dailyTarget} kcal)</option>`
+            `<option value="${UI.escapeHtml(t.id)}">${UI.escapeHtml(t.name)}</option>`
         ).join('');
 
         // Restore current selection

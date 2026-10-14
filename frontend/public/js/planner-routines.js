@@ -107,7 +107,7 @@ const PlannerRoutines = (function() {
         const run = () => {
             State.replaceActivityPlan(routine.activityPlan);
             const patient = PlannerPatient.getSelectedId();
-            UI.toastSuccess(patient ? `Rutina "${routine.name}" aplicada. Tocá «Guardar en paciente» para guardarla.` : `Rutina "${routine.name}" aplicada a la semana`);
+            UI.toastSuccess(patient ? `Rutina "${routine.name}" aplicada. Tocá «Guardar» para guardarla en el paciente.` : `Rutina "${routine.name}" aplicada a la semana`);
             UI.closeModal();
         };
         if (!itemsIn(planOf())) return run();
@@ -117,7 +117,7 @@ const PlannerRoutines = (function() {
     function stack(routine) {
         State.appendActivityPlan(routine.activityPlan);
         const patient = PlannerPatient.getSelectedId();
-        UI.toastSuccess(`Rutina "${routine.name}" sumada a la semana${patient ? '. Tocá «Guardar en paciente» para guardarla.' : ''}`);
+        UI.toastSuccess(`Rutina "${routine.name}" sumada a la semana${patient ? '. Tocá «Guardar» para guardarla en el paciente.' : ''}`);
         UI.closeModal();
     }
 

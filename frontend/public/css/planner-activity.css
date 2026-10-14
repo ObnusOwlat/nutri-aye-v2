@@ -26,7 +26,8 @@
 }
 
 .planner-bar__field .form-select {
-    min-width: 170px;
+    width: 170px;
+    text-overflow: ellipsis;
     padding-top: 6px;
     padding-bottom: 6px;
 }
@@ -34,6 +35,20 @@
 .planner-bar .calorie-summary__input {
     width: 80px;
     padding: 4px 6px;
+}
+
+#btn-manage-templates { font-size: var(--font-size-md); line-height: 1; }
+
+/* Comidas / Actividad: icon only when the bar would not fit in one line */
+@media (max-width: 1400px) {
+    .planner-mode__text { display: none; }
+}
+
+.planner-bar__target {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text-light);
 }
 
 .planner-bar__avg strong {
