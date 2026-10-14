@@ -1,22 +1,60 @@
-/* Recipe editor: one card per food — name and allergens, then quantity, unit, kcal and macros */
-.recipe-ingredient-list { display: grid; gap: var(--space-sm); margin-bottom: var(--space-md); }
-.recipe-line { padding: var(--space-sm) var(--space-md); background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-.recipe-line--error { color: var(--color-danger-dark); }
-.recipe-line__head { display: flex; align-items: center; gap: 6px; margin-bottom: var(--space-xs); }
-.recipe-line__name { font-weight: 600; color: var(--color-text); min-width: 0; }
-.recipe-line .allergen-chip { flex-shrink: 0; background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 8px; font-size: var(--font-size-xs); font-weight: 600; }
-.recipe-line__remove { margin-left: auto; flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: 50%; background: transparent; color: var(--color-text-muted); font-size: 1.25rem; line-height: 1; cursor: pointer; }
-.recipe-line__remove:hover { background: #fee2e2; color: var(--color-danger-dark); }
+/* recipe-lines.css - Recipe editor: the foods of the recipe as a table (quantity,
+   unit, grams, kcal, macros) with a TOTAL row */
 
-.recipe-line__body { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
-.recipe-line__qty, .recipe-line__unit { height: 34px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm, 6px); font: inherit; font-size: var(--font-size-sm); background: var(--color-bg-card); color: var(--color-text); }
-.recipe-line__qty { width: 80px; text-align: right; }
-.recipe-line__unit { flex: 0 1 220px; min-width: 70px; }
-.recipe-line__qty:focus, .recipe-line__unit:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(34, 197, 94, .2); }
-.recipe-line__kcal { font-size: var(--font-size-sm); color: var(--color-text); white-space: nowrap; }
-.recipe-line__macros { display: flex; gap: var(--space-sm); margin-left: auto; font-size: var(--font-size-xs); color: var(--color-text-light); white-space: nowrap; }
-.recipe-line__macros strong { color: var(--color-text); font-weight: 600; }
+.recipe-lines-wrap { overflow-x: auto; background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 12px; }
+.recipe-lines-wrap .empty-message { padding: var(--space-lg); margin: 0; color: var(--color-text-muted); text-align: center; }
+.recipe-lines { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.recipe-lines th {
+    padding: var(--space-sm); text-align: left; font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--color-text-light); border-bottom: 1px solid var(--color-border); background: var(--color-bg);
+}
+.recipe-lines td { padding: 6px var(--space-sm); border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+.recipe-lines tbody tr:hover { background: var(--color-bg); }
+.recipe-lines .rl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.recipe-lines .rl-kcal { font-weight: 600; color: var(--color-primary-dark); }
+.rl-name { min-width: 180px; font-weight: 500; color: var(--color-text); }
+.rl-name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; font-size: var(--font-size-xs); font-weight: 600; white-space: nowrap; }
+.rl-row--error td { color: var(--color-danger-dark); }
 
-@media (max-width: 520px) {
-    .recipe-line__unit { flex: 1 1 120px; }
+.rl-qty, .rl-unit {
+    height: 32px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    font: inherit; font-size: var(--font-size-sm); background: var(--color-bg-card); color: var(--color-text);
+}
+.rl-qty { width: 76px; text-align: right; }
+.rl-unit { width: 100%; min-width: 90px; max-width: 260px; }
+.rl-qty:focus, .rl-unit:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(34, 197, 94, .2); }
+
+.rl-remove { width: 28px; height: 28px; border: none; border-radius: 50%; background: transparent; color: var(--color-text-muted); font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.rl-remove:hover { background: #fee2e2; color: var(--color-danger-dark); }
+
+.rl-total td { border-bottom: 0; border-top: 2px solid var(--color-border); background: var(--color-primary-light); font-weight: 700; }
+.rl-total .rl-name { font-weight: 700; letter-spacing: .04em; }
+
+/* Phone: each food is a small card — name and ×, then quantity, unit and kcal
+   (grams and macros only in the TOTAL) */
+@media (max-width: 600px) {
+    .recipe-lines thead { display: none; }
+    .recipe-lines tbody tr.rl-row {
+        display: grid; grid-template-columns: 76px minmax(0, 1fr) auto 28px;
+        grid-template-areas: "name name name remove" "qty unit kcal kcal"; gap: 6px var(--space-sm);
+        padding: var(--space-sm); border-bottom: 1px solid var(--color-border);
+    }
+    .recipe-lines tbody td { padding: 0; border: 0; }
+    .rl-row td:nth-child(1) { grid-area: name; min-width: 0; }
+    .rl-row td:nth-child(2) { grid-area: qty; }
+    .rl-row td:nth-child(3) { grid-area: unit; }
+    .rl-row td:nth-child(5) { grid-area: kcal; align-self: center; }
+    .rl-row td:nth-child(5)::after { content: " kcal"; font-weight: 400; color: var(--color-text-light); }
+    .rl-row td:nth-child(9) { grid-area: remove; }
+    .rl-row td:nth-child(4), .rl-row td:nth-child(6), .rl-row td:nth-child(7), .rl-row td:nth-child(8) { display: none; }
+    .rl-unit { max-width: none; }
+    .rl-total { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); padding: var(--space-sm); background: var(--color-primary-light); }
+    .rl-total td { padding: 0; border: 0; background: none; }
+    .rl-total td:empty { display: none; }
+    .rl-total td[data-cell="grams"]::after { content: " g"; }
+    .rl-total td[data-cell="kcal"]::after { content: " kcal"; }
+    .rl-total td[data-cell="p"]::before { content: "P "; }
+    .rl-total td[data-cell="c"]::before { content: "C "; }
+    .rl-total td[data-cell="g"]::before { content: "G "; }
+    .recipe-lines, .recipe-lines tfoot, .recipe-lines tbody { display: block; }
 }

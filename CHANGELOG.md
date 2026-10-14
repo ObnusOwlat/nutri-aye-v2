@@ -2,6 +2,13 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Recetas a pantalla completa
+
+- **Recetario con la forma de Alimentos:** filtros a la izquierda (Comida y «Sin alérgeno», con cuántas recetas hay de cada uno), un buscador que encuentra por nombre de la receta o por alimento («palta») y una fila por receta en lugar de tarjetas. En el celular los filtros quedan detrás del botón «Filtros».
+- **Editor sin ventana emergente:** se abre dentro de la misma pestaña, a todo el ancho. La receta queda a la izquierda, como tabla: cantidad, unidad (gramos o porción casera), g, kcal, P, C, G y una fila TOTAL. A la derecha está el buscador de alimentos con el mismo árbol de filtros de Alimentos, paginado, con «+ Agregar» / «✓ agregado». Si salís con cambios sin guardar, te pide confirmación.
+- **Preparación:** se puede ver y editar. Antes, guardar una receta mandaba la preparación vacía y la borraba.
+- `IngredientFilters` pasa a ser una fábrica (`IngredientFilters.create`): Alimentos y el editor tienen filtros independientes. `recipe-ingredient-search.js` se reemplaza por `recipe-food-picker.js`.
+
 ## Rutinas que se apilan
 
 - **Sumar una semana:** en 🏋 Rutinas, «+ Sumar a la semana» agrega los ejercicios de la rutina después de lo que cada día ya tiene. «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).

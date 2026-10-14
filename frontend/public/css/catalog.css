@@ -47,11 +47,6 @@
     .food-detail__columns { grid-template-columns: 1fr; }
 }
 
-/* Recipe editor: group / origin / ⭐ Paraguay filters of the food search */
-.recipe-food-filters { display: flex; gap: var(--space-xs); align-items: center; margin-bottom: var(--space-xs); flex-wrap: wrap; }
-.recipe-food-filters .form-select { flex: 1; min-width: 140px; padding-top: 6px; padding-bottom: 6px; }
-.recipe-food-filters__py { display: flex; align-items: center; gap: 4px; font-size: var(--font-size-sm); white-space: nowrap; cursor: pointer; }
-.ingredient-dropdown__group { margin-left: 6px; color: var(--color-text-muted); font-size: var(--font-size-xs); }
 .food-py { font-size: .9em; }
 
 /* Allergens: food profile toggles, recipe summary and chips */
