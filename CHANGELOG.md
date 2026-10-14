@@ -2,6 +2,10 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Rutinas que se apilan
+
+- En 🏋 Rutinas, cada rutina tiene ahora el botón «+ Sumar a la semana». Agrega sus ejercicios después de lo que cada día ya tiene, así que se pueden combinar varias rutinas (por ejemplo, caminata + fuerza). «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).
+
 ## Arreglo: kcal de los ejercicios según la intensidad
 
 - En calistenia, "moderada" e "intensa" daban las mismas kcal: el circuito y la calistenia intensa valen los dos 7,5 MET. Ahora los niveles quedan así: suave = calistenia moderada (3,8), moderada = calistenia intensa (7,5) e intensa = HIIT intenso (11). Con la intensidad moderada, que es la que viene por defecto, el valor no cambia.

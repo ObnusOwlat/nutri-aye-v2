@@ -1,6 +1,7 @@
 /**
  * planner-routines.js - Exercise routines (templates of a week of physical
- * activity) in the planner's 🏃 Actividad mode: apply one to the week, save the
+ * activity) in the planner's 🏃 Actividad mode: apply one to the week (or add it
+ * on top of what the week has, so routines stack), save the
  * week as a routine, update, rename or deactivate it. Routines are separate
  * from the diet templates. Server: /api/activity-templates.
  */
@@ -60,7 +61,8 @@ const PlannerRoutines = (function() {
                     <small class="text-muted">${esc(daysSummary(r.activityPlan))}</small>
                 </div>
                 <div class="routines__actions">
-                    <button class="btn btn--primary btn--sm" type="button" data-action="apply">Aplicar a la semana</button>
+                    <button class="btn btn--primary btn--sm" type="button" data-action="apply" title="Reemplaza las actividades de la semana por esta rutina">Aplicar a la semana</button>
+                    <button class="btn btn--secondary btn--sm" type="button" data-action="stack" title="Agrega la rutina a lo que la semana ya tiene">+ Sumar a la semana</button>
                     <button class="btn btn--secondary btn--sm" type="button" data-action="overwrite" title="Reemplaza el contenido de la rutina con la semana que está en pantalla">Actualizar con la semana</button>
                     <button class="btn btn--secondary btn--sm" type="button" data-action="edit">Editar datos</button>
                     <button class="btn btn--danger btn--sm" type="button" data-action="deactivate">Desactivar</button>
@@ -75,6 +77,7 @@ const PlannerRoutines = (function() {
         if (action === 'save-new') return editForm(null);
         if (!routine) return;
         if (action === 'apply') apply(routine);
+        if (action === 'stack') stack(routine);
         if (action === 'edit') editForm(routine);
         if (action === 'overwrite') confirm(`¿Reemplazar el contenido de "${routine.name}" con la semana que está en pantalla?`, 'Actualizar rutina',
             () => save(routine.id, { activityPlan: planOf() }, 'Rutina actualizada'));
@@ -91,6 +94,13 @@ const PlannerRoutines = (function() {
         };
         if (!itemsIn(planOf())) return run();
         confirm(`La semana ya tiene actividades. ¿Reemplazarlas por la rutina "${routine.name}"?`, 'Reemplazar', async () => { run(); return true; }, false);
+    }
+
+    function stack(routine) {
+        State.appendActivityPlan(routine.activityPlan);
+        const patient = PlannerPatient.getSelectedId();
+        UI.toastSuccess(`Rutina "${routine.name}" sumada a la semana${patient ? '. Tocá «Guardar en paciente» para guardarla.' : ''}`);
+        UI.closeModal();
     }
 
     // A confirmation that goes back to the list when cancelled; fn runs on confirm

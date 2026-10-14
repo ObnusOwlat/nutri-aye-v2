@@ -158,6 +158,12 @@ Object.assign(State, (function() {
             if (S.DAYS.includes(day)) a[day] = items.map(i => ({ ...i, id: newActivityId() }));
         }
     });
+    // Routines stack: one more routine goes after what each day already has
+    const appendActivityPlan = (plan) => changeActivity(a => {
+        for (const [day, items] of Object.entries(plan || {})) {
+            if (S.DAYS.includes(day)) a[day].push(...items.map(i => ({ ...i, id: newActivityId() })));
+        }
+    });
 
     const getMode = () => mode;
     function setMode(next) {
@@ -214,6 +220,6 @@ Object.assign(State, (function() {
         getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan, setWeekPlan,
         getDailyCalories, getWeeklyTotal, getWeeklyAverage, getDietProfile, updateDietProfile,
         loadPatientWeek, savePlannerToPatient, getLoadedActivity: (patientId) => lastActivity[patientId] || null,
-        getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, replaceActivityPlan, getMode, setMode
+        getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, replaceActivityPlan, appendActivityPlan, getMode, setMode
     };
 })());
