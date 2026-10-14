@@ -1,7 +1,7 @@
-/* recipes.css - Recetas, editor de recetas y selector de recetas */
+/* recipes.css - Recetario (rows like Alimentos) and the recipe picker of the planner */
 
 /* ===========================================
-   RECIPES GRID
+   RECETARIO
    =========================================== */
 
 .recipes__header {
@@ -13,205 +13,16 @@
     margin-bottom: var(--space-lg);
 }
 
-.recipes__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-md);
-}
+.recipe-row__main { grid-template-columns: 110px minmax(0, 1fr) 90px 190px; }
+.recipe-row__name { min-width: 0; }
+.recipe-row__name .allergen-chip { background: #fee2e2; color: var(--color-danger-dark); border-radius: 999px; padding: 0 6px; margin-left: 4px; font-size: var(--font-size-xs); font-weight: 600; }
+.recipe-row__foods { display: block; margin-top: 2px; color: var(--color-text-muted); font-size: var(--font-size-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.recipe-card {
-    background-color: var(--color-bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    border: 1px solid var(--color-border);
-}
-
-.recipe-card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-6px);
-    border-color: var(--color-primary);
-}
-
-.recipe-card__header {
-    padding: var(--space-lg);
-    border-bottom: 1px solid var(--color-border);
-    background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-alt) 100%);
-}
-
-.recipe-card__title {
-    font-family: var(--font-family-heading);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: var(--space-xs);
-}
-
-.recipe-card__kcal {
-    color: var(--color-primary);
-    font-weight: 700;
-    font-size: var(--font-size-md);
-}
-
-.recipe-nutrition-summary {
-    display: flex;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-    flex-wrap: wrap;
-}
-
-.recipe-nutrition-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 50px;
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--color-bg);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-}
-
-.recipe-nutrition-item--main {
-    background: var(--color-primary-light);
-    border-color: var(--color-primary);
-}
-
-.recipe-nutrition-item--main .recipe-nutrition-value {
-    color: var(--color-primary);
-    font-size: var(--font-size-lg);
-}
-
-.recipe-nutrition-value {
-    font-weight: 700;
-    color: var(--color-text);
-    font-size: var(--font-size-md);
-}
-
-.recipe-nutrition-label {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-light);
-    text-transform: uppercase;
-}
-
-.recipe-card__body {
-    padding: var(--space-lg);
-}
-
-.recipe-card__ingredients {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-light);
-    margin-bottom: var(--space-sm);
-}
-
-.recipe-card__list {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
-    max-height: 60px;
-    overflow: hidden;
-}
-
-.recipe-card__instructions {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-light);
-    margin-top: var(--space-sm);
-    font-style: italic;
-    max-height: 40px;
-    overflow: hidden;
-}
-
-.recipe-card__footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-md) var(--space-lg);
-    background-color: var(--color-bg);
-    border-top: 1px solid var(--color-border);
-}
-
-/* ===========================================
-   RECIPE BUILDER (Modal)
-   =========================================== */
-
-.recipe-builder__name {
-    margin-bottom: var(--space-lg);
-}
-
-.recipe-builder__category {
-    margin-bottom: var(--space-lg);
-}
-
-.recipe-builder__ingredients {
-    margin-bottom: var(--space-lg);
-}
-
-.recipe-builder__ingredients-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-sm);
-}
-
-.recipe-builder__ingredients-list {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm);
-}
-
-.recipe-builder__ingredient-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm);
-    background-color: var(--color-bg);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-xs);
-}
-
-.recipe-builder__ingredient-row:last-child {
-    margin-bottom: 0;
-}
-
-.recipe-builder__ingredient-name {
-    flex: 1;
-    font-size: var(--font-size-sm);
-}
-
-.recipe-builder__ingredient-grams {
-    width: 80px;
-    padding: var(--space-xs);
-    text-align: center;
-}
-
-.recipe-builder__ingredient-kcal {
-    width: 70px;
-    text-align: right;
-    font-size: var(--font-size-sm);
-    color: var(--color-primary);
-}
-
-.recipe-builder__total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-md);
-    background-color: var(--color-primary-light);
-    border-radius: var(--radius-md);
-    margin-top: var(--space-md);
-}
-
-.recipe-builder__total-label {
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.recipe-builder__total-value {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    color: var(--color-primary);
+@media (max-width: 768px) {
+    .recipe-row { flex-wrap: wrap; }
+    .recipe-row__main { grid-template-columns: 1fr auto; }
+    .recipe-row__main .category-badge, .recipe-row__main .food-row__macros { display: none; }
+    .recipe-row .food-row__actions { padding: 0 var(--space-md) var(--space-sm); margin-left: auto; }
 }
 
 /* ===========================================
@@ -273,4 +84,12 @@
 .ingredient-select__item-macros {
     font-size: var(--font-size-xs);
     color: var(--color-text-light);
+}
+
+/* Phone and tablet: filters folded behind the "Filtros" button */
+.recipes__filters-toggle { display: none; }
+@media (max-width: 900px) {
+    .recipes__filters-toggle { display: inline-flex; }
+    #recipe-filters { display: none; }
+    .recipes--filters-open #recipe-filters { display: block; }
 }

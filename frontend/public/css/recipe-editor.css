@@ -1,0 +1,49 @@
+/* recipe-editor.css - Recetas tab at full width; the editor: bar with save,
+   the recipe at the left and the food search (Alimentos rows) at the right */
+
+.main:has(#tab-recipes.active) { max-width: none; }
+
+.recipe-editor__bar {
+    display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;
+    padding-bottom: var(--space-md); margin-bottom: var(--space-md); border-bottom: 1px solid var(--color-border);
+}
+.recipe-editor__bar .section-title { margin: 0; }
+.recipe-editor__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
+
+.recipe-editor__recipe, .recipe-editor__picker { min-width: 0; }
+.recipe-editor__columns { display: grid; grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); gap: var(--space-lg); align-items: start; }
+.recipe-editor__heading { margin: var(--space-md) 0 var(--space-sm); font-family: var(--font-family-heading); font-size: var(--font-size-md); }
+.recipe-editor__picker .recipe-editor__heading { margin-top: 0; }
+
+.recipe-editor__fields { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: var(--space-md); }
+.recipe-editor__fields .form-group, .recipe-editor__prep { display: block; margin-bottom: var(--space-sm); }
+.recipe-editor__prep { margin-top: var(--space-md); }
+.recipe-editor__prep textarea { resize: vertical; min-height: 110px; }
+
+/* Food search: own scroll so the recipe stays in view */
+.recipe-editor__picker {
+    position: sticky; top: 136px; max-height: calc(100vh - 152px); overflow-y: auto;
+    background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 12px; padding: var(--space-md);
+}
+.rfp-search { display: flex; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+.rfp-search .form-input { flex: 1; }
+.rfp-filters { display: none; position: static; max-height: none; margin-bottom: var(--space-sm); background: var(--color-bg); }
+.rfp--filters-open .rfp-filters { display: block; }
+.rfp-chips { margin-bottom: var(--space-sm); }
+
+/* Rows: name + kcal + add (no group column: there is no room) */
+.food-list--pick .food-row__main { grid-template-columns: minmax(0, 1fr) 70px; gap: var(--space-sm); padding: 6px var(--space-sm); }
+.food-list--pick .category-badge, .food-list--pick .food-row__macros { display: none; }
+.food-list--pick .food-row__name { font-size: var(--font-size-sm); }
+.food-list--pick .food-row__actions { padding-right: var(--space-sm); }
+.food-row__picked { font-size: var(--font-size-xs); font-weight: 600; color: var(--color-primary-dark); white-space: nowrap; }
+
+@media (max-width: 900px) {
+    .recipe-editor__columns { grid-template-columns: 1fr; }
+    .recipe-editor__picker { position: static; max-height: none; }
+}
+@media (max-width: 600px) {
+    .recipe-editor__fields { grid-template-columns: 1fr; }
+    .recipe-editor__actions { width: 100%; }
+    .recipe-editor__actions .btn { flex: 1; }
+}

@@ -1,22 +1,11 @@
 /**
- * recipe-editor.js - Create/edit recipe modal: name, category, foods with grams
- * and live nutrition totals
+ * recipe-editor.js - Create/edit a recipe in the Recetas tab, full width (no
+ * modal): name, category, its foods as a table with live totals
+ * (recipe-lines.js), preparation, and the food search at the right
+ * (recipe-food-picker.js). Leaving with unsaved changes asks first.
  */
 
 const RecipeEditor = (function() {
-    // Modal form state
-    let formState = {
-        recipeId: null,
-        name: '',
-        category: 'breakfast',
-        ingredients: [],        // Array of { ingredientId, grams }
-        isEdit: false
-    };
-
-    // Cache for ingredients (refreshed on modal open)
-    let ingredientsCache = [];
-
-    // Category options
     const CATEGORIES = [
         { id: 'breakfast', name: 'Desayuno' },
         { id: 'lunch', name: 'Almuerzo' },
@@ -25,248 +14,151 @@ const RecipeEditor = (function() {
         { id: 'snack', name: 'Colación' }
     ];
 
-    async function open(recipeId) {
+    let form = null;      // { recipeId, name, category, instructions, ingredients: [{ ingredientId, grams, qty?, portion? }] }
+    let saved = '';       // what was loaded, to know if something changed
+    let el = {};
 
-        // First foods for the empty search
-        try {
-            const response = await fetch('/api/ingredients?limit=100');
-            if (!response.ok) throw new Error('API error: ' + response.status);
-            ingredientsCache = (await response.json()).data || [];
-        } catch (e) {
-            console.error('[Recipes] Failed to load ingredients:', e);
-            UI.toastWarning('No se pudieron cargar los alimentos: ' + e.message);
-            return;
-        }
+    const snapshot = () => JSON.stringify({
+        name: form.name.trim(), category: form.category, instructions: form.instructions.trim(),
+        ingredients: form.ingredients.map(l => [l.ingredientId, l.grams])
+    });
+    const isDirty = () => form && snapshot() !== saved;
 
-        if (ingredientsCache.length === 0) {
-            UI.toastWarning('Primero agregá alimentos en la pestaña Alimentos');
-            return;
-        }
+    function init() {
+        el = {
+            list: document.getElementById('recipes-list-view'),
+            view: document.getElementById('recipe-editor-view'),
+            title: document.getElementById('recipe-editor-title'),
+            form: document.getElementById('recipe-editor-form'),
+            picker: document.getElementById('recipe-food-picker'),
+            save: document.getElementById('recipe-editor-save')
+        };
+        if (!el.view) return;
+        document.getElementById('recipe-editor-back').addEventListener('click', leave);
+        document.getElementById('recipe-editor-cancel').addEventListener('click', leave);
+        el.save.addEventListener('click', save);
 
-        // Initialize form state
+        // Name, category and preparation (the table has its own events)
+        el.form.addEventListener('input', (e) => {
+            if (e.target.id === 'recipe-name') form.name = e.target.value;
+            if (e.target.id === 'recipe-instructions') form.instructions = e.target.value;
+        });
+        el.form.addEventListener('change', (e) => {
+            if (e.target.id === 'recipe-category') form.category = e.target.value;
+        });
+    }
+
+    function open(recipeId) {
         const recipe = recipeId ? State.getRecipe(recipeId) : null;
-
-        formState = {
-            recipeId: recipeId,
+        form = {
+            recipeId: recipe ? recipeId : null,
             name: recipe?.name || '',
             category: recipe?.category || 'breakfast',
-            ingredients: recipe ? recipe.ingredients.map(ri => ({ ingredientId: ri.ingredientId, grams: ri.grams })) : [],
-            isEdit: !!recipe
+            instructions: recipe?.instructions || '',
+            ingredients: recipe ? recipe.ingredients.map(ri => ({ ingredientId: ri.ingredientId, grams: ri.grams })) : []
         };
+        saved = snapshot();
 
-        UI.openModal({
-            title: formState.isEdit ? 'Editar receta' : 'Crear receta',
-            content: buildFormContent(),
-            confirmText: formState.isEdit ? 'Guardar cambios' : 'Crear receta',
-            size: 'large',
-            onConfirm: handleSave,
-            onOpen: bindFormEvents
-        });
+        el.title.textContent = recipe ? 'Editar receta' : 'Crear receta';
+        el.save.textContent = recipe ? 'Guardar cambios' : 'Crear receta';
+        el.form.innerHTML = formHtml();
+        const lines = document.getElementById('recipe-lines');
+        RecipeLines.bind(lines, () => form.ingredients, { onChange: () => {}, onRedraw: redraw });
+        RecipeLines.loadPortions(form.ingredients).then(redraw);
+        RecipeFoodPicker.mount(el.picker, { add, inRecipe: () => new Set(form.ingredients.map(l => l.ingredientId)) });
+
+        el.list.hidden = true;
+        el.view.hidden = false;
+        window.scrollTo(0, 0);
+        if (!recipe) document.getElementById('recipe-name')?.focus();
     }
 
-    function buildFormContent() {
-        // Render ingredient list
-        const ingredientListHtml = RecipeLines.render(formState.ingredients);
-
-        // Render category options
-        const categoryOptionsHtml = CATEGORIES.map(cat => 
-            `<option value="${UI.escapeHtml(cat.id)}" ${formState.category === cat.id ? 'selected' : ''}>${cat.name}</option>`
-        ).join('');
-
+    function formHtml() {
+        const options = CATEGORIES.map(c =>
+            `<option value="${c.id}" ${form.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
         return `
-            <div class="recipe-form">
-                <!-- Recipe Name -->
-                <div class="form-group">
-                    <label class="form-label">Nombre de la receta *</label>
-                    <input type="text" id="recipe-name" class="form-input" 
-                           value="${UI.escapeHtml(formState.name)}" 
-                           placeholder="e.g., Chicken Salad">
-                </div>
-
-                <!-- Category -->
-                <div class="form-group">
-                    <label class="form-label">Categoría</label>
-                    <select id="recipe-category" class="form-select">
-                        ${categoryOptionsHtml}
-                    </select>
-                </div>
-
-                <!-- Ingredients Section -->
-                <div class="form-group">
-                    <label class="form-label">Alimentos (${formState.ingredients.length})</label>
-
-                    <!-- Current ingredients list -->
-                    <div id="recipe-ingredient-list" class="recipe-ingredient-list">
-                        ${ingredientListHtml}
-                    </div>
-
-                    <!-- Search input -->
-                    <div class="ingredient-search-section">
-                        <label class="ingredient-search-label">🔍 Buscá y agregá alimentos:</label>
-                        <div class="recipe-food-filters">
-                            <select id="recipe-food-category" class="form-select" aria-label="Grupo">
-                                <option value="">Todos los grupos</option>
-                                ${Object.entries(State.labels?.ingredientCategory || {}).map(([v, t]) => `<option value="${v}">${UI.escapeHtml(t)}</option>`).join('')}
-                            </select>
-                            <select id="recipe-food-subgroup" class="form-select" aria-label="Origen" disabled>
-                                <option value="">Todo origen</option>
-                            </select>
-                            <label class="recipe-food-filters__py" title="Alimentos de otros países. La misma opción que en Alimentos."><input type="checkbox" id="recipe-food-py" ${FoodPrefs.hideImported() ? 'checked' : ''}> Ocultar importados</label>
-                        </div>
-                        <div class="ingredient-combobox">
-                            <input type="text" id="recipe-ingredient-search" class="form-input" 
-                                   placeholder="Escribí para buscar..."
-                                   autocomplete="off">
-                            <div id="ingredient-dropdown" class="ingredient-dropdown"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Nutrition Summary -->
-                <div class="nutrition-summary">
-                    <div class="nutrition-summary__title">Información nutricional (total)</div>
-                    <div class="nutrition-summary__values">
-                        ${nutritionValuesHtml()}
-                    </div>
-                </div>
+            <div class="recipe-editor__fields">
+                <label class="form-group recipe-editor__name">
+                    <span class="form-label">Nombre de la receta *</span>
+                    <input type="text" id="recipe-name" class="form-input" value="${UI.escapeHtml(form.name)}" placeholder="Ej.: Ensalada de palta y huevo">
+                </label>
+                <label class="form-group">
+                    <span class="form-label">Comida</span>
+                    <select id="recipe-category" class="form-select">${options}</select>
+                </label>
             </div>
-        `;
+            <div id="recipe-allergens"></div>
+            <h3 class="recipe-editor__heading">Alimentos <span id="recipe-count" class="text-muted"></span></h3>
+            <div id="recipe-lines" class="recipe-lines-wrap"></div>
+            <label class="form-group recipe-editor__prep">
+                <span class="form-label">Preparación</span>
+                <textarea id="recipe-instructions" class="form-input" rows="5" placeholder="Pasos para prepararla (opcional)">${UI.escapeHtml(form.instructions)}</textarea>
+            </label>`;
     }
 
-    function calculateFormNutrition() {
-        const result = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-
-        for (const ri of formState.ingredients) {
-            const ing = State.getIngredient(ri.ingredientId);
-            if (!ing) continue;
-
-            const factor = ri.grams / 100;
-            result.calories += ing.kcalPer100g * factor;
-            result.protein += (ing.proteinPer100g || 0) * factor;
-            result.carbs += (ing.carbsPer100g || 0) * factor;
-            result.fat += (ing.fatPer100g || 0) * factor;
-        }
-
-        return result;
+    // Table, allergens, count and the "+ / ✓" of the search
+    function redraw() {
+        const lines = document.getElementById('recipe-lines');
+        if (!lines) return;
+        lines.innerHTML = RecipeLines.render(form.ingredients);
+        document.getElementById('recipe-allergens').innerHTML = RecipeLines.allergenSummary(form.ingredients);
+        document.getElementById('recipe-count').textContent = form.ingredients.length ? `(${form.ingredients.length})` : '';
+        RecipeFoodPicker.refresh();
     }
 
-    function bindFormEvents() {
-        // Keep anything typed before the modal finished opening
-        const nameInput = document.getElementById('recipe-name');
-        if (nameInput) formState.name = nameInput.value;
-        nameInput?.addEventListener('input', (e) => {
-            formState.name = e.target.value;
-        });
-
-        // Category select
-        document.getElementById('recipe-category')?.addEventListener('change', (e) => {
-            formState.category = e.target.value;
-        });
-
-        RecipeIngredientSearch.attach(ingredientsCache, addIngredient);
-
-        // Quantities in grams or household portions (recipe-lines.js)
-        const list = document.getElementById('recipe-ingredient-list');
-        if (list) RecipeLines.bind(list, () => formState.ingredients, { onTotals: refreshNutrition, onRedraw: refreshForm });
-        RecipeLines.loadPortions(formState.ingredients).then(refreshForm);
+    // A food picked at the right: 100 g, kept in this browser so the recipe can sum it
+    function add(food) {
+        if (!food || form.ingredients.some(l => l.ingredientId === food.id)) return;
+        if (!State.getIngredient(food.id)) State.cacheIngredient(food);
+        form.ingredients.push({ ingredientId: food.id, grams: 100 });
+        redraw();
+        RecipeLines.loadPortions(form.ingredients).then(redraw);
     }
 
-    /**
-     * Adds the food picked in the search; server foods (USDA) are kept in this
-     * browser so the recipe can sum them
-     */
-    function addIngredient(food) {
-        if (!food) {
-            UI.toastWarning('Elegí un alimento');
-            return;
-        }
-        const ingredientId = food.id;
-
-        // Check duplicate
-        if (formState.ingredients.some(ri => ri.ingredientId === ingredientId)) {
-            UI.toastWarning('Ese alimento ya está en la receta');
-            return;
-        }
-
-        if (!State.getIngredient(ingredientId)) State.cacheIngredient(food);
-        formState.ingredients.push({ ingredientId, grams: 100 });
-
-        refreshForm();
-        RecipeLines.loadPortions(formState.ingredients).then(refreshForm);
-        UI.toastSuccess('Alimento agregado');
+    function close() {
+        form = null;
+        el.view.hidden = true;
+        el.list.hidden = false;
+        window.scrollTo(0, 0);
     }
 
-    function refreshForm() {
-        const ingredientList = document.getElementById('recipe-ingredient-list');
-        const dropdown = document.getElementById('ingredient-dropdown');
-        const searchInput = document.getElementById('recipe-ingredient-search');
-
-        // Update ingredient list
-        if (ingredientList) {
-            ingredientList.innerHTML = RecipeLines.render(formState.ingredients);
-        }
-
-        // Update dropdown with current search
-        if (dropdown && searchInput) {
-            RecipeIngredientSearch.refresh(searchInput.value);
-        }
-
-        // Update nutrition display
-        refreshNutrition();
+    function leave() {
+        if (!isDirty()) return close();
+        UI.confirm('Hay cambios sin guardar. ¿Salir igual? Se pierden los cambios.', close);
     }
 
-    const nutritionValuesHtml = () => {
-        const n = calculateFormNutrition();
-        return `<span><strong>${Math.round(n.calories)}</strong> kcal</span>
-            <span>P: <strong>${Math.round(n.protein)}g</strong></span>
-            <span>C: <strong>${Math.round(n.carbs)}g</strong></span>
-            <span>G: <strong>${Math.round(n.fat)}g</strong></span>`;
-    };
-
-    function refreshNutrition() {
-        const summary = document.querySelector('.nutrition-summary__values');
-        if (summary) summary.innerHTML = nutritionValuesHtml();
-    }
-
-    async function handleSave() {
-        // Validate
-        const name = formState.name.trim();
-
+    async function save() {
+        const name = form.name.trim();
         if (!name) {
             UI.toastError('El nombre de la receta es obligatorio');
-            return false; // Keep modal open
+            return document.getElementById('recipe-name')?.focus();
         }
+        if (!form.ingredients.length) return UI.toastError('Agregá al menos un alimento');
 
-        if (formState.ingredients.length === 0) {
-            UI.toastError('Agregá al menos un alimento');
-            return false;
-        }
-
-        // Prepare data
         const data = {
             name,
-            category: formState.category,
-            instructions: '',
-            ingredients: formState.ingredients.map(ri => ({
-                ingredientId: ri.ingredientId,
-                grams: ri.grams
-            }))
+            category: form.category,
+            instructions: form.instructions.trim(),
+            ingredients: form.ingredients.map(l => ({ ingredientId: l.ingredientId, grams: l.grams }))
         };
-
+        el.save.disabled = true;
         try {
-            if (formState.recipeId) {
-                await State.updateRecipe(formState.recipeId, data);
+            if (form.recipeId) {
+                await State.updateRecipe(form.recipeId, data);
                 UI.toastSuccess('Receta actualizada');
             } else {
                 await State.addRecipe(data);
                 UI.toastSuccess('Receta creada');
             }
-            return true; // Close modal
+            close();
         } catch (e) {
             UI.toastError(e.message);
-            return false; // Keep modal open
+        } finally {
+            el.save.disabled = false;
         }
     }
 
-    return { open, CATEGORIES };
+    document.addEventListener('DOMContentLoaded', init);
+
+    return { open, isOpen: () => !!form, CATEGORIES };
 })();

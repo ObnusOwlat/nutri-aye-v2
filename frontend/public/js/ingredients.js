@@ -13,7 +13,7 @@ const Ingredients = (function() {
     let page = 1;
     let searchTimer = null;
     let requestSeq = 0;
-    let list, pager, chips;
+    let list, pager, chips, filters;
 
     const plain = (text) => String(text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
@@ -22,10 +22,10 @@ const Ingredients = (function() {
         pager = document.getElementById('ingredients-pager');
         chips = document.getElementById('ingredient-filter-chips');
         IngredientList.bind(list);
-        IngredientFilters.init(document.getElementById('ingredient-filters'), () => render(1));
+        filters = IngredientFilters.create(document.getElementById('ingredient-filters'), () => render(1));
         chips?.addEventListener('click', (e) => {
             const chip = e.target.closest('[data-remove]');
-            if (chip) IngredientFilters.remove(chip.dataset.remove);
+            if (chip) filters.remove(chip.dataset.remove);
         });
 
         document.getElementById('btn-add-ingredient')?.addEventListener('click', IngredientForm.showAdd);
@@ -58,7 +58,7 @@ const Ingredients = (function() {
 
     function render(pageNumber) {
         page = pageNumber;
-        if (chips) chips.innerHTML = IngredientFilters.summaryHtml();
+        if (chips) chips.innerHTML = filters.summaryHtml();
         return view === 'own' ? renderOwn() : renderCatalog();
     }
 
@@ -68,11 +68,11 @@ const Ingredients = (function() {
         const searched = State.getIngredients()
             .filter(i => !i.source || i.source === 'user')
             .filter(i => words.every(w => plain(i.name).includes(w)));
-        IngredientFilters.setCounts(IngredientFilters.countLocal(searched));
-        const own = searched.filter(IngredientFilters.matches).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        filters.setCounts(filters.countLocal(searched));
+        const own = searched.filter(filters.matches).sort((a, b) => a.name.localeCompare(b.name, 'es'));
         list.innerHTML = IngredientList.listHtml(own, {
             editable: true,
-            empty: query || IngredientFilters.active() ? 'Ningún alimento propio coincide' : 'Todavía no cargaste alimentos propios. Agregalos o duplicá uno del catálogo.'
+            empty: query || filters.active() ? 'Ningún alimento propio coincide' : 'Todavía no cargaste alimentos propios. Agregalos o duplicá uno del catálogo.'
         });
         pager.innerHTML = own.length ? `<span>${UI.plural(own.length, 'alimento propio', 'alimentos propios')}</span>` : '';
     }
@@ -84,7 +84,7 @@ const Ingredients = (function() {
         const params = new URLSearchParams({ scope: 'catalog' });
         if (query) params.set('search', query);
         if (source) params.set('source', source);
-        for (const [key, value] of Object.entries(IngredientFilters.query())) if (value) params.set(key, value);
+        for (const [key, value] of Object.entries(filters.query())) if (value) params.set(key, value);
         const listParams = new URLSearchParams(params);
         listParams.set('page', page);
         listParams.set('limit', PAGE_SIZE);
@@ -96,7 +96,7 @@ const Ingredients = (function() {
             const json = await res.json();
             if (seq !== requestSeq) return; // a newer search already answered
             if (!res.ok) throw new Error(json.error);
-            if (facets?.success) IngredientFilters.setCounts(facets.data);
+            if (facets?.success) filters.setCounts(facets.data);
             const hidden = FoodPrefs.hideImported() && facets?.success ? facets.data.total - facets.data.py : 0;
             const empty = hidden > 0
                 ? `No hay alimentos de Paraguay que coincidan. Hay ${UI.plural(hidden, 'importado oculto', 'importados ocultos')}: desmarcá «Ocultar importados» para verlos.`
