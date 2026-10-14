@@ -51,6 +51,35 @@
     <header class="header">
         <div class="header__container">
             <h1 class="header__title">Nutri Aye</h1>
+            <!-- Tab Navigation (same line as the title) -->
+            <nav class="tabs">
+                <div class="tabs__container">
+                    <button class="tabs__tab active" data-tab="patients" title="Pacientes">
+                        <span class="tabs__icon">&#128100;</span>
+                        <span class="tabs__label">Pacientes</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="planner" title="Planificador">
+                        <span class="tabs__icon">&#128197;</span>
+                        <span class="tabs__label">Planificador</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="ingredients" title="Alimentos">
+                        <span class="tabs__icon">&#127813;</span>
+                        <span class="tabs__label">Alimentos</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="recipes" title="Recetas">
+                        <span class="tabs__icon">&#128214;</span>
+                        <span class="tabs__label">Recetas</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="billing" title="Cobros">
+                        <span class="tabs__icon">&#128176;</span>
+                        <span class="tabs__label">Cobros</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="activity" title="Actividad">
+                        <span class="tabs__icon">&#128221;</span>
+                        <span class="tabs__label">Actividad</span>
+                    </button>
+                </div>
+            </nav>
             <div class="header__actions">
                 <button class="btn btn--secondary btn--sm" id="btn-print" title="Imprimir">
                     <span class="btn__icon">&#9632;</span>
@@ -61,35 +90,6 @@
         </div>
     </header>
 
-    <!-- Tab Navigation -->
-    <nav class="tabs">
-        <div class="tabs__container">
-            <button class="tabs__tab active" data-tab="patients">
-                <span class="tabs__icon">&#128100;</span>
-                <span class="tabs__label">Pacientes</span>
-            </button>
-            <button class="tabs__tab" data-tab="planner">
-                <span class="tabs__icon">&#128197;</span>
-                <span class="tabs__label">Planificador</span>
-            </button>
-            <button class="tabs__tab" data-tab="ingredients">
-                <span class="tabs__icon">&#127813;</span>
-                <span class="tabs__label">Alimentos</span>
-            </button>
-            <button class="tabs__tab" data-tab="recipes">
-                <span class="tabs__icon">&#128214;</span>
-                <span class="tabs__label">Recetas</span>
-            </button>
-            <button class="tabs__tab" data-tab="billing">
-                <span class="tabs__icon">&#128176;</span>
-                <span class="tabs__label">Cobros</span>
-            </button>
-            <button class="tabs__tab" data-tab="activity">
-                <span class="tabs__icon">&#128221;</span>
-                <span class="tabs__label">Actividad</span>
-            </button>
-        </div>
-    </nav>
 
     <!-- Main Content -->
     <main class="main">
@@ -99,7 +99,7 @@
                 <div class="planner-bar">
                     <label class="planner-bar__field">Paciente
                         <select id="planner-patient-select" class="form-select">
-                            <option value="">-- Sin paciente --</option>
+                            <option value="">Sin paciente</option>
                         </select>
                     </label>
                     <label class="planner-bar__field">Plantilla
@@ -107,21 +107,20 @@
                             <option value="">-- Personalizado --</option>
                         </select>
                     </label>
-                    <button class="btn btn--secondary btn--sm" id="btn-manage-templates" title="Administrar plantillas">Plantillas</button>
-                    <span class="planner__diet-goal" id="planner-diet-goal">Mantenimiento</span>
-                    <span class="planner__diet-target" id="planner-diet-target">2.000 kcal/día</span>
-                    <label class="planner-bar__field planner-bar__field--inline">Objetivo
-                        <input type="number" class="calorie-summary__input" id="daily-target" value="2000" min="800" max="10000"> kcal
+                    <button class="btn btn--secondary btn--sm" id="btn-manage-templates" title="Administrar plantillas" aria-label="Administrar plantillas">⚙️</button>
+                    <label class="planner-bar__target" title="Objetivo de calorías por día">
+                        <span class="planner__diet-goal" id="planner-diet-goal">Mantenimiento</span>
+                        <input type="number" class="calorie-summary__input" id="daily-target" value="2000" min="800" max="10000" aria-label="Objetivo de kcal por día"> kcal
                     </label>
-                    <span class="planner-bar__avg">Promedio <strong class="calorie-summary__value" id="weekly-avg">0</strong> kcal</span>
+                    <span class="planner-bar__avg" title="Promedio diario de la semana (kcal)">Prom. <strong class="calorie-summary__value" id="weekly-avg">0</strong></span>
                     <div class="planner-mode" id="planner-mode" role="tablist" aria-label="Qué se planifica">
-                        <button type="button" class="planner-mode__btn active" data-mode="meals">🍽 Comidas</button>
-                        <button type="button" class="planner-mode__btn" data-mode="activity">🏃 Actividad</button>
+                        <button type="button" class="planner-mode__btn active" data-mode="meals" title="Planificar comidas">🍽<span class="planner-mode__text"> Comidas</span></button>
+                        <button type="button" class="planner-mode__btn" data-mode="activity" title="Planificar actividad física">🏃<span class="planner-mode__text"> Actividad</span></button>
                     </div>
                     <button class="btn btn--secondary btn--sm" id="btn-routines" type="button" hidden title="Plantillas de ejercicio">🏋 Rutinas</button>
                     <div class="planner-bar__actions">
-                        <button class="btn btn--primary btn--sm" id="btn-save-patient-plan">Guardar en paciente</button>
-                        <button class="btn btn--danger btn--sm" id="btn-clear-week">Vaciar semana</button>
+                        <button class="btn btn--primary btn--sm" id="btn-save-patient-plan" title="Guardar la semana en la ficha del paciente">Guardar</button>
+                        <button class="btn btn--danger btn--sm" id="btn-clear-week" title="Vaciar la semana">Vaciar</button>
                     </div>
                 </div>
                 <div class="planner__body">

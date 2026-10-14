@@ -2,6 +2,17 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Cabecera en una sola línea
+
+- El título, las pestañas, Imprimir y el usuario quedan en una sola barra, que antes eran dos. También hay menos espacio arriba del contenido: la barra del planificador sube unos 80 px.
+- En pantallas de menos de 1360 px las pestañas muestran solo el ícono (el nombre aparece al pasar el mouse). La pestaña activa lleva una línea verde abajo.
+- En el celular, las pestañas van en una fila propia debajo del título y entran las 6 sin desplazar.
+- **Barra del planificador, textos más cortos:**
+  - Se sacó «2.000 kcal/día», que repetía el objetivo; ahora queda «Mantenimiento [2000] kcal».
+  - «Prom. 1.829», ⚙️ en vez de «Plantillas», y «Guardar» / «Vaciar», con el texto completo al pasar el mouse.
+  - Las plantillas ya no muestran «(2000 kcal)».
+  - En pantallas de menos de 1400 px, Comidas y Actividad muestran solo el ícono.
+  - Con eso entra en una línea también a 1280 px.
 ## Colesterol sin tope general
 
 - El colesterol ya no tiene un máximo fijo de 300 mg/día: las Guías Alimentarias de EE.UU. lo sacaron en 2015. En el Planificador se ve como dato, sin barra. El tope de 300 mg/día queda solo para pacientes con colesterol alto, dislipemia o enfermedad cardiovascular (regla `cholesterol` de `diet-rules.js`).
