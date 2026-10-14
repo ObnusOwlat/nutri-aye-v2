@@ -2,6 +2,16 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Rutinas que se apilan
+
+- **Sumar una semana:** en 🏋 Rutinas, «+ Sumar a la semana» agrega los ejercicios de la rutina después de lo que cada día ya tiene. «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).
+- **Sumar a un día:** las rutinas aparecen en la columna izquierda (pestaña Actividad, `planner-sidebar-routines.js`). Se arrastran a un día o se tocan para elegir el día. Si la rutina tiene sesiones distintas (por ejemplo, tren superior lunes y viernes, inferior miércoles), pregunta cuál sumar (`State.appendDayActivities`).
+- **Ventana de rutinas más clara:**
+  - Cada rutina muestra qué tiene cada día.
+  - Los botones para usar la rutina quedan adelante. «Reemplazar rutina con la semana actual» (antes «Actualizar con la semana»), editar y desactivar pasan a «⋯ Más».
+  - La confirmación muestra lo que la rutina tiene hoy y lo que va a quedar.
+- Se recuperó «Fuerza 3 días», que se había sobrescrito con la caminata por error, desde el registro de actividad.
+
 ## Arreglo: kcal de los ejercicios según la intensidad
 
 - En calistenia, "moderada" e "intensa" daban las mismas kcal: el circuito y la calistenia intensa valen los dos 7,5 MET. Ahora los niveles quedan así: suave = calistenia moderada (3,8), moderada = calistenia intensa (7,5) e intensa = HIIT intenso (11). Con la intensidad moderada, que es la que viene por defecto, el valor no cambia.

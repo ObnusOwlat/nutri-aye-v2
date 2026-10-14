@@ -1,6 +1,7 @@
 /**
  * planner-routines.js - Exercise routines (templates of a week of physical
- * activity) in the planner's 🏃 Actividad mode: apply one to the week, save the
+ * activity) in the planner's 🏃 Actividad mode: apply one to the week (or add it
+ * on top of what the week has, so routines stack), save the
  * week as a routine, update, rename or deactivate it. Routines are separate
  * from the diet templates. Server: /api/activity-templates.
  */
@@ -25,10 +26,20 @@ const PlannerRoutines = (function() {
 
     // "Lun 5 · Mié 5 · Vie 5" (number of exercises or activities per day)
     const daysSummary = (plan) => State.DAYS.filter(d => plan[d]?.length).map(d => `${SHORT_DAYS[d]} ${plan[d].length}`).join(' · ') || 'Sin actividades';
+    // What each day has: [{ day, short, items }]
+    const daysOf = (plan) => State.DAYS.filter(d => plan?.[d]?.length).map(d => ({ day: d, short: SHORT_DAYS[d], items: plan[d] }));
+
+    // The consultorio's routines (also shown in the left column)
+    async function reload() {
+        routines = await api('GET', '/api/activity-templates');
+        State.emit('routines:updated', routines);
+        return routines;
+    }
+    const list = () => routines;
 
     async function open() {
         try {
-            routines = await api('GET', '/api/activity-templates');
+            await reload();
         } catch (error) {
             UI.toastError(error.message);
             return;
@@ -57,13 +68,22 @@ const PlannerRoutines = (function() {
                 <div class="routines__info">
                     <h4>${esc(r.name)} <span class="routines__level routines__level--${esc(r.level)}">${esc(UI.label('routineLevel', r.level))}</span></h4>
                     ${r.description ? `<p>${esc(r.description)}</p>` : ''}
-                    <small class="text-muted">${esc(daysSummary(r.activityPlan))}</small>
+                    <details class="routines__content">
+                        <summary>${esc(daysSummary(r.activityPlan))}</summary>
+                        <ul>${daysOf(r.activityPlan).map(d => `<li><strong>${d.short}:</strong> ${esc(d.items.map(i => i.name).join(', '))}</li>`).join('')}</ul>
+                    </details>
                 </div>
                 <div class="routines__actions">
-                    <button class="btn btn--primary btn--sm" type="button" data-action="apply">Aplicar a la semana</button>
-                    <button class="btn btn--secondary btn--sm" type="button" data-action="overwrite" title="Reemplaza el contenido de la rutina con la semana que está en pantalla">Actualizar con la semana</button>
-                    <button class="btn btn--secondary btn--sm" type="button" data-action="edit">Editar datos</button>
-                    <button class="btn btn--danger btn--sm" type="button" data-action="deactivate">Desactivar</button>
+                    <button class="btn btn--primary btn--sm" type="button" data-action="apply" title="Borra las actividades de la semana y pone esta rutina">Aplicar a la semana</button>
+                    <button class="btn btn--primary btn--sm" type="button" data-action="stack" title="Agrega la rutina a lo que la semana ya tiene, sin borrar nada">+ Sumar a la semana</button>
+                    <details class="routines__more">
+                        <summary class="btn btn--secondary btn--sm">⋯ Más</summary>
+                        <div class="routines__menu">
+                            <button class="btn btn--secondary btn--sm" type="button" data-action="overwrite" title="Cambia el contenido de la rutina por la semana que está en pantalla">Reemplazar rutina con la semana actual</button>
+                            <button class="btn btn--secondary btn--sm" type="button" data-action="edit">Editar nombre y descripción</button>
+                            <button class="btn btn--danger btn--sm" type="button" data-action="deactivate">Desactivar</button>
+                        </div>
+                    </details>
                 </div>
             </li>`;
     }
@@ -75,11 +95,12 @@ const PlannerRoutines = (function() {
         if (action === 'save-new') return editForm(null);
         if (!routine) return;
         if (action === 'apply') apply(routine);
+        if (action === 'stack') stack(routine);
         if (action === 'edit') editForm(routine);
-        if (action === 'overwrite') confirm(`¿Reemplazar el contenido de "${routine.name}" con la semana que está en pantalla?`, 'Actualizar rutina',
+        if (action === 'overwrite') confirm(`¿Cambiar el contenido de la rutina "${routine.name}"? Hoy tiene: ${daysSummary(routine.activityPlan)}. Va a quedar con lo que está en pantalla: ${daysSummary(planOf())}.`, 'Sí, reemplazar la rutina',
             () => save(routine.id, { activityPlan: planOf() }, 'Rutina actualizada'));
         if (action === 'deactivate') confirm(`¿Desactivar la rutina "${routine.name}"? Queda en el historial y no se borra.`, 'Desactivar',
-            async () => { await api('DELETE', `/api/activity-templates/${encodeURIComponent(routine.id)}`); UI.toastSuccess('Rutina desactivada'); });
+            async () => { await api('DELETE', `/api/activity-templates/${encodeURIComponent(routine.id)}`); UI.toastSuccess('Rutina desactivada'); await reload(); });
     }
 
     function apply(routine) {
@@ -91,6 +112,13 @@ const PlannerRoutines = (function() {
         };
         if (!itemsIn(planOf())) return run();
         confirm(`La semana ya tiene actividades. ¿Reemplazarlas por la rutina "${routine.name}"?`, 'Reemplazar', async () => { run(); return true; }, false);
+    }
+
+    function stack(routine) {
+        State.appendActivityPlan(routine.activityPlan);
+        const patient = PlannerPatient.getSelectedId();
+        UI.toastSuccess(`Rutina "${routine.name}" sumada a la semana${patient ? '. Tocá «Guardar en paciente» para guardarla.' : ''}`);
+        UI.closeModal();
     }
 
     // A confirmation that goes back to the list when cancelled; fn runs on confirm
@@ -130,6 +158,7 @@ const PlannerRoutines = (function() {
                 else {
                     await api('POST', '/api/activity-templates', { ...body, activityPlan: planOf() });
                     UI.toastSuccess('Rutina guardada');
+                    await reload();
                 }
                 await open();
                 return false;
@@ -140,9 +169,10 @@ const PlannerRoutines = (function() {
     async function save(id, body, message) {
         await api('PUT', `/api/activity-templates/${encodeURIComponent(id)}`, body);
         UI.toastSuccess(message);
+        await reload();
     }
 
     document.addEventListener('DOMContentLoaded', init);
 
-    return { open };
+    return { open, reload, list, daysOf };
 })();
