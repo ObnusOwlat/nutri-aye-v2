@@ -158,6 +158,9 @@ Object.assign(State, (function() {
             if (S.DAYS.includes(day)) a[day] = items.map(i => ({ ...i, id: newActivityId() }));
         }
     });
+    // Items of one routine session added at the end of a day
+    const appendDayActivities = (day, items) => (S.DAYS.includes(day)
+        ? changeActivity(a => { a[day].push(...items.map(i => ({ ...i, id: newActivityId() }))); }) : false);
     // Routines stack: one more routine goes after what each day already has
     const appendActivityPlan = (plan) => changeActivity(a => {
         for (const [day, items] of Object.entries(plan || {})) {
@@ -220,6 +223,6 @@ Object.assign(State, (function() {
         getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan, setWeekPlan,
         getDailyCalories, getWeeklyTotal, getWeeklyAverage, getDietProfile, updateDietProfile,
         loadPatientWeek, savePlannerToPatient, getLoadedActivity: (patientId) => lastActivity[patientId] || null,
-        getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, replaceActivityPlan, appendActivityPlan, getMode, setMode
+        getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, replaceActivityPlan, appendActivityPlan, appendDayActivities, getMode, setMode
     };
 })());

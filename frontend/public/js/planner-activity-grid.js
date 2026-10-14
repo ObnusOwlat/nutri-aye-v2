@@ -8,6 +8,7 @@
 const PlannerActivityGrid = (function() {
     const DRAG_NEW = 'text/x-activity';      // JSON of a new item, from the sidebar
     const DRAG_MOVE = 'text/x-activity-move'; // "day|id" of an item of the grid
+    const DRAG_ROUTINE = 'text/x-activity-routine'; // id of a routine, from the sidebar
     const esc = (t) => UI.escapeHtml(t);
     const INTENSITY = { low: 'suave', moderate: 'moderada', high: 'intensa' };
 
@@ -119,7 +120,7 @@ const PlannerActivityGrid = (function() {
         grid.addEventListener('dragover', (e) => {
             const card = e.target.closest('.day-card--activity');
             const types = e.dataTransfer.types;
-            if (!card || !(types.includes(DRAG_NEW) || types.includes(DRAG_MOVE))) return;
+            if (!card || ![DRAG_NEW, DRAG_MOVE, DRAG_ROUTINE].some(t => types.includes(t))) return;
             e.preventDefault();
             grid.querySelectorAll('.day-card--drop').forEach(c => c !== card && c.classList.remove('day-card--drop'));
             card.classList.add('day-card--drop');
@@ -138,6 +139,8 @@ const PlannerActivityGrid = (function() {
                 if (id !== before) State.moveActivity(fromDay, id, day, before);
                 return;
             }
+            const routineId = e.dataTransfer.getData(DRAG_ROUTINE);
+            if (routineId) { PlannerSidebarRoutines.dropOn(day, routineId); return; }
             const raw = e.dataTransfer.getData(DRAG_NEW);
             if (raw) add(day, JSON.parse(raw));
         });
@@ -152,5 +155,5 @@ const PlannerActivityGrid = (function() {
         UI.toastSuccess(`${source.name} en ${UI.label('day', day)}`);
     }
 
-    return { html, bind, add, DRAG_NEW };
+    return { html, bind, add, DRAG_NEW, DRAG_ROUTINE };
 })();

@@ -4,7 +4,13 @@ Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
 ## Rutinas que se apilan
 
-- En 🏋 Rutinas, cada rutina tiene ahora el botón «+ Sumar a la semana». Agrega sus ejercicios después de lo que cada día ya tiene, así que se pueden combinar varias rutinas (por ejemplo, caminata + fuerza). «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).
+- **Sumar una semana:** en 🏋 Rutinas, «+ Sumar a la semana» agrega los ejercicios de la rutina después de lo que cada día ya tiene. «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).
+- **Sumar a un día:** las rutinas aparecen en la columna izquierda (pestaña Actividad, `planner-sidebar-routines.js`). Se arrastran a un día o se tocan para elegir el día. Si la rutina tiene sesiones distintas (por ejemplo, tren superior lunes y viernes, inferior miércoles), pregunta cuál sumar (`State.appendDayActivities`).
+- **Ventana de rutinas más clara:**
+  - Cada rutina muestra qué tiene cada día.
+  - Los botones para usar la rutina quedan adelante. «Reemplazar rutina con la semana actual» (antes «Actualizar con la semana»), editar y desactivar pasan a «⋯ Más».
+  - La confirmación muestra lo que la rutina tiene hoy y lo que va a quedar.
+- Se recuperó «Fuerza 3 días», que se había sobrescrito con la caminata por error, desde el registro de actividad.
 
 ## Arreglo: kcal de los ejercicios según la intensidad
 
