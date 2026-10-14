@@ -50,6 +50,35 @@
     <header class="header">
         <div class="header__container">
             <h1 class="header__title">Nutri Aye</h1>
+            <!-- Tab Navigation (same line as the title) -->
+            <nav class="tabs">
+                <div class="tabs__container">
+                    <button class="tabs__tab active" data-tab="patients" title="Pacientes">
+                        <span class="tabs__icon">&#128100;</span>
+                        <span class="tabs__label">Pacientes</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="planner" title="Planificador">
+                        <span class="tabs__icon">&#128197;</span>
+                        <span class="tabs__label">Planificador</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="ingredients" title="Alimentos">
+                        <span class="tabs__icon">&#127813;</span>
+                        <span class="tabs__label">Alimentos</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="recipes" title="Recetas">
+                        <span class="tabs__icon">&#128214;</span>
+                        <span class="tabs__label">Recetas</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="billing" title="Cobros">
+                        <span class="tabs__icon">&#128176;</span>
+                        <span class="tabs__label">Cobros</span>
+                    </button>
+                    <button class="tabs__tab" data-tab="activity" title="Actividad">
+                        <span class="tabs__icon">&#128221;</span>
+                        <span class="tabs__label">Actividad</span>
+                    </button>
+                </div>
+            </nav>
             <div class="header__actions">
                 <button class="btn btn--secondary btn--sm" id="btn-print" title="Imprimir">
                     <span class="btn__icon">&#9632;</span>
@@ -60,35 +89,6 @@
         </div>
     </header>
 
-    <!-- Tab Navigation -->
-    <nav class="tabs">
-        <div class="tabs__container">
-            <button class="tabs__tab active" data-tab="patients">
-                <span class="tabs__icon">&#128100;</span>
-                <span class="tabs__label">Pacientes</span>
-            </button>
-            <button class="tabs__tab" data-tab="planner">
-                <span class="tabs__icon">&#128197;</span>
-                <span class="tabs__label">Planificador</span>
-            </button>
-            <button class="tabs__tab" data-tab="ingredients">
-                <span class="tabs__icon">&#127813;</span>
-                <span class="tabs__label">Alimentos</span>
-            </button>
-            <button class="tabs__tab" data-tab="recipes">
-                <span class="tabs__icon">&#128214;</span>
-                <span class="tabs__label">Recetas</span>
-            </button>
-            <button class="tabs__tab" data-tab="billing">
-                <span class="tabs__icon">&#128176;</span>
-                <span class="tabs__label">Cobros</span>
-            </button>
-            <button class="tabs__tab" data-tab="activity">
-                <span class="tabs__icon">&#128221;</span>
-                <span class="tabs__label">Actividad</span>
-            </button>
-        </div>
-    </nav>
 
     <!-- Main Content -->
     <main class="main">

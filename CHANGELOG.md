@@ -2,6 +2,12 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Cabecera en una sola línea
+
+- El título, las pestañas, Imprimir y el usuario quedan en una sola barra, que antes eran dos. También hay menos espacio arriba del contenido: la barra del planificador sube unos 80 px.
+- En pantallas de menos de 1360 px las pestañas muestran solo el ícono (el nombre aparece al pasar el mouse). La pestaña activa lleva una línea verde abajo.
+- En el celular, las pestañas van en una fila propia debajo del título y entran las 6 sin desplazar.
+
 ## Rutinas que se apilan
 
 - **Sumar una semana:** en 🏋 Rutinas, «+ Sumar a la semana» agrega los ejercicios de la rutina después de lo que cada día ya tiene. «Aplicar a la semana» sigue reemplazando (`State.appendActivityPlan`).

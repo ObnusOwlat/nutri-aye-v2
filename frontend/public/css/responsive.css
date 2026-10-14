@@ -8,6 +8,17 @@
    TABLET (768px - 1024px)
    =========================================== */
 
+/* Tabs on the header's line: icons only when the labels don't fit */
+@media (max-width: 1360px) and (min-width: 768px) {
+    .tabs__label {
+        display: none;
+    }
+    
+    .tabs__tab {
+        padding: var(--space-sm);
+    }
+}
+
 @media (max-width: 1024px) {
     /* Week Grid - 2 columns on tablet */
     .week-grid {
@@ -77,9 +88,7 @@
     }
     
     .header__actions {
-        width: 100%;
         justify-content: flex-end;
-        margin-top: var(--space-sm);
     }
     
     .header__actions .btn__text {
@@ -90,19 +99,20 @@
         padding: var(--space-sm);
     }
     
-    /* Tabs */
+    /* Tabs: own row under the title and actions */
     .tabs {
-        top: 85px;
+        order: 3;
+        flex-basis: 100%;
     }
     
     .tabs__container {
-        padding: var(--space-xs) var(--space-md);
+        justify-content: space-between;
     }
     
     .tabs__tab {
         flex: 1;
-        padding: var(--space-sm);
-        min-width: 60px;
+        padding: var(--space-sm) 2px;
+        min-width: 0;
         flex-direction: column;
         gap: var(--space-xs);
     }
