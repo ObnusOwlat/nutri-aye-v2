@@ -105,3 +105,14 @@ h2.pdoc-recipe__name { font-size: 14pt; }
 .pdoc-shopping__name { flex: 1; }
 .pdoc-shopping__qty { white-space: nowrap; font-weight: 600; }
 .pdoc-shopping__note { font-size: 8.5pt; margin-bottom: 6pt; }
+
+/* Evolución de medidas (print-progress.js) */
+.pdoc-progress__chart { margin: 0 0 10pt; }
+.pdoc-progress__chart figcaption { font-size: 9pt; font-weight: 600; color: #333; margin-bottom: 2pt; }
+.pdoc-progress__chart svg { width: 100%; height: auto; max-height: 60mm; }
+.pdoc-progress__chart .grid { stroke: #ccc; stroke-width: 0.75; }
+.pdoc-progress__chart .line { fill: none; stroke: var(--pdoc-accent); stroke-width: 2; }
+.pdoc-progress__chart .dot { fill: #fff; stroke: var(--pdoc-accent); stroke-width: 2; }
+.pdoc-progress__chart .axis { font-size: 10px; fill: #555; }
+.pdoc-progress__chart .value { font-size: 10px; font-weight: 600; fill: #111; }
+.pdoc-progress__table tbody tr:last-child:not(:only-child) td { border-top: 1pt solid #333; }

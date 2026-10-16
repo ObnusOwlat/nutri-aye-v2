@@ -81,7 +81,7 @@ const PrintDialog = (function() {
             .catch(error => { UI.toastError('No se pudo cargar la semana del paciente: ' + error.message); })
             .finally(() => open({
                 title: `Imprimir · ${Print.fullName(patient)}`,
-                docs: [PrintPlan.doc({ week, patient }), PrintShopping.doc({ week, patient })]
+                docs: [PrintPlan.doc({ week, patient }), PrintShopping.doc({ week, patient }), PrintProgress.doc(patient)]
             }));
     }
 
