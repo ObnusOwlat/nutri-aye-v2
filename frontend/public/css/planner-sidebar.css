@@ -13,6 +13,7 @@
 body:not([data-planner-mode="activity"]) [data-sidebar-tab="activity"],
 body:not([data-planner-mode="activity"]) .exercises-panel,
 body[data-planner-mode="activity"] [data-sidebar-tab="recipes"],
+body[data-planner-mode="activity"] [data-sidebar-tab="templates"],
 body[data-planner-mode="activity"] #planner-nutrients {
     display: none;
 }

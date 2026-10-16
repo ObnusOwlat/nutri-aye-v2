@@ -13,6 +13,7 @@ const { createViews } = require('./schema/views');
 const { createOrganizationTables } = require('./schema/organizations');
 const { rebuildDocumentTables } = require('./schema/billing-numbering');
 const { createAuditLog } = require('./schema/audit');
+const { createDayTemplates } = require('./schema/day-templates');
 const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
 const { addActivityPlans } = require('./schema/activity-plans');
@@ -125,6 +126,11 @@ const MIGRATIONS = [
         version: 17,
         name: 'carne importada (Nueva Zelanda, Australia) deja de figurar como de Paraguay',
         up: markParaguayFoods
+    },
+    {
+        version: 18,
+        name: 'plantillas de día (comidas)',
+        up: createDayTemplates
     }
 ];
 

@@ -128,6 +128,7 @@
                         <div class="planner-sidebar__tabs" role="tablist">
                             <button class="planner-sidebar__tab active" data-sidebar-tab="patient" role="tab">Paciente</button>
                             <button class="planner-sidebar__tab" data-sidebar-tab="recipes" role="tab">Recetas</button>
+                            <button class="planner-sidebar__tab" data-sidebar-tab="templates" role="tab">Plantillas</button>
                             <button class="planner-sidebar__tab" data-sidebar-tab="activity" role="tab">Actividad</button>
                         </div>
                         <div class="planner-sidebar__panel" data-sidebar-panel="patient" id="planner-sidebar-patient"></div>
@@ -143,6 +144,13 @@
                             </div>
                             <p class="sidebar-note sidebar-note--small">Arrastrá una receta a un hueco de la semana, o tocala para elegir día y comida.</p>
                             <div class="planner-sidebar__list" id="sidebar-recipe-list"></div>
+                        </div>
+                        <div class="planner-sidebar__panel" data-sidebar-panel="templates" hidden>
+                            <p class="sidebar-note sidebar-note--small">Arrastrá un día a la semana, o tocalo para elegir dónde. Con 💾 en la cabecera de un día lo guardás como plantilla.</p>
+                            <h5 class="sidebar-subtitle">Días</h5>
+                            <div id="sidebar-day-template-list"></div>
+                            <h5 class="sidebar-subtitle">Semanas</h5>
+                            <div id="sidebar-week-template-list"></div>
                         </div>
                         <div class="planner-sidebar__panel" data-sidebar-panel="activity" hidden>
                             <p class="sidebar-note sidebar-note--small">Arrastrá una rutina o una actividad a un día de la semana, o tocala para elegir el día. Los ejercicios están a la derecha.</p>
@@ -383,6 +391,7 @@
     <script src="js/planner-sidebar-recipes.js"></script>
     <script src="js/planner-sidebar-activity.js"></script>
     <script src="js/planner-sidebar-routines.js"></script>
+    <script src="js/planner-sidebar-templates.js"></script>
     <script src="js/patient-form.js"></script>
     <script src="js/patient-profile.js"></script>
     <script src="js/billing.js"></script>

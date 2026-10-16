@@ -115,6 +115,20 @@ Object.assign(State, (function() {
     const removeMeal = (day, mealType) => assignMeal(day, mealType, null);
     const clearWeekPlan = () => changeWeek(week => { Object.assign(week, emptyWeek()); });
 
+    // Day templates and template weeks: fill only the empty meals, or replace what is there
+    const usable = (meal, recipeId) => S.VALID_MEAL_TYPES.includes(meal) && recipeId && S.getRecipe(recipeId);
+    function putDay(week, day, meals, replace) {
+        for (const [meal, recipeId] of Object.entries(meals || {})) {
+            if (usable(meal, recipeId) && (replace || !week[day][meal])) week[day][meal] = recipeId;
+        }
+    }
+    const fillDay = (day, meals, replace = false) => (S.DAYS.includes(day)
+        ? changeWeek(week => putDay(week, day, meals, replace)) : false);
+    const fillWeek = (plan, replace = false) => changeWeek(week => {
+        if (replace) Object.assign(week, emptyWeek());
+        for (const day of S.DAYS) putDay(week, day, plan?.[day], replace);
+    });
+
     // Show a patient's week in the grid (it is saved with "Guardar en paciente")
     function setWeekPlan(plan, patientId, activityPlan = null) {
         flushTemplateSave();
@@ -220,7 +234,7 @@ Object.assign(State, (function() {
 
     return {
         getDietTemplates, getDietTemplate, getCurrentTemplateId, setCurrentTemplate, addDietTemplate, updateDietTemplate, deleteDietTemplate,
-        getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan, setWeekPlan,
+        getWeekPlan, getDayMeals, assignMeal, removeMeal, clearWeekPlan, setWeekPlan, fillDay, fillWeek,
         getDailyCalories, getWeeklyTotal, getWeeklyAverage, getDietProfile, updateDietProfile,
         loadPatientWeek, savePlannerToPatient, getLoadedActivity: (patientId) => lastActivity[patientId] || null,
         getActivityPlan, getDayActivities, addActivity, updateActivity, removeActivity, moveActivity, clearActivityPlan, replaceActivityPlan, appendActivityPlan, appendDayActivities, getMode, setMode

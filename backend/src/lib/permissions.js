@@ -15,7 +15,7 @@ const RULES = [
     [/^\/api\/backup(\/|$)/, 'admin', true],
     [/^\/billing-api\/(company|pdf-config)(\/|$)/, 'admin', false],
     [/^\/api\/patients\/[^/]+\/(metrics|conditions|plans|progress|targets)(\/|$)/, 'clinical', false],
-    [/^\/api\/(diet-templates|activity-templates|migration)(\/|$)/, 'clinical', false],
+    [/^\/api\/(diet-templates|activity-templates|day-templates|migration)(\/|$)/, 'clinical', false],
     [/^\/api\/(recipes|ingredients|planner)(\/|$)/, 'clinical', false],
     [/^\/api\/patients(\/|$)/, 'front', false],
     [/^\/billing-api(\/|$)/, 'front', false]

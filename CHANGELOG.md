@@ -2,6 +2,15 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Plantillas de día y pestaña «Plantillas» del planificador
+
+- Nueva tabla `day_templates` (migración 18) y rutas `/api/day-templates`: un día de comidas (desayuno a cena) guardado para reusar. Se desactiva, nunca se borra. Va en los respaldos.
+- En Comidas, la columna izquierda tiene la pestaña **Plantillas**:
+  - **Días:** las plantillas de día. Se arrastran a un día de la semana o se tocan para elegir el día. Llenan las comidas vacías y, si el día ya tiene otras, preguntan si completar o reemplazar.
+  - **Semanas:** las plantillas con comidas cargadas. «+ Sumar» completa solo lo vacío y «Reemplazar» cambia la semana entera. Al desplegar una semana, cada día distinto se puede arrastrar solo; los días iguales aparecen juntos («Lun, Jue»).
+- 💾 en la cabecera de cada día lo guarda como plantilla de día.
+- Al aplicar, si hay recetas no aptas para el paciente (alergias o condiciones), avisa cuántas son.
+
 ## Sugerencias: las recetas no aptas quedan aparte
 
 - El server marca `unsuitable: true` cuando la receta tiene un alérgeno del paciente o pasa el doble de un límite de su condición (por ejemplo, más de 1.000 mg de sodio con hipertensión). Primero van las aptas.
