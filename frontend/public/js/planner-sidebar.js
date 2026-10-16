@@ -80,6 +80,8 @@ const PlannerSidebar = (function() {
     const warningsFor = (recipeId) => (patientId ? byRecipe.get(recipeId)?.warnings || [] : []);
     // A severe allergy of the patient is in the recipe: choosing it asks first
     const isBlocked = (recipeId) => !!(patientId && byRecipe.get(recipeId)?.blocked);
+    // An allergen, or far over a limit of a condition: hidden from the suggestions, asks before adding
+    const isUnsuitable = (recipeId) => !!(patientId && byRecipe.get(recipeId)?.unsuitable);
 
     function weekWarnings() {
         const week = State.getWeekPlan();
@@ -133,7 +135,7 @@ const PlannerSidebar = (function() {
             <p class="sidebar-note sidebar-note--small">Sugerencias orientativas por reglas (OMS, ADA, KDIGO, NASEM). Decide la nutricionista.</p>`;
     }
 
-    return { init, warningsFor, isBlocked, getPatientId: () => patientId, getSuggestions: () => suggestions, showTab };
+    return { init, warningsFor, isBlocked, isUnsuitable, getPatientId: () => patientId, getSuggestions: () => suggestions, showTab };
 })();
 
 document.addEventListener('DOMContentLoaded', () => PlannerSidebar.init());

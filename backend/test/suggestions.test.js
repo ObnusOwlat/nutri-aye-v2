@@ -23,6 +23,10 @@ test('hypertension ranks the low-sodium recipe first', async () => {
     assert.ok(ids.indexOf(plain.id) < ids.indexOf(salty.id));
     assert.ok(res.body.data.find(r => r.recipeId === plain.id).reasons.some(t => t.startsWith('Bajo en sodio')));
     assert.ok(res.body.data.find(r => r.recipeId === salty.id).warnings.some(t => t.startsWith('Alto en sodio')));
+    // More than twice the sodium limit: not suitable, but not an allergen
+    assert.equal(res.body.data.find(r => r.recipeId === salty.id).unsuitable, true);
+    assert.equal(res.body.data.find(r => r.recipeId === salty.id).excluded, false);
+    assert.equal(res.body.data.find(r => r.recipeId === plain.id).unsuitable, false);
 });
 
 test('dairy intolerance and celiac disease exclude recipes, last and flagged', async () => {
@@ -43,6 +47,8 @@ test('dairy intolerance and celiac disease exclude recipes, last and flagged', a
     const byId = Object.fromEntries(res.body.data.map(r => [r.recipeId, r]));
     assert.equal(byId[safe.id].excluded, false);
     assert.equal(byId[withCheese.id].excluded, true);
+    assert.equal(byId[withCheese.id].unsuitable, true);
+    assert.equal(byId[safe.id].unsuitable, false);
     assert.match(byId[withCheese.id].warnings[0], /^Contiene lácteos: Queso fresco S — intolerancia/);
     assert.match(byId[withBread.id].warnings[0], /^Contiene gluten: Pan de trigo S/);
     assert.equal(res.body.data.at(-1).excluded, true);

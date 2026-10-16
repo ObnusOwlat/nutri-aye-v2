@@ -7,6 +7,7 @@
 
 const PlannerSidebarRecipes = (function() {
     let panel, list, search, mealFilter, sortSelect;
+    let showUnsuitable = false, shownFor = null;   // "Ver N no aptas", per patient
 
     function init() {
         panel = document.querySelector('[data-sidebar-panel="recipes"]');
@@ -26,6 +27,11 @@ const PlannerSidebarRecipes = (function() {
             e.dataTransfer.effectAllowed = 'copy';
         });
         list.addEventListener('click', (e) => {
+            if (e.target.closest('[data-toggle-unsuitable]')) {
+                showUnsuitable = !showUnsuitable;
+                render();
+                return;
+            }
             const card = e.target.closest('[data-recipe-id]');
             if (card) chooseSlot(card.dataset.recipeId);
         });
@@ -69,9 +75,10 @@ const PlannerSidebarRecipes = (function() {
     function place(recipeId, day, meal, confirmed = false) {
         const recipe = State.getRecipe(recipeId);
         if (!recipe) return;
-        if (!confirmed && PlannerSidebar.isBlocked(recipeId)) {
-            UI.confirmDanger(`${recipe.name}: ${PlannerSidebar.warningsFor(recipeId)[0]}. ¿Agregarla igual?`,
-                () => place(recipeId, day, meal, true), 'Agregar igual');
+        if (!confirmed && PlannerSidebar.isUnsuitable(recipeId)) {
+            const message = `${recipe.name} no es apta para el paciente: ${PlannerSidebar.warningsFor(recipeId)[0]}. ¿Agregarla igual?`;
+            if (PlannerSidebar.isBlocked(recipeId)) UI.confirmDanger(message, () => place(recipeId, day, meal, true), 'Agregar igual');
+            else UI.confirm(message, () => place(recipeId, day, meal, true));
             return;
         }
         if (!State.assignMeal(day, meal, recipeId)) return;
@@ -124,9 +131,9 @@ const PlannerSidebarRecipes = (function() {
 
     function card({ recipe, suggestion }) {
         const n = recipe.nutrition || {};
-        const excluded = suggestion?.excluded;
-        const reasons = (suggestion?.reasons || []).slice(0, 2).map(t => `<li>✓ ${UI.escapeHtml(t)}</li>`).join('');
-        const warnings = (suggestion?.warnings || []).slice(0, 2).map(t => `<li class="warn">⚠ ${UI.escapeHtml(t)}</li>`).join('');
+        const excluded = suggestion?.unsuitable;
+        const reasons = excluded ? '' : (suggestion?.reasons || []).slice(0, 2).map(t => `<li>✓ ${UI.escapeHtml(t)}</li>`).join('');
+        const warnings = (suggestion?.warnings || []).slice(0, excluded ? 4 : 2).map(t => `<li class="warn">⚠ ${UI.escapeHtml(t)}</li>`).join('');
         return `
             <div class="sidebar-recipe ${excluded ? 'sidebar-recipe--excluded' : ''}" draggable="true" data-recipe-id="${UI.escapeHtml(recipe.id)}"
                  title="Arrastrala a un hueco de la semana o tocala para elegir día y comida">
@@ -145,9 +152,21 @@ const PlannerSidebarRecipes = (function() {
         sortSelect.querySelector('[value="suggested"]').disabled = !patientId;
         if (!patientId && sortSelect.value === 'suggested') sortSelect.value = 'name';
         if (patientId && !sortSelect.dataset.touched) sortSelect.value = 'suggested';
+        if (shownFor !== patientId) { showUnsuitable = false; shownFor = patientId; }
         const recipes = visibleRecipes();
-        list.innerHTML = recipes.length ? recipes.map(card).join('')
-            : '<p class="sidebar-note">No hay recetas con ese filtro.</p>';
+        if (!recipes.length) {
+            list.innerHTML = '<p class="sidebar-note">No hay recetas con ese filtro.</p>';
+            return;
+        }
+        // Suggested order: recipes that do not suit the patient go apart, behind a button
+        const split = sortSelect.value === 'suggested' && PlannerSidebar.getSuggestions();
+        const suitable = split ? recipes.filter(r => !r.suggestion?.unsuitable) : recipes;
+        const unsuitable = split ? recipes.filter(r => r.suggestion?.unsuitable) : [];
+        list.innerHTML = (suitable.length ? suitable.map(card).join('') : '<p class="sidebar-note">Ninguna receta apta con ese filtro.</p>')
+            + (unsuitable.length ? `
+                <button type="button" class="btn btn--secondary btn--sm sidebar-unsuitable-toggle" data-toggle-unsuitable>
+                    ${showUnsuitable ? 'Ocultar' : 'Ver'} ${UI.plural(unsuitable.length, 'no apta', 'no aptas')}</button>
+                ${showUnsuitable ? `<p class="sidebar-note">Por alergias o condiciones del paciente:</p>${unsuitable.map(card).join('')}` : ''}` : '');
     }
 
     document.addEventListener('DOMContentLoaded', () => {

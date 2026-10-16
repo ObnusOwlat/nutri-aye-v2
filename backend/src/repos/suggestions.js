@@ -27,7 +27,7 @@ function needWeights(dri, perRecipe, weekRecipeIds, days) {
 }
 
 function scoreRecipe(recipe, amounts, units, ctx) {
-    let score = 0;
+    let score = 0, tooHigh = false;
     const reasons = [], warnings = [];
     const amountText = (id) => `${fmt(amounts[id])} ${units[id] || ''}`.trim();
 
@@ -39,6 +39,7 @@ function scoreRecipe(recipe, amounts, units, ctx) {
                 reasons.push(`Bajo en ${text} (${amountText(nutrient)})`);
             } else if (amounts[nutrient] > 2 * max) {
                 score -= 4;
+                tooHigh = true;
                 warnings.push(`Alto en ${text} (${amountText(nutrient)}) — ${rule.label}`);
             } else {
                 score -= 1;
@@ -70,7 +71,8 @@ function scoreRecipe(recipe, amounts, units, ctx) {
     return {
         recipeId: recipe.id, name: recipe.name, category: recipe.category,
         calories: recipe.nutrition?.calories ?? null,
-        score: Math.round(score * 10) / 10, excluded: found.length > 0, blocked: found.some(f => f.block), reasons, warnings,
+        score: Math.round(score * 10) / 10, excluded: found.length > 0, blocked: found.some(f => f.block),
+        unsuitable: found.length > 0 || tooHigh, reasons, warnings,
         allergens: [...new Set(found.map(f => f.allergen))]
     };
 }
@@ -78,6 +80,8 @@ function scoreRecipe(recipe, amounts, units, ctx) {
 /**
  * Ranked recipes for a patient, or null when the patient is not in the consultorio.
  * Recipes with an allergen of the patient go last, with excluded: true.
+ * Unsuitable ones (an allergen, or more than twice a limit of a condition)
+ * come after the suitable ones, with unsuitable: true.
  */
 function forPatient(ctx, patientId, { mealType = '', limit = 50, weekRecipeIds = [], days = 7 } = {}) {
     const patient = patients.getDetail(ctx, patientId);
@@ -97,7 +101,7 @@ function forPatient(ctx, patientId, { mealType = '', limit = 50, weekRecipeIds =
 
     const ranked = list
         .map(r => scoreRecipe(r, analysis.recipes[r.id] || {}, units, { rules, allergens, dri, weights, repoCtx: ctx }))
-        .sort((a, b) => (a.excluded - b.excluded) || (b.score - a.score));
+        .sort((a, b) => (a.excluded - b.excluded) || (a.unsuitable - b.unsuitable) || (b.score - a.score));
 
     return {
         patient: {

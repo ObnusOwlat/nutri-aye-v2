@@ -116,3 +116,8 @@
 .sidebar-exercise .btn {
     margin-top: var(--space-xs);
 }
+
+.sidebar-unsuitable-toggle {
+    width: 100%;
+    margin: 8px 0;
+}
