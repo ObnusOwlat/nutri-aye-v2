@@ -11,9 +11,10 @@ const PrintDialog = (function() {
     const OPTIONS = {
         calories: { label: 'Mostrar calorías', hint: 'kcal y macronutrientes' },
         recipes: { label: 'Incluir recetario', hint: 'cada receta de la semana, con alimentos y preparación' },
-        notes: { label: 'Incluir notas de las recetas', hint: 'revisalas antes: pueden tener referencias internas' }
+        notes: { label: 'Incluir notas de las recetas', hint: 'revisalas antes: pueden tener referencias internas' },
+        shopping: { label: 'Incluir lista de compras', hint: 'los alimentos de la semana, sumados' }
     };
-    const defaults = { calories: false, recipes: true, notes: false };
+    const defaults = { calories: false, recipes: true, notes: false, shopping: true };
 
     function readOptions() {
         try { return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...defaults }; }
@@ -80,7 +81,7 @@ const PrintDialog = (function() {
             .catch(error => { UI.toastError('No se pudo cargar la semana del paciente: ' + error.message); })
             .finally(() => open({
                 title: `Imprimir · ${Print.fullName(patient)}`,
-                docs: [PrintPlan.doc({ week, patient })]
+                docs: [PrintPlan.doc({ week, patient }), PrintShopping.doc({ week, patient })]
             }));
     }
 

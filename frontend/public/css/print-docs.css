@@ -94,3 +94,14 @@ h2.pdoc-recipe__name { font-size: 14pt; }
 .pdoc-recipe__foods { break-inside: avoid; max-width: 120mm; }
 .pdoc-recipe h4 { font-size: 10pt; margin: 6pt 0 2pt; color: var(--pdoc-accent); break-after: avoid; }
 .pdoc-recipe__allergens, .pdoc-recipe__nutrition { margin-top: 4pt; font-size: 9.5pt; }
+
+/* Lista de compras (print-shopping.js) */
+.pdoc-shopping { column-count: 2; column-gap: 14pt; }
+.pdoc-shopping__group { break-inside: avoid; margin-bottom: 8pt; }
+.pdoc-shopping__group h3 { font-size: 10pt; margin: 0 0 2pt; color: var(--pdoc-accent); }
+.pdoc-shopping ul { list-style: none; margin: 0; padding: 0; font-size: 9.5pt; }
+.pdoc-shopping li { display: flex; align-items: baseline; gap: 5pt; padding: 1.5pt 0; border-bottom: 0.5pt dotted #bbb; }
+.pdoc-shopping__box { flex: none; width: 7pt; height: 7pt; border: 0.75pt solid #333; border-radius: 1pt; transform: translateY(1pt); }
+.pdoc-shopping__name { flex: 1; }
+.pdoc-shopping__qty { white-space: nowrap; font-weight: 600; }
+.pdoc-shopping__note { font-size: 8.5pt; margin-bottom: 6pt; }
