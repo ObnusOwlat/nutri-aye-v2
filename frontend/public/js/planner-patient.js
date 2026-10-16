@@ -14,6 +14,7 @@ const PlannerPatient = (function() {
 
         patientSelect?.addEventListener('change', handlePatientChange);
         document.getElementById('btn-save-patient-plan')?.addEventListener('click', saveToPatient);
+        document.getElementById('btn-print-week')?.addEventListener('click', () => PrintPlan.fromPlanner());
         State.subscribe('patients:updated', populatePatientSelector);
         populatePatientSelector();
     }
