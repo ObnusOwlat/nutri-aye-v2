@@ -1,6 +1,7 @@
 /**
- * billing-company.js - Consultorio data printed on receipts (name, RUC,
- * contact) and the payment methods offered when registering a payment.
+ * billing-company.js - Consultorio data printed on receipts and patient documents
+ * (name, RUC, contact; logo and color in print-branding.js) and the payment
+ * methods offered when registering a payment.
  * Removing a method deactivates it; old payments keep showing its name.
  */
 
@@ -13,9 +14,10 @@ const BillingCompany = (function() {
     ];
 
     async function open() {
-        let company, methods;
+        let company, methods, pdf;
         try {
-            [company, methods] = await Promise.all([api('GET', '/billing-api/company'), api('GET', '/billing-api/payment-methods')]);
+            [company, methods, pdf] = await Promise.all([api('GET', '/billing-api/company'), api('GET', '/billing-api/payment-methods'),
+                api('GET', '/billing-api/pdf-config')]);
         } catch (error) {
             UI.toastError(error.message);
             return;
@@ -26,13 +28,14 @@ const BillingCompany = (function() {
             size: 'large',
             content: `
                 <form class="billing-company" autocomplete="off">
-                    <p class="text-muted">Salen en el encabezado de los recibos y presupuestos.</p>
+                    <p class="text-muted">Salen en el encabezado de los recibos, presupuestos y documentos para el paciente.</p>
                     <div class="billing-editor__grid">
                         ${FIELDS.map(([key, label, max]) => `
                             <label class="form-group"><span class="form-label">${label}</span>
                                 <input class="form-input" name="${key}" maxlength="${max}" value="${esc(company[key])}" ${key === 'name' ? 'required' : ''}></label>`).join('')}
                     </div>
                 </form>
+                ${PrintBranding.formHtml(pdf)}
                 <section class="billing-methods">
                     <h4>Medios de pago</h4>
                     <ul class="billing-methods__list">${methodsHtml(methods)}</ul>
@@ -45,9 +48,10 @@ const BillingCompany = (function() {
                     </form>
                 </section>`,
             confirmText: 'Guardar datos',
-            onConfirm: save
+            onConfirm: () => save(pdf)
         });
         bind();
+        PrintBranding.bindForm(document.querySelector('.print-brand'));
     }
 
     function methodsHtml(methods) {
@@ -91,11 +95,12 @@ const BillingCompany = (function() {
         });
     }
 
-    async function save() {
+    async function save(pdf) {
         const form = document.querySelector('.billing-company');
         const data = Object.fromEntries([...new FormData(form)].map(([k, v]) => [k, v.trim() || null]));
         if (!data.name) throw new Error('El nombre del consultorio es obligatorio');
         await api('PUT', '/billing-api/company', { ...data, country: 'Paraguay', currency: 'PYG' });
+        await PrintBranding.saveForm(document.querySelector('.print-brand'), pdf);
         UI.toastSuccess('Datos del consultorio guardados');
         return true;
     }

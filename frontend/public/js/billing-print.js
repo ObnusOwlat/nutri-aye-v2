@@ -1,7 +1,6 @@
 /**
- * billing-print.js - Printable receipt or quote (print styles in billing.css):
- * the document is drawn in #print-area and only that is printed. Always carries
- * the "sin valor fiscal" legend.
+ * billing-print.js - Printable receipt or quote (styles in billing.css), printed
+ * with Print.run (print-core.js). Always carries the "sin valor fiscal" legend.
  */
 
 const BillingPrint = (function() {
@@ -53,16 +52,8 @@ const BillingPrint = (function() {
     }
 
     function print(kind, doc) {
-        const area = document.getElementById('print-area');
-        area.innerHTML = html(kind, doc);
-        document.body.classList.add('printing-document');
-        const done = () => {
-            document.body.classList.remove('printing-document');
-            area.innerHTML = '';
-            window.removeEventListener('afterprint', done);
-        };
-        window.addEventListener('afterprint', done);
-        window.print();
+        const name = `${kind === 'invoice' ? 'Recibo' : 'Presupuesto'} ${doc.invoiceNumber || doc.quoteNumber || ''}`.trim();
+        Print.run({ title: name, html: html(kind, doc) });
     }
 
     return { print, html };
