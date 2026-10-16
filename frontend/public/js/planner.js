@@ -181,6 +181,7 @@ const Planner = (function() {
                 <div class="day-card" data-day="${day}">
                     <div class="day-card__header ${isToday ? 'day-card__header--today' : ''}">
                         ${DAY_LABELS[day]}${isToday ? ' (Hoy)' : ''}
+                        ${Object.values(meals).some(Boolean) ? `<button class="day-card__save" type="button" data-save-day="${day}" title="Guardar este día como plantilla">💾</button>` : ''}
                     </div>
                     <div class="day-card__content">
                         <div class="day-card__calories ${isOver ? 'day-card__calories-over' : ''}">

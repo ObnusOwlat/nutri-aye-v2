@@ -21,6 +21,7 @@ const ENTITIES = {
     progress: { table: 'patient_progress', patientId: (row) => row.patient_id },
     template: { table: 'diet_templates' },
     routine: { table: 'activity_templates' },
+    dayTemplate: { table: 'day_templates' },
     recipe: {
         table: 'recipes',
         extra: { ingredients: lines('SELECT ingredient_id, grams FROM recipe_ingredients WHERE recipe_id = ? ORDER BY ingredient_id') }

@@ -69,7 +69,7 @@ app.use(authenticate);
 const ROUTES = [
     'auth', 'users', 'activity', 'labels', 'stats', 'ingredients', 'nutrients', 'nutrition', 'targets', 'suggestions', 'exercises', 'allergens', 'recipes',
     'patients/index', 'patients/records', 'patients/plans', 'patients/billing-link',
-    'bootstrap', 'diet-templates', 'activity-templates', 'migration', 'backup', 'planner',
+    'bootstrap', 'diet-templates', 'activity-templates', 'day-templates', 'migration', 'backup', 'planner',
     'billing/company', 'billing/clients', 'billing/payments', 'billing/documents', 'billing/payment-methods'
 ];
 for (const route of ROUTES) {
