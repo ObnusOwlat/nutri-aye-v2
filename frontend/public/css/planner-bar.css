@@ -91,3 +91,9 @@
     border-left: 3px solid var(--color-warning);
     background: rgba(245, 158, 11, 0.05);
 }
+
+.swap-mark {
+    color: var(--color-text-muted);
+    cursor: help;
+    margin-left: 2px;
+}

@@ -208,6 +208,9 @@ const Planner = (function() {
             const warnings = PlannerSidebar.warningsFor(recipeId);
             const allergenWarning = warnings.length
                 ? `<span class="allergen-warning" title="${UI.escapeHtml(warnings.join(' · '))}">⚠</span>` : '';
+            const swaps = PlannerSidebar.swapsFor(recipeId);
+            const swapMark = swaps.length
+                ? `<span class="swap-mark" title="${UI.escapeHtml('Para este paciente: ' + swaps.map(PlannerSidebar.swapText).join(' · ') + '. Los nutrientes son los de la receta original.')}">↺</span>` : '';
 
             const nutrition = recipe.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
@@ -215,7 +218,7 @@ const Planner = (function() {
                 <div class="meal-slot meal-slot--filled" data-day="${day}" data-meal="${mealType}">
                     <div class="meal-slot__label">${MEAL_LABELS[mealType]}</div>
                     <div class="meal-slot__content">
-                        ${UI.escapeHtml(recipe.name)} ${allergenWarning}
+                        ${UI.escapeHtml(recipe.name)} ${allergenWarning}${swapMark}
                         <button class="meal-slot__remove" data-day="${day}" data-meal="${mealType}" title="Quitar">×</button>
                     </div>
                     <div class="meal-slot__nutrition">

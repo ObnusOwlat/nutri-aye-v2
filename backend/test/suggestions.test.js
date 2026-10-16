@@ -71,3 +71,22 @@ test('suggestions are per consultorio and validate the query', async () => {
     assert.equal((await suggest(patient.id, '?mealType=brunch')).status, 400);
     assert.equal((await suggest(patient.id, '?limit=0')).status, 400);
 });
+
+test('a food with a simple swap keeps the recipe suitable; the swap is suggested', async () => {
+    // The swap alternatives are catalog foods: own copies with their ids
+    const sunflower = await createIngredient({ name: 'Aceite de girasol T', category: 'fats', kcalPer100g: 884 });
+    db.prepare('UPDATE ingredients SET id = ? WHERE id = ?').run('usda-171025', sunflower.id);
+    const soyOil = await createIngredient({ name: 'Aceite de soja T', category: 'fats', kcalPer100g: 884 });
+    const tofu = await createIngredient({ name: 'Tofu T', category: 'protein', kcalPer100g: 76 });
+    const salad = await createRecipe(soyOil.id, { name: 'Ensalada con aceite', ingredients: [{ ingredientId: soyOil.id, grams: 5 }] });
+    const withTofu = await createRecipe(tofu.id, { name: 'Tofu salteado', ingredients: [{ ingredientId: tofu.id, grams: 100 }, { ingredientId: soyOil.id, grams: 5 }] });
+
+    const patient = await createPatient({ firstName: 'Sol' });
+    await addCondition(patient.id, { type: 'allergy', name: 'Alergia a la soja' });
+    const byId = Object.fromEntries((await suggest(patient.id)).body.data.map(r => [r.recipeId, r]));
+    assert.equal(byId[salad.id].unsuitable, false);
+    assert.deepEqual(byId[salad.id].swaps.map(s => [s.to, s.toId]), [['aceite de girasol', 'usda-171025']]);
+    // tofu has no swap: still unsuitable (the oil swap is listed anyway)
+    assert.equal(byId[withTofu.id].unsuitable, true);
+    assert.equal(byId[withTofu.id].swaps.length, 1);
+});

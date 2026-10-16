@@ -2,6 +2,12 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Intercambios simples en las sugerencias (beta) y leches vegetales sin «lácteos»
+
+- `lib/swaps.js`: dos grupos de intercambio, aceites vegetales y leche de vaca. Si un alimento de la receta choca con una alergia del paciente y tiene una alternativa sin ese alérgeno (girasol, oliva o canola; leche de arroz, de almendras o de coco), la receta queda apta y se sugiere el cambio (`swaps` en `/recipe-suggestions`). La receta no se modifica y los nutrientes son los de la original.
+- Planificador: la tarjeta muestra «↺ Usar aceite de girasol en lugar de …» y la grilla un ↺ con el detalle.
+- Arreglo: las leches vegetales figuraban como lácteos porque el término «leche» de Open Food Facts no respetaba las excepciones locales. Ahora sí las respeta, y la migración 19 vuelve a calcular los alérgenos.
+
 ## Plantillas de día y pestaña «Plantillas» del planificador
 
 - Nueva tabla `day_templates` (migración 18) y rutas `/api/day-templates`: un día de comidas (desayuno a cena) guardado para reusar. Se desactiva, nunca se borra. Va en los respaldos.
