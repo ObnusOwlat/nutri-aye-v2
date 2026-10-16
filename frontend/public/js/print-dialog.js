@@ -9,9 +9,11 @@ const PrintDialog = (function() {
     const esc = (v) => UI.escapeHtml(v ?? '');
     const KEY = 'nutri-aye.printOptions';
     const OPTIONS = {
-        calories: { label: 'Mostrar calorías', hint: 'kcal por comida y por día' }
+        calories: { label: 'Mostrar calorías', hint: 'kcal y macronutrientes' },
+        recipes: { label: 'Incluir recetario', hint: 'cada receta de la semana, con alimentos y preparación' },
+        notes: { label: 'Incluir notas de las recetas', hint: 'revisalas antes: pueden tener referencias internas' }
     };
-    const defaults = { calories: false };
+    const defaults = { calories: false, recipes: true, notes: false };
 
     function readOptions() {
         try { return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...defaults }; }
@@ -48,10 +50,14 @@ const PrintDialog = (function() {
 
     const chosen = (docs) => docs.find(d => d.id === document.querySelector('.print-dialog [name=doc]:checked')?.value) || docs[0];
 
-    // Only the options of the chosen document are shown
+    // Only the options of the chosen document are shown; the notes go with the recetario
     function syncOptions(docs) {
         const doc = chosen(docs);
-        document.querySelectorAll('.print-dialog [data-opt]').forEach(el => { el.hidden = !(doc.options || []).includes(el.dataset.opt); });
+        const form = document.querySelector('.print-dialog');
+        const noRecetario = (doc.options || []).includes('recipes') && !form?.elements.recipes?.checked;
+        document.querySelectorAll('.print-dialog [data-opt]').forEach(el => {
+            el.hidden = !(doc.options || []).includes(el.dataset.opt) || (el.dataset.opt === 'notes' && noRecetario);
+        });
     }
 
     function confirm(docs, optionKeys) {

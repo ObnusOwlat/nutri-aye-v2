@@ -84,3 +84,13 @@
 .print-dialog label { display: flex; align-items: baseline; gap: var(--space-xs); cursor: pointer; }
 .print-dialog label[hidden] { display: none; }
 .print-dialog__hint { font-size: var(--font-size-sm); margin: 0; }
+
+/* Receta y recetario (print-recipe.js) */
+.pdoc-recipe { margin-bottom: 12pt; padding-bottom: 8pt; border-bottom: 0.5pt solid #ccc; }
+.pdoc-recipe:last-child { border-bottom: 0; }
+.pdoc-recipe__name { font-size: 12pt; margin: 0 0 4pt; display: flex; justify-content: space-between; align-items: baseline; gap: 8pt; break-after: avoid; }
+h2.pdoc-recipe__name { font-size: 14pt; }
+.pdoc-recipe__name small { font-family: 'Inter', Arial, sans-serif; font-size: 8.5pt; font-weight: 500; color: #555; text-transform: uppercase; }
+.pdoc-recipe__foods { break-inside: avoid; max-width: 120mm; }
+.pdoc-recipe h4 { font-size: 10pt; margin: 6pt 0 2pt; color: var(--pdoc-accent); break-after: avoid; }
+.pdoc-recipe__allergens, .pdoc-recipe__nutrition { margin-top: 4pt; font-size: 9.5pt; }

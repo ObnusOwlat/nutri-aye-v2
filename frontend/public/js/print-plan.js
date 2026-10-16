@@ -1,7 +1,8 @@
 /**
  * print-plan.js - "Plan alimentario semanal" for the patient: one block per
  * day with its meals in order and the recipe of each. Calories only when the
- * option is on. Empty meals are left out; an empty day says so.
+ * option is on. Empty meals are left out; an empty day says so. Optionally
+ * followed by the recetario (print-recipe.js).
  */
 
 const PrintPlan = (function() {
@@ -40,7 +41,8 @@ const PrintPlan = (function() {
             <section class="pdoc__section">
                 <div class="pdoc-week">${days}</div>
                 ${average != null ? `<p class="pdoc-week__avg">Promedio diario: <strong>${UI.formatCalories(average)}</strong></p>` : ''}
-            </section>`;
+            </section>
+            ${opts.recipes ? PrintRecipe.recetario(week, opts) : ''}`;
         return Print.page({ title: 'Plan alimentario semanal', subtitle: avoidLine(patient), patient, body });
     }
 
@@ -49,7 +51,7 @@ const PrintPlan = (function() {
         return {
             id: 'plan',
             label: 'Plan alimentario semanal',
-            options: ['calories'],
+            options: ['calories', 'recipes', 'notes'],
             build: (opts) => {
                 if (!hasMeals(week)) throw new Error(patient ? 'La semana del paciente no tiene comidas guardadas' : 'La semana no tiene comidas');
                 return { title: Print.fileTitle('Plan semanal', patient), html: html({ week, patient }, opts) };
