@@ -9,6 +9,8 @@ test('foods found in Paraguay and translation fixes', () => {
     assert.equal(isAvailableInPy({ name: 'Carne vacuna, bife', sourceCategory: 'Beef Products' }), true);
     assert.equal(isAvailableInPy({ name: 'Pollo, nuggets', nameEn: "McDONALD'S, Chicken McNUGGETS", sourceCategory: 'Fast Foods' }), false);
     assert.equal(isAvailableInPy({ name: 'Halibut del Atlántico' }), false);
+    assert.equal(isAvailableInPy({ name: 'Carne vacuna, Nueva Zelanda, importada, lengua, cruda', nameEn: 'Beef, New Zealand, imported, tongue, raw' }), false);
+    assert.equal(isAvailableInPy({ name: 'Carne vacuna, australiana, importada, wagyu, cruda', nameEn: 'Beef, Australian, imported, Wagyu, raw' }), false);
     assert.equal(isAvailableInPy({ name: 'Cualquier cosa', orgId: 'org-1' }), true);   // own foods
     assert.equal(fixName('Pavo, molido, 93% de préstamos, 7 % de grasa, pan-broiled crumbles'), 'Pavo, molido, 93 % magro, 7 % de grasa, a la sartén, desmenuzado');
     assert.equal(fixName('Pollo, broiler o fryers, pechuga'), 'Pollo, parrillero, pechuga');

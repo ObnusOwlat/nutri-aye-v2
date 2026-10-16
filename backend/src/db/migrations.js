@@ -120,6 +120,11 @@ const MIGRATIONS = [
         version: 16,
         name: 'rutinas de ejercicio (plantillas de actividad)',
         up: createActivityTemplates
+    },
+    {
+        version: 17,
+        name: 'carne importada (Nueva Zelanda, Australia) deja de figurar como de Paraguay',
+        up: markParaguayFoods
     }
 ];
 

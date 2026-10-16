@@ -34,12 +34,19 @@ const PY_FOODS = [
 // USDA groups of US-only products (restaurants, brands, baby foods, native foods)
 const NOT_PY_GROUPS = ['Fast Foods', 'Restaurant Foods', 'Baby Foods', 'American Indian/Alaska Native Foods', 'Meals, Entrees, and Side Dishes'];
 
+// Foods the USDA marks as brought from another country ("Carne vacuna, Nueva
+// Zelanda, importada…", "Beef, Australian, imported…"): the first words say
+// "carne vacuna", but that cut is not the one sold here
+const IMPORTED_EN = /\b(imported|New Zealand|Australian)\b/i;
+const IMPORTED_ES = /\b(importad[oa]s?|nueva zelanda|australian[oa]s?)\b/;
+
 const firstPart = (name) => plain(String(name || '').split(',')[0]).trim();
 const startsWithAny = (text) => PY_FOODS.some(k => text === k || text.startsWith(`${k} `));
 
 function isAvailableInPy({ name, nameEn, sourceCategory, orgId }) {
     if (orgId) return true;                                      // own foods: the consultorio has them
     if (NOT_PY_GROUPS.includes(sourceCategory)) return false;
+    if (IMPORTED_EN.test(nameEn || '') || IMPORTED_ES.test(plain(name))) return false;
     if (/\b[A-Z]{3,}[A-Z' ]*\b/.test(nameEn || '') && !/^(USDA|NFS)\b/.test(nameEn)) return false; // brand names (KRAFT…)
     return startsWithAny(firstPart(name));
 }
