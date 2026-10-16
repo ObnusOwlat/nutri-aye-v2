@@ -119,13 +119,7 @@
     .billing-payments li { grid-template-columns: 1fr auto; }
 }
 
-/* Impresión: solo el documento */
-.print-area { display: none; }
-@media print {
-    body.printing-document > *:not(.print-area) { display: none !important; }
-    body.printing-document .print-area { display: block !important; }
-    @page { size: A4; margin: 15mm; }
-}
+/* Recibo y presupuesto impresos (el mecanismo está en print-docs.css) */
 .print-doc { font: 11pt/1.4 Arial, Helvetica, sans-serif; color: #000; }
 .print-doc h1 { font-size: 16pt; margin: 0 0 4px; }
 .print-doc h2 { font-size: 14pt; margin: 0; text-transform: uppercase; }
