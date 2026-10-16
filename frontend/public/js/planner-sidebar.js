@@ -1,6 +1,7 @@
 /**
  * planner-sidebar.js - Left column of the planner: tabs Paciente / Recetas /
- * Actividad. This file has the tabs, the patient sheet and the patient's recipe
+ * Actividad (Recetas only in Comidas mode, Actividad only in Actividad mode;
+ * body[data-planner-mode] also swaps the right panel: nutrients or exercises). This file has the tabs, the patient sheet and the patient's recipe
  * warnings (from GET /api/patients/:id/recipe-suggestions), which the grid
  * uses to mark planned meals with ⚠. Recipes and activity live in
  * planner-sidebar-recipes.js and planner-sidebar-activity.js.
@@ -25,6 +26,8 @@ const PlannerSidebar = (function() {
 
         // Wide page only on the planner tab
         UI.on('app:tabChanged', ({ tab }) => { document.body.dataset.tab = tab; });
+        State.subscribe('plannerMode:changed', onMode);
+        onMode(State.getMode());
         State.subscribe('plannerPatient:changed', setPatient);
         State.subscribe('patients:updated', () => patientId && loadSuggestions());
         State.subscribe('recipes:updated', () => patientId && loadSuggestions());
@@ -35,6 +38,14 @@ const PlannerSidebar = (function() {
     function showTab(name) {
         root.querySelectorAll('[data-sidebar-tab]').forEach(t => t.classList.toggle('active', t.dataset.sidebarTab === name));
         root.querySelectorAll('[data-sidebar-panel]').forEach(p => { p.hidden = p.dataset.sidebarPanel !== name; });
+    }
+
+    // Each mode shows only its own tab: Recetas for meals, Actividad for activity
+    function onMode(mode) {
+        document.body.dataset.plannerMode = mode;
+        const own = mode === 'activity' ? 'activity' : 'recipes';
+        const active = root.querySelector('[data-sidebar-tab].active')?.dataset.sidebarTab;
+        if (active !== 'patient' && active !== own) showTab(own);
     }
 
     function setPatient(id) {

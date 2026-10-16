@@ -6,7 +6,15 @@
 
 /* Below the sticky header and tabs */
 :root {
-    --planner-sticky-top: 136px;
+    --planner-sticky-top: 60px;
+}
+
+/* Comidas: Recetas + nutrients. Actividad: Actividad + exercises */
+body:not([data-planner-mode="activity"]) [data-sidebar-tab="activity"],
+body:not([data-planner-mode="activity"]) .exercises-panel,
+body[data-planner-mode="activity"] [data-sidebar-tab="recipes"],
+body[data-planner-mode="activity"] #planner-nutrients {
+    display: none;
 }
 
 body[data-tab="planner"] .nutrients-panel {

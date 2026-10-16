@@ -1,12 +1,13 @@
 /**
- * planner-sidebar-activity.js - "Actividad" tab of the planner's left column:
- * common activities (2024 Compendium, by group) and the wger exercise catalog.
+ * planner-sidebar-activity.js - "Actividad" tab of the planner's left column
+ * (common activities, 2024 Compendium, by group) and the wger exercise catalog
+ * in the right panel, which takes the place of the nutrients in Actividad mode.
  * Both are dragged onto a day of the grid in "Actividad" mode, or tapped to
  * choose the day. Kcal are estimated in the grid (planner-energy.js).
  */
 
 const PlannerSidebarActivity = (function() {
-    let panel, activityList, exSearch, exMuscle, exCategory, exList;
+    let panel, exPanel, activityList, exSearch, exMuscle, exCategory, exList;
     let searchTimer = null;
     let exercises = new Map();   // shown exercises by id, for drag/tap
     const esc = (t) => UI.escapeHtml(t);
@@ -14,26 +15,29 @@ const PlannerSidebarActivity = (function() {
     function init() {
         panel = document.querySelector('[data-sidebar-panel="activity"]');
         if (!panel) return;
+        exPanel = document.getElementById('planner-exercises');
         activityList = panel.querySelector('#sidebar-activity-list');
-        exSearch = panel.querySelector('#sidebar-exercise-search');
-        exMuscle = panel.querySelector('#sidebar-exercise-muscle');
-        exCategory = panel.querySelector('#sidebar-exercise-category');
-        exList = panel.querySelector('#sidebar-exercise-list');
+        exSearch = exPanel.querySelector('#sidebar-exercise-search');
+        exMuscle = exPanel.querySelector('#sidebar-exercise-muscle');
+        exCategory = exPanel.querySelector('#sidebar-exercise-category');
+        exList = exPanel.querySelector('#sidebar-exercise-list');
 
         [exSearch, exMuscle, exCategory].forEach(el => el.addEventListener('input', () => {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(searchExercises, 250);
         }));
-        panel.addEventListener('dragstart', (e) => {
-            const source = sourceOf(e.target.closest('[data-source]'));
-            if (!source) return;
-            e.dataTransfer.setData(PlannerActivityGrid.DRAG_NEW, JSON.stringify(source));
-            e.dataTransfer.effectAllowed = 'copy';
-            if (State.getMode() !== 'activity') State.setMode('activity');
-        });
-        panel.addEventListener('click', (e) => {
-            const source = sourceOf(e.target.closest('[data-source]'));
-            if (source) chooseDay(source);
+        [panel, exPanel].forEach(el => {
+            el.addEventListener('dragstart', (e) => {
+                const source = sourceOf(e.target.closest('[data-source]'));
+                if (!source) return;
+                e.dataTransfer.setData(PlannerActivityGrid.DRAG_NEW, JSON.stringify(source));
+                e.dataTransfer.effectAllowed = 'copy';
+                if (State.getMode() !== 'activity') State.setMode('activity');
+            });
+            el.addEventListener('click', (e) => {
+                const source = sourceOf(e.target.closest('[data-source]'));
+                if (source) chooseDay(source);
+            });
         });
         // Activity mode shows this tab
         State.subscribe('plannerMode:changed', (mode) => { if (mode === 'activity') PlannerSidebar.showTab('activity'); });
