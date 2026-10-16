@@ -18,7 +18,7 @@ const { createServerFirstTables } = require('./schema/server-first');
 const { addFoodGroups } = require('./schema/food-groups');
 const { addActivityPlans } = require('./schema/activity-plans');
 const { markParaguayFoods } = require('./schema/paraguay');
-const { createAllergenTables } = require('./schema/allergens');
+const { createAllergenTables, tagAllFoods } = require('./schema/allergens');
 const { translateCatalogNames, translateBasicFoods } = require('./schema/spanish-names');
 const { createTargetTables, renameVitaminA } = require('./schema/targets');
 const { createPaymentTables } = require('./schema/payments');
@@ -131,6 +131,11 @@ const MIGRATIONS = [
         version: 18,
         name: 'plantillas de día (comidas)',
         up: createDayTemplates
+    },
+    {
+        version: 19,
+        name: 'las leches vegetales (almendras, arroz, soja, coco, avena) dejan de figurar como lácteos',
+        up: (db) => tagAllFoods(db)
     }
 ];
 

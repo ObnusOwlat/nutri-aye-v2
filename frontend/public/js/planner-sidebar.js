@@ -79,6 +79,9 @@ const PlannerSidebar = (function() {
     const changed = () => State.emit('plannerSuggestions:updated', { patientId, suggestions });
 
     const warningsFor = (recipeId) => (patientId ? byRecipe.get(recipeId)?.warnings || [] : []);
+    // Simple swaps for the patient: [{ from, to, allergen }] ("aceite de girasol" for soy oil)
+    const swapsFor = (recipeId) => (patientId ? byRecipe.get(recipeId)?.swaps || [] : []);
+    const swapText = (s) => `Usar ${s.to} en lugar de ${s.from} (${s.allergen})`;
     // A severe allergy of the patient is in the recipe: choosing it asks first
     const isBlocked = (recipeId) => !!(patientId && byRecipe.get(recipeId)?.blocked);
     // An allergen, or far over a limit of a condition: hidden from the suggestions, asks before adding
@@ -136,7 +139,7 @@ const PlannerSidebar = (function() {
             <p class="sidebar-note sidebar-note--small">Sugerencias orientativas por reglas (OMS, ADA, KDIGO, NASEM). Decide la nutricionista.</p>`;
     }
 
-    return { init, warningsFor, isBlocked, isUnsuitable, getPatientId: () => patientId, getSuggestions: () => suggestions, showTab };
+    return { init, warningsFor, swapsFor, swapText, isBlocked, isUnsuitable, getPatientId: () => patientId, getSuggestions: () => suggestions, showTab };
 })();
 
 document.addEventListener('DOMContentLoaded', () => PlannerSidebar.init());

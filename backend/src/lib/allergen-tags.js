@@ -31,7 +31,7 @@ const LOCAL_RULES = [
     ['gluten', ['trigo', 'avena', 'cebada', 'centeno', 'pan', 'harina', 'fideo', 'pasta', 'galleta', 'galletita', 'semola', 'cuscus', 'burgol', 'empanada', 'oats', 'barley', 'rye', 'wheat', 'salsa de soja'],
         ['harina de maiz', 'harina de mandioca', 'harina de arroz', 'pan de yuca', 'almidon', 'sin gluten', 'harina de garbanzo', 'pasta de mani']],
     ['milk', ['leche', 'queso', 'yogur', 'manteca', 'crema', 'ricota', 'requeson', 'mozzarella', 'dulce de leche', 'suero', 'kefir'],
-        ['leche de coco', 'leche de almendra', 'leche de arroz', 'leche de soja', 'manteca de mani', 'manteca de cacao', 'manteca de almendra', 'manteca de girasol', 'manteca de cerdo', 'crema de mani', 'crema de coco', 'crema de arroz']],
+        ['leche de coco', 'leche de almendra', 'leche de arroz', 'leche de soja', 'leche de avena', 'leche vegetal', 'manteca de mani', 'manteca de cacao', 'manteca de almendra', 'manteca de girasol', 'manteca de cerdo', 'crema de mani', 'crema de coco', 'crema de arroz']],
     ['eggs', ['huevo', 'clara', 'yema', 'mayonesa', 'merengue'], []],
     ['peanuts', ['mani', 'manies', 'cacahuate'], []],
     ['nuts', ['nuez', 'nueces', 'almendra', 'avellana', 'castana', 'pistacho', 'caju', 'pecan', 'macadamia'], ['nuez moscada']],
@@ -84,10 +84,12 @@ function offMatches(text) {
 function tagFood({ name, nameEn }) {
     const tags = new Map();
     const add = (allergen, source, term) => { if (ALLERGENS[allergen] && !tags.has(allergen)) tags.set(allergen, { allergen, source, term }); };
-    for (const text of [plain(nameEn), plain(name)]) {
-        for (const m of offMatches(text)) for (const a of m.allergens) add(a, 'off', m.term);
-    }
     const es = plain(name);
+    // The local exceptions also apply to the taxonomy ("leche de almendras" is not milk)
+    const excepted = (allergen) => LOCAL_RULES.some(([a, , exceptions]) => a === allergen && exceptions.some(e => es.includes(e)));
+    for (const text of [plain(nameEn), es]) {
+        for (const m of offMatches(text)) for (const a of m.allergens) if (!excepted(a)) add(a, 'off', m.term);
+    }
     for (const [allergen, keywords, exceptions] of LOCAL_RULES) {
         if (exceptions.some(e => es.includes(e))) continue;
         const hit = keywords.find(k => wordRe(k).test(es));

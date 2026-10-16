@@ -54,3 +54,9 @@ test('patient allergies are structured; a severe allergy blocks the recipe', asy
     const targets = (await api().get(`/api/patients/${patient.id}/targets`)).body.data;
     assert.deepEqual(targets.avoid.map(a => [a.id, a.block]), [['crustaceans', true], ['milk', false]]);
 });
+
+test('plant milks are not dairy', () => {
+    assert.deepEqual(tags('Leche de almendras sin azúcar'), ['nuts']);
+    assert.deepEqual(tags('Leche de arroz sin azúcar'), []);
+    assert.deepEqual(tags('Leche entera'), ['milk']);
+});

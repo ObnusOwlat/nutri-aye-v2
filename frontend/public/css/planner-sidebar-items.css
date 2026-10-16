@@ -55,6 +55,10 @@
     color: var(--color-danger-dark);
 }
 
+.sidebar-recipe__why .swap {
+    color: var(--color-text-muted);
+}
+
 .meal-slot--drop {
     outline: 2px dashed var(--color-primary);
     outline-offset: -2px;

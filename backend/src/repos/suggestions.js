@@ -8,6 +8,7 @@ const { rulesFor } = require('../lib/diet-rules');
 const allergenRepo = require('./allergens');
 const { driFor, DRI_NAMES } = require('../lib/dri');
 const { ageOf } = require('../lib/age');
+const { swapFor } = require('../lib/swaps');
 
 // Planner meal slot -> recipe category
 const CATEGORY_OF_MEAL = { morning_snack: 'snack' };
@@ -63,7 +64,16 @@ function scoreRecipe(recipe, amounts, units, ctx) {
     covered.sort((a, b) => b[1] - a[1]).slice(0, 2)
         .forEach(([id, share]) => reasons.push(`Aporta ${Math.round(share * 100)} % de ${DRI_NAMES[id]} del día`));
 
-    const found = allergenRepo.conflicts(ctx.repoCtx, ctx.allergens, recipe.ingredients);
+    // A food with an allergen that has a simple swap (another oil, a plant milk)
+    // does not make the recipe unsuitable: the swap is suggested instead
+    const found = [], swaps = [];
+    const tagsOf = (ids) => allergenRepo.forIngredients(ctx.repoCtx, ids);
+    for (const conflict of allergenRepo.conflicts(ctx.repoCtx, ctx.allergens, recipe.ingredients)) {
+        if (swaps.some(s => s.from === conflict.ingredient)) continue;
+        const to = swapFor(conflict.ingredient, ctx.allergens, tagsOf);
+        if (to) swaps.push({ from: conflict.ingredient, to: to.short, toId: to.id, allergen: conflict.label.toLowerCase() });
+        else found.push(conflict);
+    }
     for (const { label, ingredient, block, type } of found) {
         warnings.unshift(`Contiene ${label.toLowerCase()}: ${ingredient}${block ? ' — alergia grave' : type === 'intolerance' ? ' — intolerancia' : ''}`);
     }
@@ -72,7 +82,7 @@ function scoreRecipe(recipe, amounts, units, ctx) {
         recipeId: recipe.id, name: recipe.name, category: recipe.category,
         calories: recipe.nutrition?.calories ?? null,
         score: Math.round(score * 10) / 10, excluded: found.length > 0, blocked: found.some(f => f.block),
-        unsuitable: found.length > 0 || tooHigh, reasons, warnings,
+        unsuitable: found.length > 0 || tooHigh, reasons, warnings, swaps,
         allergens: [...new Set(found.map(f => f.allergen))]
     };
 }

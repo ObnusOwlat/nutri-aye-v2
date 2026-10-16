@@ -133,6 +133,7 @@ const PlannerSidebarRecipes = (function() {
         const n = recipe.nutrition || {};
         const excluded = suggestion?.unsuitable;
         const reasons = excluded ? '' : (suggestion?.reasons || []).slice(0, 2).map(t => `<li>✓ ${UI.escapeHtml(t)}</li>`).join('');
+        const swaps = (suggestion?.swaps || []).map(sw => `<li class="swap">↺ ${UI.escapeHtml(PlannerSidebar.swapText(sw))}</li>`).join('');
         const warnings = (suggestion?.warnings || []).slice(0, excluded ? 4 : 2).map(t => `<li class="warn">⚠ ${UI.escapeHtml(t)}</li>`).join('');
         return `
             <div class="sidebar-recipe ${excluded ? 'sidebar-recipe--excluded' : ''}" draggable="true" data-recipe-id="${UI.escapeHtml(recipe.id)}"
@@ -142,7 +143,7 @@ const PlannerSidebarRecipes = (function() {
                     <span>${UI.formatCalories(n.calories)}</span>
                 </div>
                 <div class="sidebar-recipe__meta">${UI.escapeHtml(UI.label('mealCategory', recipe.category))} · P ${UI.formatNumber(n.protein)} g · C ${UI.formatNumber(n.carbs)} g · G ${UI.formatNumber(n.fat)} g</div>
-                ${reasons || warnings ? `<ul class="sidebar-recipe__why">${warnings}${reasons}</ul>` : ''}
+                ${reasons || warnings || swaps ? `<ul class="sidebar-recipe__why">${warnings}${swaps}${reasons}</ul>` : ''}
             </div>`;
     }
 
