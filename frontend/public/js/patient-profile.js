@@ -14,12 +14,13 @@ const PatientProfile = (function() {
             tab.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
         });
 
-        // Header buttons (Edit, Export)
+        // Header buttons (Print, Edit, Export)
         patientProfile?.addEventListener('click', (e) => {
             const button = e.target.closest('[data-action]');
             if (!button) return;
             if (button.dataset.action === 'edit-patient') PatientForm.showEditModal(button.dataset.patientId);
             if (button.dataset.action === 'export-patient') Patients.exportPatient(button.dataset.patientId);
+            if (button.dataset.action === 'print-patient') PrintDialog.openForPatient(button.dataset.patientId);
         });
 
         // Keep the open profile up to date after an edit
@@ -96,6 +97,7 @@ const PatientProfile = (function() {
                 </div>
             </div>
             <div class="patient-profile__actions">
+                <button class="btn btn--primary" data-action="print-patient" data-patient-id="${patient.id}" title="Documentos para entregar al paciente">🖨 Imprimir</button>
                 <button class="btn btn--secondary" data-action="edit-patient" data-patient-id="${patient.id}">Editar paciente</button>
                 <button class="btn btn--secondary" data-action="export-patient" data-patient-id="${patient.id}">Exportar</button>
             </div>
