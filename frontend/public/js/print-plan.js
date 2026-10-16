@@ -2,7 +2,7 @@
  * print-plan.js - "Plan alimentario semanal" for the patient: one block per
  * day with its meals in order and the recipe of each. Calories only when the
  * option is on. Empty meals are left out; an empty day says so. Optionally
- * followed by the recetario (print-recipe.js).
+ * followed by the recetario (print-recipe.js) and the shopping list (print-shopping.js).
  */
 
 const PrintPlan = (function() {
@@ -42,7 +42,8 @@ const PrintPlan = (function() {
                 <div class="pdoc-week">${days}</div>
                 ${average != null ? `<p class="pdoc-week__avg">Promedio diario: <strong>${UI.formatCalories(average)}</strong></p>` : ''}
             </section>
-            ${opts.recipes ? PrintRecipe.recetario(week, opts) : ''}`;
+            ${opts.recipes ? PrintRecipe.recetario(week, opts) : ''}
+            ${opts.shopping ? PrintShopping.section(week) : ''}`;
         return Print.page({ title: 'Plan alimentario semanal', subtitle: avoidLine(patient), patient, body });
     }
 
@@ -51,7 +52,7 @@ const PrintPlan = (function() {
         return {
             id: 'plan',
             label: 'Plan alimentario semanal',
-            options: ['calories', 'recipes', 'notes'],
+            options: ['calories', 'recipes', 'notes', 'shopping'],
             build: (opts) => {
                 if (!hasMeals(week)) throw new Error(patient ? 'La semana del paciente no tiene comidas guardadas' : 'La semana no tiene comidas');
                 return { title: Print.fileTitle('Plan semanal', patient), html: html({ week, patient }, opts) };
@@ -62,7 +63,8 @@ const PrintPlan = (function() {
     // Planner button: the week as it is on screen (saved or not), with or without patient
     function fromPlanner() {
         const patient = State.getPatient(PlannerPatient.getSelectedId()) || null;
-        PrintDialog.open({ title: 'Imprimir plan semanal', docs: [doc({ week: State.getWeekPlan(), patient })] });
+        const week = State.getWeekPlan();
+        PrintDialog.open({ title: 'Imprimir semana', docs: [doc({ week, patient }), PrintShopping.doc({ week, patient })] });
     }
 
     return { doc, html, fromPlanner, hasMeals };
