@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { api, db, createIngredient, createPatient, createRecipe } = require('./helpers');
+const { api, db, sessionFor, createIngredient, createPatient, createRecipe } = require('./helpers');
 
 test('backup round trip brings back deactivated data without touching the rest', async () => {
     const rice = await createIngredient({ name: 'Arroz respaldo' });
@@ -35,6 +35,27 @@ test('backup round trip brings back deactivated data without touching the rest',
     assert.equal(Math.round((await api().get(`/api/recipes/${recipe.id}`)).body.data.nutrition.calories), 260);
     // Import never deletes
     assert.equal((await api().get(`/api/patients/${other.id}`)).status, 200);
+});
+
+test('a backup restores into a new installation (patient linked to its billing client)', async () => {
+    const owner = sessionFor('admin');
+    const rice = await createIngredient({ name: 'Arroz mudanza' }, owner);
+    const recipe = await createRecipe(rice.id, { name: 'Receta mudanza' }, owner);
+    const patient = await createPatient({ firstName: 'Mudanza' }, owner);
+    await api(owner).post(`/api/patients/${patient.id}/sync-to-billing`);
+    const backup = (await api(owner).get('/api/backup/export')).body;
+
+    // Another installation: same rows, ids it has never seen
+    const ids = new Set(Object.values(backup.tables).flat().filter(r => r.org_id !== null).map(r => r.id));
+    const moved = JSON.parse(JSON.stringify(backup), (key, value) => (typeof value === 'string' && ids.has(value) ? `${value}-w` : value));
+    const fresh = sessionFor('admin');
+    const res = await api(fresh).post('/api/backup/import').send(moved);
+    assert.equal(res.status, 200, res.body.error);
+
+    const restored = (await api(fresh).get(`/api/patients/${patient.id}-w`)).body.data;
+    assert.equal(restored.firstName, 'Mudanza');
+    assert.ok(restored.billingClientId);
+    assert.equal((await api(fresh).get(`/api/recipes/${recipe.id}-w`)).body.data.name, 'Receta mudanza');
 });
 
 test('a backup with broken references imports nothing', async () => {

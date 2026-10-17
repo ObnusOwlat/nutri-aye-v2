@@ -33,21 +33,21 @@ function seedNutrients() {
                        (1089, 'Iron, Fe', 'Hierro', 'mg', 5400, 'minerals')`).run();
 }
 
-async function createIngredient(overrides = {}) {
-    const res = await api().post('/api/ingredients').send({
+async function createIngredient(overrides = {}, session = admin) {
+    const res = await api(session).post('/api/ingredients').send({
         name: 'Arroz blanco', category: 'carbs', kcalPer100g: 130,
         proteinPer100g: 2.7, carbsPer100g: 28, fatPer100g: 0.3, ...overrides
     });
     return res.body.data;
 }
 
-async function createPatient(overrides = {}) {
-    const res = await api().post('/api/patients').send({ firstName: 'Ana', lastName: 'Pérez', ...overrides });
+async function createPatient(overrides = {}, session = admin) {
+    const res = await api(session).post('/api/patients').send({ firstName: 'Ana', lastName: 'Pérez', ...overrides });
     return res.body.data;
 }
 
-async function createRecipe(ingredientId, overrides = {}) {
-    const res = await api().post('/api/recipes').send({
+async function createRecipe(ingredientId, overrides = {}, session = admin) {
+    const res = await api(session).post('/api/recipes').send({
         name: 'Arroz', category: 'lunch', ingredients: [{ ingredientId, grams: 200 }], ...overrides
     });
     return res.body.data;

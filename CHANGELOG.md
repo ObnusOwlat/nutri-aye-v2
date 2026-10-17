@@ -2,6 +2,13 @@
 
 Cambios por fase del plan de trabajo. Las fechas son de merge a `master`.
 
+## Arreglos de la prueba del circuito completo (instalación nueva)
+
+Encontrados al instalar desde cero y recorrer todo el circuito en el navegador (paciente, recetas, planificador, actividad, cobros, usuarios, respaldo).
+- Respaldo: un respaldo no se podía restaurar en otra instalación («datos de otro consultorio (patients.billing_client_id)»), porque los pacientes se importaban antes que los clientes de cobro a los que apuntan. Ahora los datos del consultorio y los clientes van primero. Test nuevo que simula la mudanza a otra computadora.
+- `import-usda.js` e `import-foods.js` calculan los alérgenos de cada alimento al terminar. En una instalación nueva no había ningún alimento con alérgenos: los filtros y avisos de alergia no funcionaban. También respetan `DB_PATH`.
+- Planificador: al elegir un paciente, las tarjetas de los días comparaban contra 2.000 kcal en vez de la meta del plan del paciente.
+
 ## Intercambios simples en las sugerencias (beta) y leches vegetales sin «lácteos»
 
 - `lib/swaps.js`: dos grupos de intercambio, aceites vegetales y leche de vaca. Si un alimento de la receta choca con una alergia del paciente y tiene una alternativa sin ese alérgeno (girasol, oliva o canola; leche de arroz, de almendras o de coco), la receta queda apta y se sugiere el cambio (`swaps` en `/recipe-suggestions`). La receta no se modifica y los nutrientes son los de la original.
