@@ -70,6 +70,8 @@ const PlannerPatient = (function() {
         if (!context) return;
         if (dailyTarget) dailyTarget.value = context.targetCalories;
         if (dietGoal) dietGoal.value = context.goal;
+        // The day cards compare against the profile, not the input
+        State.updateDietProfile({ dailyTarget: context.targetCalories, goal: context.goal });
     }
 
     /**

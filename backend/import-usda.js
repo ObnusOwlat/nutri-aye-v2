@@ -18,6 +18,8 @@ const path = require('path');
 const fs = require('fs');
 const { classifyFoods } = require('./src/db/schema/food-groups');
 const { markParaguayFoods } = require('./src/db/schema/paraguay');
+const { tagAllFoods } = require('./src/db/schema/allergens');
+const { DB_PATH } = require('./src/config');
 
 const usdaDir = path.join(__dirname, '..', 'foods-data', 'usda');
 const files = process.argv.length > 2
@@ -34,7 +36,7 @@ if (files.length === 0) {
     process.exit(1);
 }
 
-const db = new Database(path.join(__dirname, 'db', 'database.sqlite'));
+const db = new Database(DB_PATH);
 db.pragma('foreign_keys = ON');
 
 // Spanish names: foods from tools/translate-usda.py, nutrients hand-translated
@@ -251,6 +253,7 @@ db.transaction(() => {
 // Subgroup (origen) and preparation form of every food
 classifyFoods(db);
 markParaguayFoods(db); // ⭐ foods found in Paraguay, translation fixes
+tagAllFoods(db); // allergens of every food (filters, warnings, suggestions)
 
 const count = (sql) => db.prepare(sql).get().c;
 console.log(`
