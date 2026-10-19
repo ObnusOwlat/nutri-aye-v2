@@ -3,6 +3,7 @@ const { app } = require('./src/app');
 const { db } = require('./src/db/connection');
 const { logger } = require('./src/lib/logger');
 const { PORT, HOST, DB_PATH } = require('./src/config');
+const { startDailyBackups } = require('./src/backup/daily');
 
 function startServer() {
     return app.listen(PORT, HOST, () => {
@@ -19,6 +20,7 @@ if (require.main === module) {
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
     startServer();
+    startDailyBackups();
 }
 
 module.exports = { app, db, startServer };

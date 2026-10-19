@@ -78,3 +78,15 @@ body[data-role="recepcion"] .patient-tabs__tab[data-tab="progress"] { display: n
     font: 600 18px ui-monospace, monospace; background: var(--color-bg); border: 1px dashed var(--color-border-dark);
     border-radius: 8px; padding: var(--space-md); text-align: center; letter-spacing: 1px; user-select: all;
 }
+
+/* Respaldos (backup-admin.js) */
+.backups { display: grid; gap: var(--space-lg); }
+.backups section { display: grid; gap: var(--space-sm); justify-items: start; }
+.backups h4 { margin: 0; }
+.backups p { margin: 0; }
+.backups code { word-break: break-all; }
+.backups__preview {
+    display: grid; gap: var(--space-sm); justify-items: start;
+    border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md);
+}
+.backups__preview ul { margin: 0; padding-left: 1.2em; columns: 2; }
