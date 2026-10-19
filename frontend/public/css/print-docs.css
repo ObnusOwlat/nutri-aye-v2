@@ -1,0 +1,67 @@
+/* print-docs.css - Printed documents (print-core.js): only #print-area is printed */
+
+.print-area { display: none; }
+@media print {
+    body.printing-document > *:not(.print-area) { display: none !important; }
+    body.printing-document .print-area { display: block !important; }
+    @page { size: A4; margin: 15mm; }
+}
+
+/* Documents for the patient: sober, readable in black and white (color only in lines and titles) */
+.pdoc {
+    --pdoc-accent: #166534;
+    font: 10.5pt/1.45 'Inter', Arial, Helvetica, sans-serif;
+    color: #111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    orphans: 3;
+    widows: 3;
+}
+.pdoc h1, .pdoc h2, .pdoc h3 { font-family: 'Poppins', Arial, Helvetica, sans-serif; color: #111; break-after: avoid; }
+.pdoc p { margin: 0; }
+
+.pdoc__head {
+    display: flex; align-items: center; gap: 12pt;
+    padding-bottom: 6pt; border-bottom: 2pt solid var(--pdoc-accent);
+}
+.pdoc__logo { max-height: 20mm; max-width: 60mm; object-fit: contain; }
+.pdoc__org { display: flex; flex-direction: column; font-size: 9pt; color: #444; }
+.pdoc__org strong { font-size: 13pt; color: #111; }
+
+.pdoc__title { margin: 10pt 0 8pt; }
+.pdoc__title h1 { font-size: 16pt; margin: 0; }
+.pdoc__patient { font-size: 12pt; font-weight: 600; }
+.pdoc__subtitle { font-size: 9.5pt; color: #444; }
+
+.pdoc__section { margin-top: 10pt; }
+.pdoc__section h2 {
+    font-size: 12pt; margin: 0 0 5pt; padding-bottom: 2pt;
+    border-bottom: 1pt solid var(--pdoc-accent); color: var(--pdoc-accent);
+}
+.pdoc__section--break { break-before: page; }
+.pdoc__block { break-inside: avoid; }
+.pdoc__muted { color: #555; }
+.pdoc__note { white-space: pre-line; }
+
+.pdoc-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.pdoc-table thead { display: table-header-group; }
+.pdoc-table tr { break-inside: avoid; }
+.pdoc-table th { text-align: left; font-weight: 600; border-bottom: 1pt solid #333; padding: 2pt 4pt; }
+.pdoc-table td { border-bottom: 0.5pt solid #bbb; padding: 2pt 4pt; vertical-align: top; }
+.pdoc-table .num { text-align: right; white-space: nowrap; }
+
+.pdoc__foot {
+    margin-top: 14pt; padding-top: 4pt; border-top: 0.5pt solid #999;
+    font-size: 8.5pt; color: #555; break-inside: avoid;
+}
+
+/* Logo y color, in Datos del consultorio */
+.print-brand { margin-top: var(--space-lg); }
+.print-brand__row { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+.print-brand__preview {
+    width: 180px; height: 72px; display: flex; align-items: center; justify-content: center;
+    border: 1px dashed var(--color-border-dark); border-radius: var(--radius-md); background: #fff;
+}
+.print-brand__preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.print-brand__actions { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.print-brand__color { display: inline-flex; align-items: center; gap: var(--space-xs); font-size: var(--font-size-sm); }
