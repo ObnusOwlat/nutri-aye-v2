@@ -4,6 +4,12 @@
 @media print {
     body.printing-document > *:not(.print-area) { display: none !important; }
     body.printing-document .print-area { display: block !important; }
+    /* Printing from the browser menu: never the screen, a hint instead */
+    body:not(.printing-document) > * { display: none !important; }
+    body:not(.printing-document)::before {
+        content: 'Para imprimir usá el botón «🖨 Imprimir» de la ficha del paciente, del planificador o de cada receta.';
+        display: block; font: 12pt Arial, sans-serif; padding: 20mm 0;
+    }
     @page { size: A4; margin: 15mm; }
 }
 
@@ -77,6 +83,15 @@
 .pdoc-day dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 2pt 8pt; font-size: 9.5pt; }
 .pdoc-day dt { font-weight: 600; color: #333; }
 .pdoc-day dd { margin: 0; }
+/* Activity: the name over its detail (exercise names are long) */
+.pdoc-day--activity dl { display: block; }
+.pdoc-day--activity dd { margin-bottom: 3pt; color: #333; }
+.pdoc-day--activity small { white-space: nowrap; }
+
+/* Patient summary (print-patient.js) */
+.pdoc-summary { display: grid; grid-template-columns: 40mm 1fr; gap: 3pt 10pt; margin: 0; }
+.pdoc-summary dt { font-weight: 600; color: #333; }
+.pdoc-summary dd { margin: 0; }
 .pdoc-week__avg { margin-top: 6pt; text-align: right; }
 
 /* The "Imprimir" window */

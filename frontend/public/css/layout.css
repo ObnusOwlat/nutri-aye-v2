@@ -250,33 +250,3 @@
 .empty-state__hint {
     font-size: var(--font-size-sm);
 }
-
-/* Print Styles */
-@media print {
-    body {
-        background: white;
-        color: black;
-    }
-    
-    .header,
-    .tabs,
-    .btn,
-    .modal-overlay,
-    .toast-container,
-    .no-print {
-        display: none !important;
-    }
-    
-    .main {
-        padding: 0;
-        max-width: 100%;
-    }
-    
-    .tab-content {
-        display: block !important;
-    }
-    
-    .planner__header {
-        display: none;
-    }
-}

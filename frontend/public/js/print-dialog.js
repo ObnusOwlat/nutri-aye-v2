@@ -81,9 +81,20 @@ const PrintDialog = (function() {
             .catch(error => { UI.toastError('No se pudo cargar la semana del paciente: ' + error.message); })
             .finally(() => open({
                 title: `Imprimir · ${Print.fullName(patient)}`,
-                docs: [PrintPlan.doc({ week, patient }), PrintShopping.doc({ week, patient }), PrintProgress.doc(patient)]
+                docs: [PrintPlan.doc({ week, patient }), PrintShopping.doc({ week, patient }),
+                    PrintActivity.doc({ plan: State.getLoadedActivity(patientId), patient }),
+                    PrintProgress.doc(patient), PrintPatient.doc(patient)]
             }));
     }
 
-    return { open, openForPatient };
+    // Ctrl+P and the header button: the documents of what is on screen, never the screen itself
+    function contextual() {
+        if (document.querySelector('.print-dialog')) return;
+        if (App.currentTab === 'planner') return PrintPlan.fromPlanner();
+        const patientId = App.currentTab === 'patients' && PatientProfile.getCurrentId();
+        if (patientId) return openForPatient(patientId);
+        UI.toastInfo('Para imprimir abrí la ficha de un paciente o el planificador. Las recetas se imprimen con 🖨 en cada una.');
+    }
+
+    return { open, openForPatient, contextual };
 })();
