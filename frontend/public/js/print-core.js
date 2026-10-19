@@ -33,6 +33,8 @@ const Print = (function() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
+    // Recipe name for the patient: without the level suffix of the loaded plans ("… · 1300/1500 kcal")
+    const recipeName = (name) => String(name || '').replace(/\s*·\s*[\d./\s]+kcal\s*$/i, '');
     const fullName = (patient) => `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
 
     /**
@@ -73,5 +75,5 @@ const Print = (function() {
     const section = (title, content, className = '') =>
         `<section class="pdoc__section ${className}"><h2>${esc(title)}</h2>${content}</section>`;
 
-    return { run, page, table, section, fileTitle, fullName, today, esc };
+    return { run, page, table, section, fileTitle, fullName, recipeName, today, esc };
 })();
