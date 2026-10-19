@@ -16,11 +16,14 @@ function shutdown() {
     process.exit(0);
 }
 
-if (require.main === module) {
+// Server + daily copies; `npm start` and the Windows launcher (installer/launcher.js)
+function main() {
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
-    startServer();
     startDailyBackups();
+    return startServer();
 }
 
-module.exports = { app, db, startServer };
+if (require.main === module) main();
+
+module.exports = { app, db, startServer, main };

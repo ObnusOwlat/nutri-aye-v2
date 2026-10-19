@@ -16,6 +16,7 @@ const stmts = {
     setPassword: db.prepare('UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?'),
     touchLogin: db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?'),
     insertOrg: db.prepare('INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?)'),
+    renameOrg: db.prepare('UPDATE organizations SET name = ? WHERE id = ?'),
     orgById: db.prepare('SELECT * FROM organizations WHERE id = ?'),
     anyOrg: db.prepare('SELECT * FROM organizations WHERE deactivated_at IS NULL ORDER BY created_at LIMIT 1'),
     memberships: db.prepare(`
@@ -75,6 +76,7 @@ function createOrganization(name) {
 }
 
 const getOrganization = (id) => stmts.orgById.get(id);
+const renameOrganization = (id, name) => { stmts.renameOrg.run(name, id); return stmts.orgById.get(id); };
 const firstOrganization = () => stmts.anyOrg.get();
 
 function setPassword(userId, password, { mustChange = false } = {}) {
@@ -120,6 +122,6 @@ const switchSessionOrg = (sessionId, orgId) => stmts.switchOrg.run(orgId, sessio
 
 module.exports = {
     hasUsers, findUserByEmail, getUser, membershipsOf, checkCredentials, createUser, addMembership,
-    createOrganization, getOrganization, firstOrganization, setPassword,
+    createOrganization, getOrganization, renameOrganization, firstOrganization, setPassword,
     createSession, resolveSession, revokeSession, revokeUserSessions, revokeUserOrgSessions, switchSessionOrg
 };

@@ -30,3 +30,6 @@ tools/.venv/
 tools/models/
 tools/argos-index.json
 __pycache__/
+installer/.cache/
+installer/.stage/
+installer/dist/
