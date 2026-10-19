@@ -3,16 +3,22 @@ const express = require('express');
 const { exportBackup, checkBackup, importBackup } = require('../backup/serializer');
 const { badRequest } = require('../lib/http');
 const { record } = require('../audit/log');
+const daily = require('../backup/daily');
 
 const router = express.Router();
 
 router.get('/api/backup/export', (req, res) => {
-    const date = new Date().toISOString().slice(0, 10);
+    const date = daily.localDate(); // the computer's day, not UTC (after 21:00 in Paraguay it is already tomorrow)
     res.setHeader('Content-Disposition', `attachment; filename=nutri-aye-respaldo-${date}.json`);
     const backup = exportBackup(req.ctx);
     const counts = Object.fromEntries(Object.entries(backup.tables).map(([name, rows]) => [name, [null, rows.length]]));
     record(req.ctx, { action: 'export', entity: 'backup', changes: counts });
     res.json(backup);
+});
+
+// The automatic daily copies (whole database, on this computer)
+router.get('/api/backup/auto', (req, res) => {
+    res.json({ success: true, data: daily.status() });
 });
 
 router.post('/api/backup/import', (req, res) => {

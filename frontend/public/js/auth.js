@@ -193,7 +193,8 @@ const Auth = (function() {
                     <small>${esc(ROLE_LABELS[me.role])} · ${esc(me.organization.name)}</small>
                 </div>
                 ${others}
-                ${me.role === 'admin' ? '<button class="user-menu__item" type="button" data-action="users">Usuarios del consultorio</button>' : ''}
+                ${me.role === 'admin' ? `<button class="user-menu__item" type="button" data-action="users">Usuarios del consultorio</button>
+                    <button class="user-menu__item" type="button" data-action="backups">💾 Respaldos</button>` : ''}
                 <button class="user-menu__item" type="button" data-action="password">Cambiar contraseña</button>
                 <button class="user-menu__item" type="button" data-action="logout">Cerrar sesión</button>
             </div>`;
@@ -202,6 +203,7 @@ const Auth = (function() {
             const action = e.target.closest('[data-action]')?.dataset.action;
             if (action === 'toggle') menu.classList.toggle('open');
             if (action === 'users') { menu.classList.remove('open'); UsersAdmin.open(me); }
+            if (action === 'backups') { menu.classList.remove('open'); BackupAdmin.open(); }
             if (action === 'password') { menu.classList.remove('open'); showPasswordForm(false); }
             if (action === 'logout') logout();
         });
