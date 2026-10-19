@@ -184,10 +184,6 @@
 .sidebar-drag small { color: var(--color-text-muted); white-space: nowrap; }
 .sidebar-exercise[draggable="true"] { cursor: grab; }
 
-@media print {
-    .planner-bar, .planner-sidebar, .act-drop, .act-item__remove { display: none; }
-}
-
 /* Rutinas de ejercicio (planner-routines.js) */
 #btn-routines[hidden] { display: none; }
 .routines__save { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin: var(--space-sm) 0 var(--space-md); }

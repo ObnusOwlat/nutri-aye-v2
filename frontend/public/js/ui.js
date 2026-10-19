@@ -10,7 +10,7 @@ const UI = (function() {
         document.getElementById('btn-print')?.addEventListener('click', printPage);
     }
 
-    const printPage = () => window.print();
+    const printPage = () => PrintDialog.contextual();
 
     // Paraguayan format: 1.234,5 · 31/12/2026 · ₲ 150.000
     const formatNumber = (num, decimals = 0) => (num == null || Number.isNaN(Number(num)) ? '-'

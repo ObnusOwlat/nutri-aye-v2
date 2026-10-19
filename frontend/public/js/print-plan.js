@@ -64,7 +64,9 @@ const PrintPlan = (function() {
     function fromPlanner() {
         const patient = State.getPatient(PlannerPatient.getSelectedId()) || null;
         const week = State.getWeekPlan();
-        PrintDialog.open({ title: 'Imprimir semana', docs: [doc({ week, patient }), PrintShopping.doc({ week, patient })] });
+        const docs = [doc({ week, patient }), PrintShopping.doc({ week, patient }), PrintActivity.doc({ plan: State.getActivityPlan(), patient })];
+        if (State.getMode() === 'activity') docs.unshift(docs.pop()); // in Actividad mode it comes first
+        PrintDialog.open({ title: 'Imprimir semana', docs });
     }
 
     return { doc, html, fromPlanner, hasMeals };
