@@ -40,6 +40,9 @@ mkdir -p "$STAGE/app/backend" "$STAGE/app/frontend" "$STAGE/app/seed"
 cp -r backend/src backend/server.js backend/package.json backend/package-lock.json "$STAGE/app/backend/"
 cp -r frontend/public "$STAGE/app/frontend/"
 cp installer/launcher.js "$STAGE/app/"
+# Data files the backend reads while running (exercises, allergens, Spanish names); not the USDA source
+mkdir -p "$STAGE/app/foods-data"
+cp -r foods-data/exercises foods-data/allergens foods-data/translations "$STAGE/app/foods-data/"
 # Production dependencies only; no install scripts (they would build the Linux binary)
 (cd "$STAGE/app/backend" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --loglevel=error)
 mkdir -p "$STAGE/app/backend/node_modules/better-sqlite3/build/Release"

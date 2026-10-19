@@ -42,6 +42,7 @@ Section "Nutri Aye"
     ; An update replaces the program entirely (old files out), never the data
     RMDir /r "$INSTDIR\backend"
     RMDir /r "$INSTDIR\frontend"
+    RMDir /r "$INSTDIR\foods-data"
     SetOutPath "$INSTDIR"
     File /r "${STAGE}\app\*.*"
     File "${STAGE}\nutri-aye.ico"
@@ -75,5 +76,5 @@ Section "Uninstall"
     RMDir /r "$SMPROGRAMS\${APP}"
     RMDir /r "$INSTDIR"
     DeleteRegKey HKCU "${UNINST_KEY}"
-    MessageBox MB_OK|MB_ICONINFORMATION "Se desinstaló ${APP}.$\r$\n$\r$\nLos datos (pacientes, recetas, respaldos) quedaron en:$\r$\n$LOCALAPPDATA\NutriAye$\r$\n$\r$\nSi se vuelve a instalar, aparecen de nuevo."
+    MessageBox MB_OK|MB_ICONINFORMATION "Se desinstaló ${APP}.$\r$\n$\r$\nLos datos (pacientes, recetas, respaldos) quedaron en:$\r$\n$LOCALAPPDATA\NutriAye$\r$\n$\r$\nSi se vuelve a instalar, aparecen de nuevo." /SD IDOK
 SectionEnd

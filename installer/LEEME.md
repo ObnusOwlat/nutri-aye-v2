@@ -11,7 +11,7 @@ installer/build.sh otra-base.sqlite         # o desde otra base
 ## Qué lleva
 - `nutri-aye-server.exe`: Node 22 para Windows (renombrado, así el instalador lo cierra sin tocar otros Node).
 - El backend con sus dependencias de producción y el `better_sqlite3.node` de Windows.
-- `frontend/public`.
+- `frontend/public` y los datos que el backend lee al correr: `foods-data/exercises`, `allergens` y `translations` (los USDA no).
 - `seed/database.sqlite`: la base inicial (`make-seed-db.js`). Tiene el catálogo de alimentos, las recetas, las plantillas activas y las rutinas del consultorio. No tiene usuarios, pacientes, cobros ni registro de cambios.
 - `launcher.js`: arranca el server oculto y abre el navegador.
 
@@ -23,6 +23,24 @@ installer/build.sh otra-base.sqlite         # o desde otra base
 - Solo escucha en `127.0.0.1:3001` (esta computadora). Si el puerto está ocupado: variable de entorno `NUTRI_AYE_PORT`.
 - **Actualizar** = correr el instalador nuevo: cierra el server, reemplaza el programa y las migraciones corren al arrancar.
 
-## Probado
-- En Linux, el paquete con el `.node` de Linux: primer arranque, admin, segundo arranque y reinicio.
-- Falta probarlo en un Windows real (Wine no llegó a iniciar).
+## Probar con Wine (Fedora)
+Hace falta el metapaquete **`wine`** completo (`sudo dnf install wine`). Con solo `wine-core` falta Mono:
+la creación del prefijo abre una ventana para descargarlo y se queda esperando (parece colgada).
+Siempre con `winemenubuilder` apagado, para que no deje accesos ni asociaciones en el escritorio de KDE:
+
+```bash
+export WINEPREFIX=/tmp/prueba-wine WINEDEBUG=-all WINEDLLOVERRIDES="winemenubuilder.exe=d" NUTRI_AYE_PORT=3401
+wine wineboot -i                                   # ~1 min la primera vez
+wine installer/dist/NutriAye-Setup-*.exe /S        # instalación silenciosa
+P="$WINEPREFIX/drive_c/users/$USER/AppData/Local/Programs/Nutri Aye"
+wine "$P/nutri-aye-server.exe" "C:\users\$USER\AppData\Local\Programs\Nutri Aye\launcher.js" --background
+curl 127.0.0.1:3401/api/auth/status                # setupRequired: true la primera vez
+wine "$P/Desinstalar.exe" /S
+```
+
+## Probado (18/10, Wine 11 en Fedora 44)
+- Instalación silenciosa: archivos, accesos (escritorio, menú Inicio, Inicio de Windows) y registro de desinstalación.
+- Node y SQLite de Windows: primer arranque con base inicial y copia diaria, primer admin, 194 recetas, las 6 pestañas sin errores.
+- Actualizar con el server corriendo: lo cierra, reemplaza el programa y conserva los datos.
+- Desinstalar: borra el programa y los accesos, conserva los datos.
+- Falta: Windows real (arranque al prender, navegador por defecto, SmartScreen).
