@@ -142,6 +142,7 @@ const Recipes = (function() {
                     <span class="food-row__macros">P ${Math.round(n.protein)} · C ${Math.round(n.carbs)} · G ${Math.round(n.fat)} g</span>
                 </button>
                 <span class="food-row__actions">
+                    <button class="btn btn--secondary btn--sm" type="button" data-action="print" title="Imprimir la receta para el paciente">🖨</button>
                     <button class="btn btn--secondary btn--sm" type="button" data-action="edit">Editar</button>
                     <button class="btn btn--danger btn--sm" type="button" data-action="deactivate">Desactivar</button>
                 </span>
@@ -154,6 +155,7 @@ const Recipes = (function() {
         if (!row || !action) return;
         const id = row.dataset.id;
         if (action === 'edit') RecipeEditor.open(id);
+        if (action === 'print') PrintRecipe.open(id);
         if (action === 'deactivate') {
             UI.confirmDanger('¿Desactivar esta receta? Deja de aparecer en la lista; los planes que la usan no cambian.', async () => {
                 await State.deleteRecipe(id);

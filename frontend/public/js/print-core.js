@@ -35,6 +35,8 @@ const Print = (function() {
     };
     // Recipe name for the patient: without the level suffix of the loaded plans ("… · 1300/1500 kcal")
     const recipeName = (name) => String(name || '').replace(/\s*·\s*[\d./\s]+kcal\s*$/i, '');
+    // Food name for the patient: without the catalog's notes in parentheses ("(incluye alimentos para …)")
+    const foodName = (name) => String(name || '').replace(/\s*\([^)]*\)/g, '').replace(/,\s*(?=,)/g, '').replace(/\s*,\s*$/, '').trim();
     const fullName = (patient) => `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
 
     /**
@@ -75,5 +77,5 @@ const Print = (function() {
     const section = (title, content, className = '') =>
         `<section class="pdoc__section ${className}"><h2>${esc(title)}</h2>${content}</section>`;
 
-    return { run, page, table, section, fileTitle, fullName, recipeName, today, esc };
+    return { run, page, table, section, fileTitle, fullName, recipeName, foodName, today, esc };
 })();
