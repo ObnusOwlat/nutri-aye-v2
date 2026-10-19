@@ -47,7 +47,11 @@ router.get('/api/auth/status', (req, res) => {
 // Only while there are no users at all
 router.post('/api/auth/setup', loginLimiter, validate(schemas.setup), (req, res) => {
     if (auth.hasUsers()) throw new HttpError(409, 'El sistema ya tiene usuarios', 'CONFLICT');
-    const org = auth.firstOrganization() || auth.createOrganization(req.body.orgName || 'Consultorio principal');
+    // A new installation already has its consultorio (with the recipes and templates): it takes the given name
+    const existing = auth.firstOrganization();
+    const org = existing
+        ? (req.body.orgName ? auth.renameOrganization(existing.id, req.body.orgName) : existing)
+        : auth.createOrganization(req.body.orgName || 'Consultorio principal');
     const user = auth.createUser({ email: req.body.email, name: req.body.name, password: req.body.password });
     auth.addMembership(user.id, org.id, 'admin');
     record(ctxOf(req, user.id, org.id), { action: 'create', entity: 'user', entityId: user.id, changes: { role: [null, 'admin'] } });
